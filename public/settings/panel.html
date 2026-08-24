@@ -43,10 +43,20 @@
           </div>
         </div>
       </fieldset>
+
+      <nav class="settings-nav">
+        <button type="button" class="nav-tab-btn active" data-tab="movement">Mouvement</button>
+        <button type="button" class="nav-tab-btn" data-tab="presence">Présence</button>
+        <button type="button" class="nav-tab-btn" data-tab="nametag">Pseudo</button>
+        <button type="button" class="nav-tab-btn" data-tab="follow">Follow</button>
+        <button type="button" class="nav-tab-btn" data-tab="subscribe">Sub</button>
+        <button type="button" class="nav-tab-btn" data-tab="cheer">Cheer</button>
+        <button type="button" class="nav-tab-btn" data-tab="raid">Raid</button>
+      </nav>
       </div>
 
       <div class="settings-main">
-      <fieldset>
+      <fieldset data-nav-panel="movement">
         <legend>Mouvement</legend>
         <label>
           Schéma de déplacement
@@ -83,7 +93,7 @@
         </label>
       </fieldset>
 
-      <fieldset>
+      <fieldset data-nav-panel="presence" hidden>
         <legend>Présence</legend>
         <label>
           Disparition après (minutes d'inactivité dans le chat)
@@ -96,7 +106,7 @@
         </label>
       </fieldset>
 
-      <fieldset>
+      <fieldset data-nav-panel="nametag" hidden>
         <legend>Pseudo au-dessus</legend>
         <label>
           <input type="checkbox" id="nameShow" />
@@ -113,18 +123,10 @@
         </label>
       </fieldset>
 
-      <fieldset>
-        <legend>Événements (follow / sub / cheer / raid)</legend>
-        <p class="hint">Variables utilisables dans le texte : <code>{user}</code> partout, <code>{bits}</code> pour les cheers, <code>{viewers}</code> pour les raids.</p>
-
-        <div class="event-tabs" role="tablist">
-          <button type="button" class="event-tab-btn active" data-tab="follow">Follow</button>
-          <button type="button" class="event-tab-btn" data-tab="subscribe">Sub</button>
-          <button type="button" class="event-tab-btn" data-tab="cheer">Cheer</button>
-          <button type="button" class="event-tab-btn" data-tab="raid">Raid</button>
-        </div>
-
-        <div class="event-block" data-tab-panel="follow">
+      <fieldset data-nav-panel="follow" hidden>
+        <legend>Alerte Follow</legend>
+        <p class="hint">Variables utilisables dans le texte : <code>{user}</code>.</p>
+        <div class="event-block">
           <h3>Follow</h3>
           <label><input type="checkbox" id="evt-follow-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-follow-showtext" /> Afficher le texte</label>
@@ -146,8 +148,12 @@
           <label>Position verticale <input type="range" id="evt-follow-posy" min="0" max="100" step="1" /><output id="evt-follow-posy-out"></output></label>
           <button type="button" class="test-event-btn" data-type="follow">Tester cette alerte</button>
         </div>
+      </fieldset>
 
-        <div class="event-block" data-tab-panel="subscribe" hidden>
+      <fieldset data-nav-panel="subscribe" hidden>
+        <legend>Alerte Sub</legend>
+        <p class="hint">Variables utilisables dans le texte : <code>{user}</code>.</p>
+        <div class="event-block">
           <h3>Sub</h3>
           <label><input type="checkbox" id="evt-subscribe-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-subscribe-showtext" /> Afficher le texte</label>
@@ -169,8 +175,12 @@
           <label>Position verticale <input type="range" id="evt-subscribe-posy" min="0" max="100" step="1" /><output id="evt-subscribe-posy-out"></output></label>
           <button type="button" class="test-event-btn" data-type="subscribe">Tester cette alerte</button>
         </div>
+      </fieldset>
 
-        <div class="event-block" data-tab-panel="cheer" hidden>
+      <fieldset data-nav-panel="cheer" hidden>
+        <legend>Alerte Cheer</legend>
+        <p class="hint">Variables utilisables dans le texte : <code>{user}</code>, <code>{bits}</code>.</p>
+        <div class="event-block">
           <h3>Cheer</h3>
           <label><input type="checkbox" id="evt-cheer-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-cheer-showtext" /> Afficher le texte</label>
@@ -192,8 +202,12 @@
           <label>Position verticale <input type="range" id="evt-cheer-posy" min="0" max="100" step="1" /><output id="evt-cheer-posy-out"></output></label>
           <button type="button" class="test-event-btn" data-type="cheer">Tester cette alerte</button>
         </div>
+      </fieldset>
 
-        <div class="event-block" data-tab-panel="raid" hidden>
+      <fieldset data-nav-panel="raid" hidden>
+        <legend>Alerte Raid</legend>
+        <p class="hint">Variables utilisables dans le texte : <code>{user}</code>, <code>{viewers}</code>.</p>
+        <div class="event-block">
           <h3>Raid</h3>
           <label><input type="checkbox" id="evt-raid-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-raid-showtext" /> Afficher le texte</label>
