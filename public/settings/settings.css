@@ -92,6 +92,7 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   border: 1px solid #3a3a45;
   border-radius: 6px;
   overflow: hidden;
+  position: relative;
 }
 .zone-preview-label {
   position: absolute;
