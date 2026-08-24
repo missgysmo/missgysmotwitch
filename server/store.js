@@ -18,6 +18,12 @@ const DEFAULT_SETTINGS = {
   inactivityMinutes: 10,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
+  events: {
+    follow: { text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16 },
+    subscribe: { text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16 },
+    cheer: { text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16 },
+    raid: { text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16 },
+  },
 };
 
 function readJson(filePath, fallback) {
@@ -64,6 +70,12 @@ function getSettings() {
     ...saved,
     zone: { ...DEFAULT_SETTINGS.zone, ...(saved.zone || {}) },
     nameTag: { ...DEFAULT_SETTINGS.nameTag, ...(saved.nameTag || {}) },
+    events: {
+      follow: { ...DEFAULT_SETTINGS.events.follow, ...(saved.events?.follow || {}) },
+      subscribe: { ...DEFAULT_SETTINGS.events.subscribe, ...(saved.events?.subscribe || {}) },
+      cheer: { ...DEFAULT_SETTINGS.events.cheer, ...(saved.events?.cheer || {}) },
+      raid: { ...DEFAULT_SETTINGS.events.raid, ...(saved.events?.raid || {}) },
+    },
   };
 }
 

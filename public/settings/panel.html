@@ -109,6 +109,39 @@
         </label>
       </fieldset>
 
+      <fieldset>
+        <legend>Événements (follow / sub / cheer / raid)</legend>
+        <p class="hint">Variables utilisables dans le texte : <code>{user}</code> partout, <code>{bits}</code> pour les cheers, <code>{viewers}</code> pour les raids.</p>
+
+        <div class="event-block">
+          <h3>Follow</h3>
+          <label>Texte <input type="text" id="evt-follow-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="evt-follow-color" /></label>
+          <label>Taille <input type="range" id="evt-follow-size" min="8" max="40" step="1" /><output id="evt-follow-size-out"></output></label>
+        </div>
+
+        <div class="event-block">
+          <h3>Sub</h3>
+          <label>Texte <input type="text" id="evt-subscribe-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="evt-subscribe-color" /></label>
+          <label>Taille <input type="range" id="evt-subscribe-size" min="8" max="40" step="1" /><output id="evt-subscribe-size-out"></output></label>
+        </div>
+
+        <div class="event-block">
+          <h3>Cheer</h3>
+          <label>Texte <input type="text" id="evt-cheer-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="evt-cheer-color" /></label>
+          <label>Taille <input type="range" id="evt-cheer-size" min="8" max="40" step="1" /><output id="evt-cheer-size-out"></output></label>
+        </div>
+
+        <div class="event-block">
+          <h3>Raid</h3>
+          <label>Texte <input type="text" id="evt-raid-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="evt-raid-color" /></label>
+          <label>Taille <input type="range" id="evt-raid-size" min="8" max="40" step="1" /><output id="evt-raid-size-out"></output></label>
+        </div>
+      </fieldset>
+
       <button type="submit">Enregistrer</button>
       <p id="status"></p>
     </form>

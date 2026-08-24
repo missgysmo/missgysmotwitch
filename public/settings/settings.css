@@ -112,6 +112,30 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   width: 2px;
 }
 
+.event-block {
+  border-top: 1px solid #3a3a45;
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.event-block h3 { margin: 0; font-size: 0.85rem; color: #c9b3ff; }
+.event-block input[type="text"] {
+  flex: 1;
+  background: #17171d;
+  border: 1px solid #3a3a45;
+  border-radius: 6px;
+  color: #f1f1f5;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+.hint code {
+  background: #17171d;
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  color: #c9b3ff;
+}
+
 button {
   padding: 0.6rem;
   border: none;

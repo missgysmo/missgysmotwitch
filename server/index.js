@@ -82,12 +82,59 @@ function buildState() {
   const active = chatTracker.getActiveLogins();
   return {
     type: 'state',
-    viewers: active.map((login) => ({ login, skin: getSkin(login) })),
+    viewers: active.filter(isFollowerCached).map((login) => ({ login, skin: getSkin(login) })),
   };
 }
 
 function isChannelOwner(login) {
   return login.toLowerCase() === CHANNEL.toLowerCase();
+}
+
+// --- Vérification "followers uniquement" ---
+// Seuls les followers de la chaîne ont un avatar sur l'overlay.
+let broadcasterId = null;
+const followerCache = new Map(); // login (lowercase) -> { follows, checkedAt }
+const FOLLOWER_TTL_MS = 5 * 60 * 1000;
+
+async function ensureBroadcasterId() {
+  if (broadcasterId) return broadcasterId;
+  const tokens = store.getTokens();
+  if (!tokens) return null;
+  broadcasterId = await twitchEvents.getUserId({ clientId: CLIENT_ID, accessToken: tokens.access_token, login: CHANNEL });
+  return broadcasterId;
+}
+
+async function checkAndCacheFollower(login) {
+  if (isChannelOwner(login)) return true;
+  const key = login.toLowerCase();
+  try {
+    const tokens = store.getTokens();
+    const bId = await ensureBroadcasterId();
+    if (!tokens || !bId) throw new Error('app pas encore autorisée via /auth');
+    const userId = await twitchEvents.getUserId({ clientId: CLIENT_ID, accessToken: tokens.access_token, login });
+    const follows = await twitchEvents.checkFollower({ clientId: CLIENT_ID, accessToken: tokens.access_token, broadcasterId: bId, userId });
+    followerCache.set(key, { follows, checkedAt: Date.now() });
+    return follows;
+  } catch (err) {
+    console.error(`[followers] échec vérification pour ${login}:`, err.message);
+    followerCache.set(key, { follows: false, checkedAt: Date.now() });
+    return false;
+  }
+}
+
+// Lecture synchrone pour buildState() : renvoie la dernière valeur connue (false si jamais vérifié)
+// et relance une vérification en arrière-plan si absente ou périmée.
+function isFollowerCached(login) {
+  if (isChannelOwner(login)) return true;
+  const key = login.toLowerCase();
+  const cached = followerCache.get(key);
+  if (!cached || Date.now() - cached.checkedAt > FOLLOWER_TTL_MS) {
+    checkAndCacheFollower(login).then((follows) => {
+      const prev = cached?.follows;
+      if (follows !== prev) broadcast(buildState());
+    });
+  }
+  return cached ? cached.follows : false;
 }
 
 function getSkin(login) {
@@ -118,14 +165,22 @@ app.get('/api/species', (req, res) => {
   res.json(species.getSelectable().map((s) => ({ id: s.id, label: s.label, file: s.file })));
 });
 
-app.get('/api/avatar/:login', (req, res) => {
-  res.json(getSkin(req.params.login));
+app.get('/api/avatar/:login', async (req, res) => {
+  const login = req.params.login;
+  const skin = getSkin(login);
+  const follows = isChannelOwner(login) ? true : await checkAndCacheFollower(login);
+  res.json({ ...skin, follows });
 });
 
-app.post('/api/avatar/:login', (req, res) => {
+app.post('/api/avatar/:login', async (req, res) => {
   const login = req.params.login;
   if (isChannelOwner(login)) {
     return res.status(403).json({ error: 'Cet avatar est réservé, il ne peut pas être personnalisé.' });
+  }
+
+  const follows = await checkAndCacheFollower(login);
+  if (!follows) {
+    return res.status(403).json({ error: 'Tu dois suivre la chaîne sur Twitch pour personnaliser un avatar.' });
   }
 
   const { speciesId, hue } = req.body;
@@ -146,10 +201,19 @@ app.get('/api/settings', requireAdmin, (req, res) => {
 const MOVEMENT_PATTERNS = ['random', 'horizontal', 'vertical', 'circular'];
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
+function sanitizeEventConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    text: typeof input?.text === 'string' && input.text.trim() ? input.text.slice(0, 200) : fallback.text,
+    color: HEX_COLOR.test(input?.color) ? input.color : fallback.color,
+    fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+  };
+}
+
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   const d = store.DEFAULT_SETTINGS;
@@ -174,6 +238,12 @@ app.post('/api/settings', requireAdmin, (req, res) => {
       show: typeof nameTag?.show === 'boolean' ? nameTag.show : d.nameTag.show,
       fontSize: clamp(nameTag?.fontSize, 8, 32, d.nameTag.fontSize),
       color: HEX_COLOR.test(nameTag?.color) ? nameTag.color : d.nameTag.color,
+    },
+    events: {
+      follow: sanitizeEventConfig(events?.follow, d.events.follow),
+      subscribe: sanitizeEventConfig(events?.subscribe, d.events.subscribe),
+      cheer: sanitizeEventConfig(events?.cheer, d.events.cheer),
+      raid: sanitizeEventConfig(events?.raid, d.events.raid),
     },
   };
 

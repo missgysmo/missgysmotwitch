@@ -25,6 +25,12 @@ let settings = {
   mirrorOnDirection: true,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
+  events: {
+    follow: { text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16 },
+    subscribe: { text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16 },
+    cheer: { text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16 },
+    raid: { text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16 },
+  },
 };
 
 function applySettings(newSettings) {
@@ -186,12 +192,24 @@ function syncState(viewers) {
   }
 }
 
-const EVENT_LABELS = {
-  'channel.follow': (e) => `💜 ${e.user_name} vient de follow !`,
-  'channel.subscribe': (e) => `⭐ ${e.user_name} vient de s'abonner !`,
-  'channel.cheer': (e) => `💎 ${e.user_name || 'Quelqu\'un'} a cheer ${e.bits} bits !`,
-  'channel.raid': (e) => `🚀 Raid de ${e.from_broadcaster_user_name} (${e.viewers} viewers) !`,
+const EVENT_KEYS = {
+  'channel.follow': 'follow',
+  'channel.subscribe': 'subscribe',
+  'channel.cheer': 'cheer',
+  'channel.raid': 'raid',
 };
+
+function buildEventText(eventType, event) {
+  const key = EVENT_KEYS[eventType];
+  const cfg = settings.events?.[key];
+  if (!cfg) return null;
+  const vars = {
+    user: event.user_name || event.from_broadcaster_user_name || 'Quelqu\'un',
+    bits: event.bits,
+    viewers: event.viewers,
+  };
+  return cfg.text.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
+}
 
 function eventLogin(eventType, event) {
   if (eventType === 'channel.raid') return event.from_broadcaster_user_login;
@@ -199,8 +217,10 @@ function eventLogin(eventType, event) {
 }
 
 function showEvent(eventType, event) {
-  const label = EVENT_LABELS[eventType];
-  if (!label) return;
+  const text = buildEventText(eventType, event);
+  if (!text) return;
+  const key = EVENT_KEYS[eventType];
+  const cfg = settings.events[key];
   const login = eventLogin(eventType, event);
   const anchor = login && avatars.get(login.toLowerCase());
   const pos = anchor
@@ -211,7 +231,9 @@ function showEvent(eventType, event) {
   popup.className = 'event-popup';
   popup.style.left = `${pos.x}px`;
   popup.style.top = `${pos.y}px`;
-  popup.textContent = label(event);
+  popup.style.color = cfg.color;
+  popup.style.fontSize = `${cfg.fontSize}px`;
+  popup.textContent = text;
   eventLayer.appendChild(popup);
   setTimeout(() => popup.remove(), 3600);
 }

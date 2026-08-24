@@ -50,6 +50,16 @@ async function getUserId({ clientId, accessToken, login }) {
   return body.data[0].id;
 }
 
+async function checkFollower({ clientId, accessToken, broadcasterId, userId }) {
+  const params = new URLSearchParams({ broadcaster_id: broadcasterId, user_id: userId });
+  const res = await fetch(`https://api.twitch.tv/helix/channels/followers?${params.toString()}`, {
+    headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error(`checkFollower failed: ${res.status} ${await res.text()}`);
+  const body = await res.json();
+  return (body.total || 0) > 0;
+}
+
 async function subscribe({ clientId, accessToken, type, version, condition, sessionId }) {
   const res = await fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
     method: 'POST',
@@ -127,4 +137,4 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent 
   connectSocket();
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshAccessToken, getUserId, connectEventSub };
+module.exports = { getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, connectEventSub };

@@ -17,6 +17,17 @@ const fields = {
   corridorPosition: { el: document.getElementById('corridorPosition'), out: document.getElementById('corridorPosition-out'), fmt: (v) => `${v}%` },
 };
 
+const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
+const eventFields = {};
+for (const type of EVENT_TYPES) {
+  eventFields[type] = {
+    text: document.getElementById(`evt-${type}-text`),
+    color: document.getElementById(`evt-${type}-color`),
+    size: document.getElementById(`evt-${type}-size`),
+    sizeOut: document.getElementById(`evt-${type}-size-out`),
+  };
+}
+
 const movementPatternEl = document.getElementById('movementPattern');
 const mirrorOnDirectionEl = document.getElementById('mirrorOnDirection');
 const transitionEffectEl = document.getElementById('transitionEffect');
@@ -26,6 +37,9 @@ const nameColorEl = document.getElementById('nameColor');
 function updateOutputs() {
   for (const f of Object.values(fields)) {
     f.out.textContent = f.fmt(Number(f.el.value));
+  }
+  for (const type of EVENT_TYPES) {
+    eventFields[type].sizeOut.textContent = `${eventFields[type].size.value}px`;
   }
   updateZonePreview();
 }
@@ -52,6 +66,9 @@ function updateCorridorLine() {
 
 Object.values(fields).forEach((f) => f.el.addEventListener('input', updateOutputs));
 movementPatternEl.addEventListener('input', updateCorridorLine);
+for (const type of EVENT_TYPES) {
+  eventFields[type].size.addEventListener('input', updateOutputs);
+}
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -72,6 +89,11 @@ async function loadSettings() {
   transitionEffectEl.checked = s.transitionEffect;
   nameShowEl.checked = s.nameTag.show;
   nameColorEl.value = s.nameTag.color;
+  for (const type of EVENT_TYPES) {
+    eventFields[type].text.value = s.events[type].text;
+    eventFields[type].color.value = s.events[type].color;
+    eventFields[type].size.value = s.events[type].fontSize;
+  }
   updateOutputs();
 }
 
@@ -99,6 +121,11 @@ form.addEventListener('submit', async (e) => {
       fontSize: Number(fields.nameFontSize.el.value),
       color: nameColorEl.value,
     },
+    events: Object.fromEntries(EVENT_TYPES.map((type) => [type, {
+      text: eventFields[type].text.value,
+      color: eventFields[type].color.value,
+      fontSize: Number(eventFields[type].size.value),
+    }])),
   };
   try {
     const res = await fetch('/api/settings', {

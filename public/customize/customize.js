@@ -5,6 +5,7 @@ const statusEl = document.getElementById('status');
 const speciesGrid = document.getElementById('species-grid');
 const pickerBlock = document.getElementById('picker-block');
 const reservedNotice = document.getElementById('reserved-notice');
+const notFollowerNotice = document.getElementById('not-follower-notice');
 
 const previewImg = document.getElementById('preview-img');
 const previewName = document.getElementById('preview-name');
@@ -12,6 +13,7 @@ const previewName = document.getElementById('preview-name');
 let speciesList = [];
 let selectedSpecies = null;
 let isReserved = false;
+let isNotFollower = false;
 
 async function loadSpecies() {
   const res = await fetch('/api/species');
@@ -61,12 +63,14 @@ async function checkReserved() {
     const res = await fetch(`/api/avatar/${encodeURIComponent(login)}`);
     const skin = await res.json();
     isReserved = skin.species === 'mon-avatar';
+    isNotFollower = !isReserved && !skin.follows;
     reservedNotice.hidden = !isReserved;
-    pickerBlock.hidden = isReserved;
+    notFollowerNotice.hidden = !isNotFollower;
+    pickerBlock.hidden = isReserved || isNotFollower;
     if (isReserved) {
       previewImg.src = '/overlay/sprites/mon-avatar.png';
       previewImg.style.filter = 'none';
-    } else {
+    } else if (!isNotFollower) {
       updatePreview();
     }
   } catch {
@@ -77,7 +81,7 @@ async function checkReserved() {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const login = loginInput.value.trim().toLowerCase();
-  if (!login || isReserved || !selectedSpecies) return;
+  if (!login || isReserved || isNotFollower || !selectedSpecies) return;
 
   statusEl.textContent = 'Enregistrement...';
   try {
@@ -92,7 +96,7 @@ form.addEventListener('submit', async (e) => {
     }
     statusEl.textContent = 'Avatar enregistré ! Il apparaîtra au prochain message dans le chat.';
   } catch (err) {
-    statusEl.textContent = "Erreur lors de l'enregistrement, réessaie.";
+    statusEl.textContent = err.message || "Erreur lors de l'enregistrement, réessaie.";
     console.error(err);
   }
 });
