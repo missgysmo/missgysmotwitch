@@ -198,6 +198,21 @@ app.get('/api/settings', requireAdmin, (req, res) => {
   res.json(store.getSettings());
 });
 
+// --- Test des alertes (déclenche une fausse notification, sans passer par Twitch) ---
+const TEST_EVENTS = {
+  follow: { type: 'channel.follow', event: { user_name: 'TestFollower', user_login: 'testfollower' } },
+  subscribe: { type: 'channel.subscribe', event: { user_name: 'TestSub', user_login: 'testsub' } },
+  cheer: { type: 'channel.cheer', event: { user_name: 'TestCheerer', user_login: 'testcheerer', bits: 100 } },
+  raid: { type: 'channel.raid', event: { from_broadcaster_user_name: 'TestRaider', from_broadcaster_user_login: 'testraider', viewers: 25 } },
+};
+
+app.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
+  const test = TEST_EVENTS[req.params.type];
+  if (!test) return res.status(400).json({ error: 'type invalide' });
+  broadcast({ type: 'event', eventType: test.type, event: test.event });
+  res.json({ ok: true });
+});
+
 const MOVEMENT_PATTERNS = ['random', 'horizontal', 'vertical', 'circular'];
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 

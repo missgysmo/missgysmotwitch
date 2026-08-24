@@ -120,6 +120,19 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   gap: 0.5rem;
 }
 .event-block h3 { margin: 0; font-size: 0.85rem; color: #c9b3ff; }
+.test-event-btn {
+  align-self: flex-start;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #9147ff;
+  border-radius: 6px;
+  background: transparent;
+  color: #c9b3ff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.test-event-btn:hover { background: rgba(145, 71, 255, 0.15); }
+.test-event-btn:disabled { opacity: 0.6; cursor: default; }
 .event-block input[type="text"] {
   flex: 1;
   background: #17171d;

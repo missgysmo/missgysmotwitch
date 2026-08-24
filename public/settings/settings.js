@@ -147,3 +147,17 @@ document.getElementById('logout')?.addEventListener('click', async () => {
   await fetch('/api/admin/logout', { method: 'POST' });
   location.reload();
 });
+
+document.querySelectorAll('.test-event-btn').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Envoi...';
+    try {
+      await fetch(`/api/admin/test-event/${btn.dataset.type}`, { method: 'POST' });
+    } finally {
+      btn.textContent = original;
+      btn.disabled = false;
+    }
+  });
+});

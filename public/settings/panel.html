@@ -118,6 +118,7 @@
           <label>Texte <input type="text" id="evt-follow-text" maxlength="200" /></label>
           <label>Couleur <input type="color" id="evt-follow-color" /></label>
           <label>Taille <input type="range" id="evt-follow-size" min="8" max="40" step="1" /><output id="evt-follow-size-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="follow">Tester cette alerte</button>
         </div>
 
         <div class="event-block">
@@ -125,6 +126,7 @@
           <label>Texte <input type="text" id="evt-subscribe-text" maxlength="200" /></label>
           <label>Couleur <input type="color" id="evt-subscribe-color" /></label>
           <label>Taille <input type="range" id="evt-subscribe-size" min="8" max="40" step="1" /><output id="evt-subscribe-size-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="subscribe">Tester cette alerte</button>
         </div>
 
         <div class="event-block">
@@ -132,6 +134,7 @@
           <label>Texte <input type="text" id="evt-cheer-text" maxlength="200" /></label>
           <label>Couleur <input type="color" id="evt-cheer-color" /></label>
           <label>Taille <input type="range" id="evt-cheer-size" min="8" max="40" step="1" /><output id="evt-cheer-size-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="cheer">Tester cette alerte</button>
         </div>
 
         <div class="event-block">
@@ -139,7 +142,9 @@
           <label>Texte <input type="text" id="evt-raid-text" maxlength="200" /></label>
           <label>Couleur <input type="color" id="evt-raid-color" /></label>
           <label>Taille <input type="range" id="evt-raid-size" min="8" max="40" step="1" /><output id="evt-raid-size-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="raid">Tester cette alerte</button>
         </div>
+        <p class="hint">Le test affiche le popup sur <code>/overlay/</code> (ouvre-le dans un autre onglet ou regarde OBS). Comme le "faux" viewer testé n'a pas d'avatar affiché, seul le popup de texte apparaît — pas l'effet de pulsation sur l'avatar (ça, ça se voit avec un vrai event).</p>
       </fieldset>
 
       <button type="submit">Enregistrer</button>
