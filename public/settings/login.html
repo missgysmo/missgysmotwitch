@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connexion réglages</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <main>
+    <h1>Réglages de l'overlay</h1>
+    <p>Accès réservé. Entre le mot de passe pour continuer.</p>
+
+    <form id="login-form">
+      <label>
+        Mot de passe
+        <input type="password" id="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit">Se connecter</button>
+      <p id="status"></p>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const statusEl = document.getElementById('status');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = '';
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        location.reload();
+      } else {
+        statusEl.textContent = 'Mot de passe incorrect.';
+      }
+    });
+  </script>
+</body>
+</html>

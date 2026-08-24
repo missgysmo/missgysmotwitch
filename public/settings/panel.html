@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Réglages overlay</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <main>
+    <div class="top-row">
+      <h1>Réglages de l'overlay</h1>
+      <button id="logout" type="button">Se déconnecter</button>
+    </div>
+    <p>Ajuste la taille des avatars, leur zone de déplacement et leur vitesse. Les changements s'appliquent en direct sur l'overlay, sans rafraîchir OBS.</p>
+
+    <form id="form">
+      <fieldset>
+        <legend>Taille</legend>
+        <label>
+          Taille des avatars (px)
+          <input type="range" id="avatarSize" min="24" max="200" step="2" />
+          <output id="avatarSize-out"></output>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Zone de déplacement</legend>
+        <p class="hint">Marge exclue depuis chaque bord de l'écran (en %) — les avatars ne s'approcheront pas plus près que ça des bords.</p>
+        <div class="zone-grid">
+          <label>Haut <input type="range" id="zoneTop" min="0" max="45" /><output id="zoneTop-out"></output></label>
+          <label>Bas <input type="range" id="zoneBottom" min="0" max="45" /><output id="zoneBottom-out"></output></label>
+          <label>Gauche <input type="range" id="zoneLeft" min="0" max="45" /><output id="zoneLeft-out"></output></label>
+          <label>Droite <input type="range" id="zoneRight" min="0" max="45" /><output id="zoneRight-out"></output></label>
+        </div>
+        <div class="zone-preview">
+          <span class="zone-preview-label">Ton écran de stream</span>
+          <div id="zone-box">
+            <span class="zone-box-label">Zone où les avatars se baladent</span>
+            <div id="corridor-line"></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Mouvement</legend>
+        <label>
+          Schéma de déplacement
+          <select id="movementPattern">
+            <option value="random">Aléatoire (toute la zone)</option>
+            <option value="horizontal">Horizontal (couloir fixe)</option>
+            <option value="vertical">Vertical (couloir fixe)</option>
+            <option value="circular">Circulaire</option>
+          </select>
+        </label>
+        <label>
+          Position du couloir (haut→bas ou gauche→droite selon le schéma)
+          <input type="range" id="corridorPosition" min="0" max="100" step="1" />
+          <output id="corridorPosition-out"></output>
+        </label>
+        <label>
+          <input type="checkbox" id="mirrorOnDirection" />
+          Retourner le sprite selon le sens de déplacement
+        </label>
+        <label>
+          Vitesse de déplacement (durée du trajet)
+          <input type="range" id="transitionSeconds" min="0.5" max="15" step="0.5" />
+          <output id="transitionSeconds-out"></output>
+        </label>
+        <label>
+          Intervalle entre deux déplacements
+          <input type="range" id="moveIntervalMs" min="500" max="20000" step="100" />
+          <output id="moveIntervalMs-out"></output>
+        </label>
+        <label>
+          Variation aléatoire de l'intervalle
+          <input type="range" id="moveVarianceMs" min="0" max="10000" step="100" />
+          <output id="moveVarianceMs-out"></output>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Présence</legend>
+        <label>
+          Disparition après (minutes d'inactivité dans le chat)
+          <input type="range" id="inactivityMinutes" min="1" max="120" step="1" />
+          <output id="inactivityMinutes-out"></output>
+        </label>
+        <label>
+          <input type="checkbox" id="transitionEffect" />
+          Fondu à l'apparition/disparition
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pseudo au-dessus</legend>
+        <label>
+          <input type="checkbox" id="nameShow" />
+          Afficher le pseudo
+        </label>
+        <label>
+          Taille du texte
+          <input type="range" id="nameFontSize" min="8" max="32" step="1" />
+          <output id="nameFontSize-out"></output>
+        </label>
+        <label>
+          Couleur
+          <input type="color" id="nameColor" />
+        </label>
+      </fieldset>
+
+      <button type="submit">Enregistrer</button>
+      <p id="status"></p>
+    </form>
+  </main>
+
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Personnalise ton avatar</title>
+  <link rel="stylesheet" href="customize.css" />
+</head>
+<body>
+  <main>
+    <h1>Personnalise ton avatar de stream</h1>
+    <p>Entre ton pseudo Twitch, choisis ton personnage et sa couleur. Il apparaîtra sur le stream quand tu écris dans le chat !</p>
+
+    <form id="form">
+      <label>
+        Pseudo Twitch
+        <input type="text" id="login" placeholder="ton_pseudo" required autocomplete="off" />
+      </label>
+
+      <p id="reserved-notice" class="notice" hidden>Cet avatar est réservé, il ne peut pas être personnalisé.</p>
+
+      <div id="picker-block">
+        <fieldset>
+          <legend>Personnage</legend>
+          <div id="species-grid" class="species-grid"></div>
+        </fieldset>
+
+        <label>
+          Teinte
+          <input type="range" id="hue" min="0" max="360" value="0" />
+        </label>
+
+        <button type="submit">Enregistrer</button>
+        <p id="status"></p>
+      </div>
+    </form>
+
+    <div id="preview-wrap">
+      <p>Aperçu</p>
+      <div id="preview">
+        <img id="preview-img" alt="Aperçu de l'avatar" />
+        <div id="preview-name" class="avatar-name">pseudo</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="customize.js"></script>
+</body>
+</html>

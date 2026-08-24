@@ -1,0 +1,107 @@
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, sans-serif;
+  background: #17171d;
+  color: #f1f1f5;
+  margin: 0;
+  padding: 2rem 1rem;
+}
+main {
+  max-width: 480px;
+  margin: 0 auto;
+}
+h1 { font-size: 1.4rem; }
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: #22222b;
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+input[type="text"] {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #3a3a45;
+  background: #17171d;
+  color: inherit;
+}
+input[type="range"] { flex: 1; }
+fieldset {
+  border: 1px solid #3a3a45;
+  border-radius: 8px;
+}
+button {
+  padding: 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: #9147ff;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:hover { background: #7d2ff0; }
+#status { min-height: 1.2em; font-size: 0.9rem; }
+
+.notice {
+  background: #3a2a1a;
+  color: #f3c98b;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.species-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.5rem;
+}
+.species-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  background: #17171d;
+}
+.species-option img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.species-option span { font-size: 0.68rem; text-align: center; }
+.species-option.selected { border-color: #9147ff; background: #2a2035; }
+
+#preview-wrap { margin-top: 2rem; text-align: center; }
+#preview {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+#preview-img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.avatar-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 0 3px black, 0 0 3px black;
+}
