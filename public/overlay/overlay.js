@@ -227,6 +227,12 @@ function showEvent(eventType, event) {
     ? { x: parseFloat(anchor.el.style.left) + 28, y: parseFloat(anchor.el.style.top) }
     : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
+  if (anchor) {
+    anchor.el.style.setProperty('--event-glow', cfg.color);
+    anchor.el.classList.add('event-pulse');
+    setTimeout(() => anchor.el.classList.remove('event-pulse'), 3600);
+  }
+
   const popup = document.createElement('div');
   popup.className = 'event-popup';
   popup.style.left = `${pos.x}px`;
