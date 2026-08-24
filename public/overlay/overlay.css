@@ -51,14 +51,34 @@ body.hide-names .avatar-name {
   transition: transform 0.2s ease;
 }
 
-.avatar-wrap.event-pulse {
-  animation: avatarPulse 0.6s ease-in-out 6;
+.avatar-wrap[class*="event-"] {
   filter: drop-shadow(0 0 14px var(--event-glow, #9147ff));
 }
+
+.avatar-wrap.event-pulse { animation: avatarPulse 0.6s ease-in-out 6; }
+.avatar-wrap.event-jump { animation: avatarJump 0.5s ease-in-out 7; }
+.avatar-wrap.event-shake { animation: avatarShake 0.35s ease-in-out 10; }
+.avatar-wrap.event-spin { animation: avatarSpin 0.9s linear 4; }
 
 @keyframes avatarPulse {
   0%, 100% { transform: scale(1) translateY(0); }
   50% { transform: scale(1.22) translateY(-6px); }
+}
+
+@keyframes avatarJump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-30px); }
+}
+
+@keyframes avatarShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-6px) rotate(-6deg); }
+  75% { transform: translateX(6px) rotate(6deg); }
+}
+
+@keyframes avatarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .event-popup {

@@ -115,7 +115,18 @@
 
         <div class="event-block">
           <h3>Follow</h3>
+          <label><input type="checkbox" id="evt-follow-enabled" /> Activer cette alerte</label>
           <label>Texte <input type="text" id="evt-follow-text" maxlength="200" /></label>
+          <label>
+            Réaction de l'avatar
+            <select id="evt-follow-reaction">
+              <option value="pulse">Sursaut</option>
+              <option value="jump">Saut</option>
+              <option value="shake">Tremble</option>
+              <option value="spin">Tourne sur lui-même</option>
+              <option value="none">Aucune</option>
+            </select>
+          </label>
           <label>Couleur <input type="color" id="evt-follow-color" /></label>
           <label>Taille <input type="range" id="evt-follow-size" min="8" max="40" step="1" /><output id="evt-follow-size-out"></output></label>
           <button type="button" class="test-event-btn" data-type="follow">Tester cette alerte</button>
@@ -123,7 +134,18 @@
 
         <div class="event-block">
           <h3>Sub</h3>
+          <label><input type="checkbox" id="evt-subscribe-enabled" /> Activer cette alerte</label>
           <label>Texte <input type="text" id="evt-subscribe-text" maxlength="200" /></label>
+          <label>
+            Réaction de l'avatar
+            <select id="evt-subscribe-reaction">
+              <option value="pulse">Sursaut</option>
+              <option value="jump">Saut</option>
+              <option value="shake">Tremble</option>
+              <option value="spin">Tourne sur lui-même</option>
+              <option value="none">Aucune</option>
+            </select>
+          </label>
           <label>Couleur <input type="color" id="evt-subscribe-color" /></label>
           <label>Taille <input type="range" id="evt-subscribe-size" min="8" max="40" step="1" /><output id="evt-subscribe-size-out"></output></label>
           <button type="button" class="test-event-btn" data-type="subscribe">Tester cette alerte</button>
@@ -131,7 +153,18 @@
 
         <div class="event-block">
           <h3>Cheer</h3>
+          <label><input type="checkbox" id="evt-cheer-enabled" /> Activer cette alerte</label>
           <label>Texte <input type="text" id="evt-cheer-text" maxlength="200" /></label>
+          <label>
+            Réaction de l'avatar
+            <select id="evt-cheer-reaction">
+              <option value="pulse">Sursaut</option>
+              <option value="jump">Saut</option>
+              <option value="shake">Tremble</option>
+              <option value="spin">Tourne sur lui-même</option>
+              <option value="none">Aucune</option>
+            </select>
+          </label>
           <label>Couleur <input type="color" id="evt-cheer-color" /></label>
           <label>Taille <input type="range" id="evt-cheer-size" min="8" max="40" step="1" /><output id="evt-cheer-size-out"></output></label>
           <button type="button" class="test-event-btn" data-type="cheer">Tester cette alerte</button>
@@ -139,12 +172,23 @@
 
         <div class="event-block">
           <h3>Raid</h3>
+          <label><input type="checkbox" id="evt-raid-enabled" /> Activer cette alerte</label>
           <label>Texte <input type="text" id="evt-raid-text" maxlength="200" /></label>
+          <label>
+            Réaction de l'avatar
+            <select id="evt-raid-reaction">
+              <option value="pulse">Sursaut</option>
+              <option value="jump">Saut</option>
+              <option value="shake">Tremble</option>
+              <option value="spin">Tourne sur lui-même</option>
+              <option value="none">Aucune</option>
+            </select>
+          </label>
           <label>Couleur <input type="color" id="evt-raid-color" /></label>
           <label>Taille <input type="range" id="evt-raid-size" min="8" max="40" step="1" /><output id="evt-raid-size-out"></output></label>
           <button type="button" class="test-event-btn" data-type="raid">Tester cette alerte</button>
         </div>
-        <p class="hint">Le test affiche le popup sur <code>/overlay/</code> (ouvre-le dans un autre onglet ou regarde OBS). Comme le "faux" viewer testé n'a pas d'avatar affiché, seul le popup de texte apparaît — pas l'effet de pulsation sur l'avatar (ça, ça se voit avec un vrai event).</p>
+        <p class="hint">Le test affiche le popup sur <code>/overlay/</code> (ouvre-le dans un autre onglet ou regarde OBS). Un avatar au hasard parmi ceux affichés fera la réaction choisie — s'il n'y a aucun avatar actif, seul le popup de texte s'affiche.</p>
       </fieldset>
 
       <button type="submit">Enregistrer</button>

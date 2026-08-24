@@ -21,10 +21,12 @@ const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
 for (const type of EVENT_TYPES) {
   eventFields[type] = {
+    enabled: document.getElementById(`evt-${type}-enabled`),
     text: document.getElementById(`evt-${type}-text`),
     color: document.getElementById(`evt-${type}-color`),
     size: document.getElementById(`evt-${type}-size`),
     sizeOut: document.getElementById(`evt-${type}-size-out`),
+    reaction: document.getElementById(`evt-${type}-reaction`),
   };
 }
 
@@ -90,9 +92,11 @@ async function loadSettings() {
   nameShowEl.checked = s.nameTag.show;
   nameColorEl.value = s.nameTag.color;
   for (const type of EVENT_TYPES) {
+    eventFields[type].enabled.checked = s.events[type].enabled;
     eventFields[type].text.value = s.events[type].text;
     eventFields[type].color.value = s.events[type].color;
     eventFields[type].size.value = s.events[type].fontSize;
+    eventFields[type].reaction.value = s.events[type].reaction;
   }
   updateOutputs();
 }
@@ -122,9 +126,11 @@ form.addEventListener('submit', async (e) => {
       color: nameColorEl.value,
     },
     events: Object.fromEntries(EVENT_TYPES.map((type) => [type, {
+      enabled: eventFields[type].enabled.checked,
       text: eventFields[type].text.value,
       color: eventFields[type].color.value,
       fontSize: Number(eventFields[type].size.value),
+      reaction: eventFields[type].reaction.value,
     }])),
   };
   try {

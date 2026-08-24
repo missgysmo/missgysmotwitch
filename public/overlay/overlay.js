@@ -178,7 +178,7 @@ function syncState(viewers) {
     if (avatars.has(login)) {
       applySkin(avatars.get(login).el, skin);
     } else {
-      const entry = { el: null, moveTimer: null };
+      const entry = { el: null, moveTimer: null, login };
       entry.el = createAvatarEl(login, skin, entry);
       avatars.set(login, entry);
       entry.moveTimer = setTimeout(() => wander(login), Math.max(settings.moveIntervalMs, settings.transitionSeconds * 1000));
@@ -202,13 +202,19 @@ const EVENT_KEYS = {
 function buildEventText(eventType, event) {
   const key = EVENT_KEYS[eventType];
   const cfg = settings.events?.[key];
-  if (!cfg) return null;
+  if (!cfg || !cfg.enabled) return null;
   const vars = {
     user: event.user_name || event.from_broadcaster_user_name || 'Quelqu\'un',
     bits: event.bits,
     viewers: event.viewers,
   };
   return cfg.text.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
+}
+
+function pickRandomAvatar() {
+  const entries = [...avatars.values()];
+  if (!entries.length) return null;
+  return entries[Math.floor(Math.random() * entries.length)];
 }
 
 function eventLogin(eventType, event) {
@@ -222,15 +228,19 @@ function showEvent(eventType, event) {
   const key = EVENT_KEYS[eventType];
   const cfg = settings.events[key];
   const login = eventLogin(eventType, event);
-  const anchor = login && avatars.get(login.toLowerCase());
+  const anchor = (login && avatars.get(login.toLowerCase())) || pickRandomAvatar();
   const pos = anchor
     ? { x: parseFloat(anchor.el.style.left) + 28, y: parseFloat(anchor.el.style.top) }
     : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-  if (anchor) {
+  if (anchor && cfg.reaction !== 'none') {
     anchor.el.style.setProperty('--event-glow', cfg.color);
-    anchor.el.classList.add('event-pulse');
-    setTimeout(() => anchor.el.classList.remove('event-pulse'), 3600);
+    const cls = `event-${cfg.reaction}`;
+    anchor.el.classList.add(cls);
+    // fige le déplacement normal le temps de la réaction, pour ne pas la parasiter
+    clearTimeout(anchor.moveTimer);
+    anchor.moveTimer = setTimeout(() => wander(anchor.login), 3600);
+    setTimeout(() => anchor.el.classList.remove(cls), 3600);
   }
 
   const popup = document.createElement('div');

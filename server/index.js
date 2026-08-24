@@ -216,12 +216,16 @@ app.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
 const MOVEMENT_PATTERNS = ['random', 'horizontal', 'vertical', 'circular'];
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
+const EVENT_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin'];
+
 function sanitizeEventConfig(input, fallback) {
   const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
   return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
     text: typeof input?.text === 'string' && input.text.trim() ? input.text.slice(0, 200) : fallback.text,
     color: HEX_COLOR.test(input?.color) ? input.color : fallback.color,
     fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+    reaction: EVENT_REACTIONS.includes(input?.reaction) ? input.reaction : fallback.reaction,
   };
 }
 

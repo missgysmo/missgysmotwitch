@@ -19,10 +19,10 @@ const DEFAULT_SETTINGS = {
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   events: {
-    follow: { text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16 },
-    subscribe: { text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16 },
-    cheer: { text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16 },
-    raid: { text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16 },
+    follow: { enabled: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse' },
+    subscribe: { enabled: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump' },
+    cheer: { enabled: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake' },
+    raid: { enabled: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'spin' },
   },
 };
 
