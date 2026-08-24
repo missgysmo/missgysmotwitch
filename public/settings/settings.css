@@ -6,7 +6,7 @@ body {
   margin: 0;
   padding: 2rem 1rem;
 }
-main { max-width: 520px; margin: 0 auto; }
+main { max-width: 920px; margin: 0 auto; }
 h1 { font-size: 1.4rem; margin: 0; }
 p { color: #a9a9b8; font-size: 0.9rem; }
 
@@ -28,13 +28,28 @@ p { color: #a9a9b8; font-size: 0.9rem; }
 .top-row button:hover { color: #f1f1f5; }
 
 form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
   background: #22222b;
   padding: 1.25rem;
   border-radius: 12px;
   margin-top: 1.5rem;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.settings-sidebar,
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (max-width: 820px) {
+  .settings-layout { grid-template-columns: 1fr; }
 }
 fieldset {
   border: 1px solid #3a3a45;
@@ -115,9 +130,29 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   width: 2px;
 }
 
+.event-tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.event-tab-btn {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #3a3a45;
+  border-radius: 999px;
+  background: transparent;
+  color: #a9a9b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.event-tab-btn:hover { color: #f1f1f5; }
+.event-tab-btn.active {
+  background: #9147ff;
+  border-color: #9147ff;
+  color: white;
+}
+
 .event-block {
-  border-top: 1px solid #3a3a45;
-  padding-top: 0.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

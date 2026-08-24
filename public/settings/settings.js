@@ -168,6 +168,15 @@ document.getElementById('logout')?.addEventListener('click', async () => {
   location.reload();
 });
 
+document.querySelectorAll('.event-tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.event-tab-btn').forEach((b) => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.event-block').forEach((panel) => {
+      panel.hidden = panel.dataset.tabPanel !== btn.dataset.tab;
+    });
+  });
+});
+
 document.querySelectorAll('.test-event-btn').forEach((btn) => {
   btn.addEventListener('click', async () => {
     btn.disabled = true;

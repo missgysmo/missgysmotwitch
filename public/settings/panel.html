@@ -15,6 +15,8 @@
     <p>Ajuste la taille des avatars, leur zone de déplacement et leur vitesse. Les changements s'appliquent en direct sur l'overlay, sans rafraîchir OBS.</p>
 
     <form id="form">
+      <div class="settings-layout">
+      <div class="settings-sidebar">
       <fieldset>
         <legend>Taille</legend>
         <label>
@@ -41,7 +43,9 @@
           </div>
         </div>
       </fieldset>
+      </div>
 
+      <div class="settings-main">
       <fieldset>
         <legend>Mouvement</legend>
         <label>
@@ -113,7 +117,14 @@
         <legend>Événements (follow / sub / cheer / raid)</legend>
         <p class="hint">Variables utilisables dans le texte : <code>{user}</code> partout, <code>{bits}</code> pour les cheers, <code>{viewers}</code> pour les raids.</p>
 
-        <div class="event-block">
+        <div class="event-tabs" role="tablist">
+          <button type="button" class="event-tab-btn active" data-tab="follow">Follow</button>
+          <button type="button" class="event-tab-btn" data-tab="subscribe">Sub</button>
+          <button type="button" class="event-tab-btn" data-tab="cheer">Cheer</button>
+          <button type="button" class="event-tab-btn" data-tab="raid">Raid</button>
+        </div>
+
+        <div class="event-block" data-tab-panel="follow">
           <h3>Follow</h3>
           <label><input type="checkbox" id="evt-follow-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-follow-showtext" /> Afficher le texte</label>
@@ -136,7 +147,7 @@
           <button type="button" class="test-event-btn" data-type="follow">Tester cette alerte</button>
         </div>
 
-        <div class="event-block">
+        <div class="event-block" data-tab-panel="subscribe" hidden>
           <h3>Sub</h3>
           <label><input type="checkbox" id="evt-subscribe-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-subscribe-showtext" /> Afficher le texte</label>
@@ -159,7 +170,7 @@
           <button type="button" class="test-event-btn" data-type="subscribe">Tester cette alerte</button>
         </div>
 
-        <div class="event-block">
+        <div class="event-block" data-tab-panel="cheer" hidden>
           <h3>Cheer</h3>
           <label><input type="checkbox" id="evt-cheer-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-cheer-showtext" /> Afficher le texte</label>
@@ -182,7 +193,7 @@
           <button type="button" class="test-event-btn" data-type="cheer">Tester cette alerte</button>
         </div>
 
-        <div class="event-block">
+        <div class="event-block" data-tab-panel="raid" hidden>
           <h3>Raid</h3>
           <label><input type="checkbox" id="evt-raid-enabled" /> Activer cette alerte</label>
           <label><input type="checkbox" id="evt-raid-showtext" /> Afficher le texte</label>
@@ -209,6 +220,8 @@
 
       <button type="submit">Enregistrer</button>
       <p id="status"></p>
+      </div>
+      </div>
     </form>
   </main>
 
