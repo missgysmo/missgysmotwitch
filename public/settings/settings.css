@@ -66,8 +66,11 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   background: #0c0c11;
   border: 1px solid #3a3a45;
   border-radius: 6px;
-  position: relative;
   overflow: hidden;
+  position: sticky;
+  top: 1rem;
+  z-index: 5;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 .zone-preview-label {
   position: absolute;
