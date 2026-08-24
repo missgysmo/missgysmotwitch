@@ -86,9 +86,7 @@ body.hide-names .avatar-name {
 
 .event-popup {
   position: fixed;
-  left: 50%;
-  top: 14%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   background: rgba(0,0,0,.75);
   color: white;
   padding: 8px 16px;
@@ -101,8 +99,8 @@ body.hide-names .avatar-name {
 }
 
 @keyframes popup {
-  0% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.8); }
-  15% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  0% { opacity: 0; transform: translate(-50%, -50%) translateY(20px) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -50%) translateY(0) scale(1); }
   80% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.9); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translateY(-20px) scale(0.9); }
 }

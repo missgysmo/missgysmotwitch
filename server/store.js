@@ -19,10 +19,10 @@ const DEFAULT_SETTINGS = {
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   events: {
-    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse' },
-    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump' },
-    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake' },
-    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'rain' },
+    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },
+    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 } },
+    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 } },
+    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'rain', position: { x: 50, y: 14 } },
   },
 };
 
@@ -63,6 +63,10 @@ function setTokens(tokens) {
   writeJson(TOKENS_PATH, tokens);
 }
 
+function mergeEventConfig(defaults, saved) {
+  return { ...defaults, ...(saved || {}), position: { ...defaults.position, ...(saved?.position || {}) } };
+}
+
 function getSettings() {
   const saved = readJson(SETTINGS_PATH, {});
   return {
@@ -71,10 +75,10 @@ function getSettings() {
     zone: { ...DEFAULT_SETTINGS.zone, ...(saved.zone || {}) },
     nameTag: { ...DEFAULT_SETTINGS.nameTag, ...(saved.nameTag || {}) },
     events: {
-      follow: { ...DEFAULT_SETTINGS.events.follow, ...(saved.events?.follow || {}) },
-      subscribe: { ...DEFAULT_SETTINGS.events.subscribe, ...(saved.events?.subscribe || {}) },
-      cheer: { ...DEFAULT_SETTINGS.events.cheer, ...(saved.events?.cheer || {}) },
-      raid: { ...DEFAULT_SETTINGS.events.raid, ...(saved.events?.raid || {}) },
+      follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),
+      subscribe: mergeEventConfig(DEFAULT_SETTINGS.events.subscribe, saved.events?.subscribe),
+      cheer: mergeEventConfig(DEFAULT_SETTINGS.events.cheer, saved.events?.cheer),
+      raid: mergeEventConfig(DEFAULT_SETTINGS.events.raid, saved.events?.raid),
     },
   };
 }

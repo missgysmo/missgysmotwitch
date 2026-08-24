@@ -26,10 +26,10 @@ let settings = {
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   events: {
-    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse' },
-    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump' },
-    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake' },
-    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'rain' },
+    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },
+    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 } },
+    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 } },
+    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'rain', position: { x: 50, y: 14 } },
   },
 };
 
@@ -253,6 +253,8 @@ function showEvent(eventType, event) {
   if (cfg.showText) {
     const popup = document.createElement('div');
     popup.className = 'event-popup';
+    popup.style.left = `${cfg.position.x}%`;
+    popup.style.top = `${cfg.position.y}%`;
     popup.style.color = cfg.color;
     popup.style.fontSize = `${cfg.fontSize}px`;
     popup.textContent = buildEventText(eventType, event, cfg);

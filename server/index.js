@@ -227,6 +227,10 @@ function sanitizeEventConfig(input, fallback) {
     color: HEX_COLOR.test(input?.color) ? input.color : fallback.color,
     fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
     reaction: EVENT_REACTIONS.includes(input?.reaction) ? input.reaction : fallback.reaction,
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+    },
   };
 }
 

@@ -28,6 +28,10 @@ for (const type of EVENT_TYPES) {
     size: document.getElementById(`evt-${type}-size`),
     sizeOut: document.getElementById(`evt-${type}-size-out`),
     reaction: document.getElementById(`evt-${type}-reaction`),
+    posX: document.getElementById(`evt-${type}-posx`),
+    posXOut: document.getElementById(`evt-${type}-posx-out`),
+    posY: document.getElementById(`evt-${type}-posy`),
+    posYOut: document.getElementById(`evt-${type}-posy-out`),
   };
 }
 
@@ -43,6 +47,8 @@ function updateOutputs() {
   }
   for (const type of EVENT_TYPES) {
     eventFields[type].sizeOut.textContent = `${eventFields[type].size.value}px`;
+    eventFields[type].posXOut.textContent = `${eventFields[type].posX.value}%`;
+    eventFields[type].posYOut.textContent = `${eventFields[type].posY.value}%`;
   }
   updateZonePreview();
 }
@@ -71,6 +77,8 @@ Object.values(fields).forEach((f) => f.el.addEventListener('input', updateOutput
 movementPatternEl.addEventListener('input', updateCorridorLine);
 for (const type of EVENT_TYPES) {
   eventFields[type].size.addEventListener('input', updateOutputs);
+  eventFields[type].posX.addEventListener('input', updateOutputs);
+  eventFields[type].posY.addEventListener('input', updateOutputs);
 }
 
 async function loadSettings() {
@@ -99,6 +107,8 @@ async function loadSettings() {
     eventFields[type].color.value = s.events[type].color;
     eventFields[type].size.value = s.events[type].fontSize;
     eventFields[type].reaction.value = s.events[type].reaction;
+    eventFields[type].posX.value = s.events[type].position.x;
+    eventFields[type].posY.value = s.events[type].position.y;
   }
   updateOutputs();
 }
@@ -134,6 +144,7 @@ form.addEventListener('submit', async (e) => {
       color: eventFields[type].color.value,
       fontSize: Number(eventFields[type].size.value),
       reaction: eventFields[type].reaction.value,
+      position: { x: Number(eventFields[type].posX.value), y: Number(eventFields[type].posY.value) },
     }])),
   };
   try {
