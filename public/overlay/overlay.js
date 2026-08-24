@@ -208,21 +208,45 @@ function buildEventText(eventType, event, cfg) {
   return cfg.text.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
 }
 
+function makeItRain(entry, color) {
+  clearTimeout(entry.moveTimer);
+  const bounds = zoneBounds();
+  const x = parseFloat(entry.el.style.left) || bounds.minX;
+  const landingY = bounds.maxY;
+
+  entry.el.style.setProperty('--event-glow', color);
+  entry.el.classList.add('event-rain');
+
+  // téléporte au-dessus de l'écran, sans transition, puis relance la chute vers le bas
+  entry.el.style.transition = 'none';
+  entry.el.style.left = `${x}px`;
+  entry.el.style.top = `${-settings.avatarSize}px`;
+  entry.el.offsetHeight; // force le navigateur à appliquer la position avant de ré-activer la transition
+  entry.el.style.transition = '';
+  entry.el.style.top = `${landingY}px`;
+
+  entry.moveTimer = setTimeout(() => {
+    entry.el.classList.remove('event-rain');
+    wander(entry.login);
+  }, 1400);
+}
+
 function showEvent(eventType, event) {
   const key = EVENT_KEYS[eventType];
   const cfg = settings.events?.[key];
   if (!cfg || !cfg.enabled) return;
 
-  const reactionDuration = cfg.reaction === 'rain' ? 2200 : 3600;
-  if (cfg.reaction !== 'none') {
+  if (cfg.reaction === 'rain') {
+    for (const entry of avatars.values()) makeItRain(entry, cfg.color);
+  } else if (cfg.reaction !== 'none') {
     const cls = `event-${cfg.reaction}`;
     for (const entry of avatars.values()) {
       entry.el.style.setProperty('--event-glow', cfg.color);
       entry.el.classList.add(cls);
       // fige le déplacement normal le temps de la réaction, pour ne pas la parasiter
       clearTimeout(entry.moveTimer);
-      entry.moveTimer = setTimeout(() => wander(entry.login), reactionDuration);
-      setTimeout(() => entry.el.classList.remove(cls), reactionDuration);
+      entry.moveTimer = setTimeout(() => wander(entry.login), 3600);
+      setTimeout(() => entry.el.classList.remove(cls), 3600);
     }
   }
 
