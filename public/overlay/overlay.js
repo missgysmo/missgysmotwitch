@@ -233,14 +233,16 @@ function showEvent(eventType, event) {
     ? { x: parseFloat(anchor.el.style.left) + 28, y: parseFloat(anchor.el.style.top) }
     : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-  if (anchor && cfg.reaction !== 'none') {
-    anchor.el.style.setProperty('--event-glow', cfg.color);
+  if (cfg.reaction !== 'none') {
     const cls = `event-${cfg.reaction}`;
-    anchor.el.classList.add(cls);
-    // fige le déplacement normal le temps de la réaction, pour ne pas la parasiter
-    clearTimeout(anchor.moveTimer);
-    anchor.moveTimer = setTimeout(() => wander(anchor.login), 3600);
-    setTimeout(() => anchor.el.classList.remove(cls), 3600);
+    for (const entry of avatars.values()) {
+      entry.el.style.setProperty('--event-glow', cfg.color);
+      entry.el.classList.add(cls);
+      // fige le déplacement normal le temps de la réaction, pour ne pas la parasiter
+      clearTimeout(entry.moveTimer);
+      entry.moveTimer = setTimeout(() => wander(entry.login), 3600);
+      setTimeout(() => entry.el.classList.remove(cls), 3600);
+    }
   }
 
   const popup = document.createElement('div');
