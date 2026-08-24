@@ -59,6 +59,7 @@ body.hide-names .avatar-name {
 .avatar-wrap.event-jump { animation: avatarJump 0.5s ease-in-out 7; }
 .avatar-wrap.event-shake { animation: avatarShake 0.35s ease-in-out 10; }
 .avatar-wrap.event-spin { animation: avatarSpin 0.9s linear 4; }
+.avatar-wrap.event-rain { animation: avatarRain 1.1s cubic-bezier(.36,.15,.32,1.15) 1; }
 
 @keyframes avatarPulse {
   0%, 100% { transform: scale(1) translateY(0); }
@@ -81,12 +82,21 @@ body.hide-names .avatar-name {
   to { transform: rotate(360deg); }
 }
 
+@keyframes avatarRain {
+  0% { transform: translateY(-110vh) rotate(-25deg); opacity: 0.5; }
+  70% { transform: translateY(12px) rotate(10deg); opacity: 1; }
+  85% { transform: translateY(-6px) rotate(-4deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
 .event-popup {
-  position: absolute;
-  transform: translate(-50%, -100%);
+  position: fixed;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%);
   background: rgba(0,0,0,.75);
   color: white;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-family: system-ui, sans-serif;
   font-weight: 700;
@@ -96,8 +106,8 @@ body.hide-names .avatar-name {
 }
 
 @keyframes popup {
-  0% { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
-  15% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  0% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.8); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
   80% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -120%) scale(0.9); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.9); }
 }

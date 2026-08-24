@@ -216,12 +216,13 @@ app.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
 const MOVEMENT_PATTERNS = ['random', 'horizontal', 'vertical', 'circular'];
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
-const EVENT_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin'];
+const EVENT_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'rain'];
 
 function sanitizeEventConfig(input, fallback) {
   const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
   return {
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    showText: typeof input?.showText === 'boolean' ? input.showText : fallback.showText,
     text: typeof input?.text === 'string' && input.text.trim() ? input.text.slice(0, 200) : fallback.text,
     color: HEX_COLOR.test(input?.color) ? input.color : fallback.color,
     fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),

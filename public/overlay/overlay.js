@@ -26,10 +26,10 @@ let settings = {
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   events: {
-    follow: { text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16 },
-    subscribe: { text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16 },
-    cheer: { text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16 },
-    raid: { text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16 },
+    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse' },
+    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump' },
+    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake' },
+    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'rain' },
   },
 };
 
@@ -199,10 +199,7 @@ const EVENT_KEYS = {
   'channel.raid': 'raid',
 };
 
-function buildEventText(eventType, event) {
-  const key = EVENT_KEYS[eventType];
-  const cfg = settings.events?.[key];
-  if (!cfg || !cfg.enabled) return null;
+function buildEventText(eventType, event, cfg) {
   const vars = {
     user: event.user_name || event.from_broadcaster_user_name || 'Quelqu\'un',
     bits: event.bits,
@@ -211,28 +208,12 @@ function buildEventText(eventType, event) {
   return cfg.text.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
 }
 
-function pickRandomAvatar() {
-  const entries = [...avatars.values()];
-  if (!entries.length) return null;
-  return entries[Math.floor(Math.random() * entries.length)];
-}
-
-function eventLogin(eventType, event) {
-  if (eventType === 'channel.raid') return event.from_broadcaster_user_login;
-  return event.user_login;
-}
-
 function showEvent(eventType, event) {
-  const text = buildEventText(eventType, event);
-  if (!text) return;
   const key = EVENT_KEYS[eventType];
-  const cfg = settings.events[key];
-  const login = eventLogin(eventType, event);
-  const anchor = (login && avatars.get(login.toLowerCase())) || pickRandomAvatar();
-  const pos = anchor
-    ? { x: parseFloat(anchor.el.style.left) + 28, y: parseFloat(anchor.el.style.top) }
-    : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  const cfg = settings.events?.[key];
+  if (!cfg || !cfg.enabled) return;
 
+  const reactionDuration = cfg.reaction === 'rain' ? 2200 : 3600;
   if (cfg.reaction !== 'none') {
     const cls = `event-${cfg.reaction}`;
     for (const entry of avatars.values()) {
@@ -240,20 +221,20 @@ function showEvent(eventType, event) {
       entry.el.classList.add(cls);
       // fige le déplacement normal le temps de la réaction, pour ne pas la parasiter
       clearTimeout(entry.moveTimer);
-      entry.moveTimer = setTimeout(() => wander(entry.login), 3600);
-      setTimeout(() => entry.el.classList.remove(cls), 3600);
+      entry.moveTimer = setTimeout(() => wander(entry.login), reactionDuration);
+      setTimeout(() => entry.el.classList.remove(cls), reactionDuration);
     }
   }
 
-  const popup = document.createElement('div');
-  popup.className = 'event-popup';
-  popup.style.left = `${pos.x}px`;
-  popup.style.top = `${pos.y}px`;
-  popup.style.color = cfg.color;
-  popup.style.fontSize = `${cfg.fontSize}px`;
-  popup.textContent = text;
-  eventLayer.appendChild(popup);
-  setTimeout(() => popup.remove(), 3600);
+  if (cfg.showText) {
+    const popup = document.createElement('div');
+    popup.className = 'event-popup';
+    popup.style.color = cfg.color;
+    popup.style.fontSize = `${cfg.fontSize}px`;
+    popup.textContent = buildEventText(eventType, event, cfg);
+    eventLayer.appendChild(popup);
+    setTimeout(() => popup.remove(), 3600);
+  }
 }
 
 function connect() {

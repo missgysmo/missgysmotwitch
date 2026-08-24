@@ -22,6 +22,7 @@ const eventFields = {};
 for (const type of EVENT_TYPES) {
   eventFields[type] = {
     enabled: document.getElementById(`evt-${type}-enabled`),
+    showText: document.getElementById(`evt-${type}-showtext`),
     text: document.getElementById(`evt-${type}-text`),
     color: document.getElementById(`evt-${type}-color`),
     size: document.getElementById(`evt-${type}-size`),
@@ -93,6 +94,7 @@ async function loadSettings() {
   nameColorEl.value = s.nameTag.color;
   for (const type of EVENT_TYPES) {
     eventFields[type].enabled.checked = s.events[type].enabled;
+    eventFields[type].showText.checked = s.events[type].showText;
     eventFields[type].text.value = s.events[type].text;
     eventFields[type].color.value = s.events[type].color;
     eventFields[type].size.value = s.events[type].fontSize;
@@ -127,6 +129,7 @@ form.addEventListener('submit', async (e) => {
     },
     events: Object.fromEntries(EVENT_TYPES.map((type) => [type, {
       enabled: eventFields[type].enabled.checked,
+      showText: eventFields[type].showText.checked,
       text: eventFields[type].text.value,
       color: eventFields[type].color.value,
       fontSize: Number(eventFields[type].size.value),
