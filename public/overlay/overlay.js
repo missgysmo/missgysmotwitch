@@ -12,6 +12,9 @@ const SPECIES_FILES = {
   unicorn: 'unicorn.png',
 };
 
+// Sprites dessinés de face (pas de profil) : on ne les retourne jamais selon le sens de marche.
+const NOT_MIRRORABLE = new Set(['mon-avatar', 'girl', 'grunge-boy']);
+
 const avatars = new Map(); // login -> { el, moveTimer }
 
 let settings = {
@@ -147,6 +150,8 @@ function applySkin(el, skin) {
   const file = SPECIES_FILES[skin.species] || SPECIES_FILES.cat;
   if (!img.src.endsWith(file)) img.src = `/overlay/sprites/${file}`;
   img.style.filter = skin.hue ? `hue-rotate(${skin.hue}deg)` : 'none';
+  el.dataset.species = skin.species;
+  if (NOT_MIRRORABLE.has(skin.species)) img.style.transform = 'none';
 }
 
 function escapeHtml(str) {
@@ -157,7 +162,7 @@ function wander(login) {
   const entry = avatars.get(login);
   if (!entry) return;
   const pos = nextPos(entry);
-  if (settings.mirrorOnDirection) {
+  if (settings.mirrorOnDirection && !NOT_MIRRORABLE.has(entry.el.dataset.species)) {
     const prevX = parseFloat(entry.el.style.left) || pos.x;
     if (Math.abs(pos.x - prevX) > 1) {
       entry.el.querySelector('.avatar').style.transform = pos.x < prevX ? 'scaleX(-1)' : 'scaleX(1)';
