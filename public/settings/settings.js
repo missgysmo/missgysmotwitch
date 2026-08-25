@@ -18,7 +18,7 @@ const fields = {
   ownerSize: { el: document.getElementById('ownerSize'), out: document.getElementById('ownerSize-out'), fmt: (v) => `${v}px` },
 };
 
-const ownerColorEl = document.getElementById('ownerColor');
+const ownerNameColorEl = document.getElementById('ownerNameColor');
 
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
@@ -98,7 +98,7 @@ async function loadSettings() {
   fields.inactivityMinutes.el.value = s.inactivityMinutes;
   fields.nameFontSize.el.value = s.nameTag.fontSize;
   fields.corridorPosition.el.value = s.corridorPosition;
-  ownerColorEl.value = s.ownerColor;
+  ownerNameColorEl.value = s.ownerNameColor;
   fields.ownerSize.el.value = s.ownerSize;
   movementPatternEl.value = s.movementPattern;
   mirrorOnDirectionEl.checked = s.mirrorOnDirection;
@@ -137,7 +137,7 @@ form.addEventListener('submit', async (e) => {
     },
     movementPattern: movementPatternEl.value,
     corridorPosition: Number(fields.corridorPosition.el.value),
-    ownerColor: ownerColorEl.value,
+    ownerNameColor: ownerNameColorEl.value,
     ownerSize: Number(fields.ownerSize.el.value),
     mirrorOnDirection: mirrorOnDirectionEl.checked,
     inactivityMinutes: Number(fields.inactivityMinutes.el.value),

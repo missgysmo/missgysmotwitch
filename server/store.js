@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS = {
   inactivityMinutes: 10,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
-  ownerColor: '#9147ff',
+  ownerNameColor: '#ffd633',
   ownerSize: 64,
   spriteFlip: {
     cat: true,

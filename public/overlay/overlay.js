@@ -25,7 +25,7 @@ let settings = {
   mirrorOnDirection: true,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
-  ownerColor: '#9147ff',
+  ownerNameColor: '#ffd633',
   ownerSize: 64,
   spriteFlip: {
     cat: true, 'cosmic-cat': true, 'cyber-unicorn': true, dino: false,
@@ -50,13 +50,9 @@ function applySettings(newSettings) {
   const ownerEntry = [...avatars.values()].find((e) => e.el.dataset.species === 'mon-avatar');
   if (ownerEntry) {
     const size = `${settings.ownerSize}px`;
-    const img = ownerEntry.el.querySelector('.avatar');
-    const tint = ownerEntry.el.querySelector('.avatar-tint');
-    img.style.width = size;
-    img.style.height = size;
-    tint.style.width = size;
-    tint.style.height = size;
-    tint.style.background = settings.ownerColor;
+    ownerEntry.el.querySelector('.avatar').style.width = size;
+    ownerEntry.el.querySelector('.avatar').style.height = size;
+    ownerEntry.el.querySelector('.avatar-name').style.color = settings.ownerNameColor;
   }
 }
 
@@ -135,10 +131,7 @@ function createAvatarEl(login, skin, entry) {
   wrap.className = 'avatar-wrap';
   wrap.innerHTML = `
     <div class="avatar-name">${escapeHtml(login)}</div>
-    <div class="avatar-visual">
-      <img class="avatar" alt="" />
-      <div class="avatar-tint"></div>
-    </div>
+    <img class="avatar" alt="" />
   `;
   applySkin(wrap, skin);
   stage.appendChild(wrap);
@@ -164,7 +157,7 @@ function removeAvatarEl(entry) {
 
 function applySkin(el, skin) {
   const img = el.querySelector('.avatar');
-  const tint = el.querySelector('.avatar-tint');
+  const name = el.querySelector('.avatar-name');
   const file = SPECIES_FILES[skin.species] || SPECIES_FILES.cat;
   const src = `/overlay/sprites/${file}`;
   if (!img.src.endsWith(file)) img.src = src;
@@ -175,17 +168,12 @@ function applySkin(el, skin) {
     img.style.width = size;
     img.style.height = size;
     img.style.filter = 'none';
-    tint.style.width = size;
-    tint.style.height = size;
-    tint.style.background = settings.ownerColor;
-    tint.style.maskImage = `url(${src})`;
-    tint.style.webkitMaskImage = `url(${src})`;
-    tint.style.display = 'block';
+    name.style.color = settings.ownerNameColor;
   } else {
     img.style.width = '';
     img.style.height = '';
     img.style.filter = skin.hue ? `hue-rotate(${skin.hue}deg)` : 'none';
-    tint.style.display = 'none';
+    name.style.color = '';
   }
 }
 
