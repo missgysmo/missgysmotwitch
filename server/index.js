@@ -263,7 +263,7 @@ function sanitizeEventConfig(input, fallback) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   const d = store.DEFAULT_SETTINGS;
@@ -295,6 +295,9 @@ app.post('/api/settings', requireAdmin, (req, res) => {
       cheer: sanitizeEventConfig(events?.cheer, d.events.cheer),
       raid: sanitizeEventConfig(events?.raid, d.events.raid),
     },
+    spriteFlip: Object.fromEntries(
+      Object.keys(d.spriteFlip).map((id) => [id, typeof spriteFlip?.[id] === 'boolean' ? spriteFlip[id] : d.spriteFlip[id]])
+    ),
   };
 
   store.setSettings(settings);

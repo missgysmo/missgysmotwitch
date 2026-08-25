@@ -18,6 +18,16 @@ const DEFAULT_SETTINGS = {
   inactivityMinutes: 10,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
+  spriteFlip: {
+    cat: true,
+    'cosmic-cat': true,
+    'cyber-unicorn': true,
+    dino: false,
+    girl: false,
+    'grunge-boy': false,
+    unicorn: false,
+    'mon-avatar': true,
+  },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 } },
@@ -74,6 +84,7 @@ function getSettings() {
     ...saved,
     zone: { ...DEFAULT_SETTINGS.zone, ...(saved.zone || {}) },
     nameTag: { ...DEFAULT_SETTINGS.nameTag, ...(saved.nameTag || {}) },
+    spriteFlip: { ...DEFAULT_SETTINGS.spriteFlip, ...(saved.spriteFlip || {}) },
     events: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),
       subscribe: mergeEventConfig(DEFAULT_SETTINGS.events.subscribe, saved.events?.subscribe),

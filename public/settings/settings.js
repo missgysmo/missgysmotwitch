@@ -110,6 +110,9 @@ async function loadSettings() {
     eventFields[type].posX.value = s.events[type].position.x;
     eventFields[type].posY.value = s.events[type].position.y;
   }
+  for (const id in spriteFlipFields) {
+    spriteFlipFields[id].checked = !!s.spriteFlip[id];
+  }
   updateOutputs();
 }
 
@@ -146,6 +149,7 @@ form.addEventListener('submit', async (e) => {
       reaction: eventFields[type].reaction.value,
       position: { x: Number(eventFields[type].posX.value), y: Number(eventFields[type].posY.value) },
     }])),
+    spriteFlip: Object.fromEntries(Object.entries(spriteFlipFields).map(([id, cb]) => [id, cb.checked])),
   };
   try {
     const res = await fetch('/api/settings', {
@@ -161,7 +165,7 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-loadSettings();
+loadTestAvatars().then(loadSettings);
 
 document.getElementById('logout')?.addEventListener('click', async () => {
   await fetch('/api/admin/logout', { method: 'POST' });
@@ -177,6 +181,8 @@ document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
   });
 });
 
+const spriteFlipFields = {};
+
 async function loadTestAvatars() {
   const res = await fetch('/api/species');
   const list = await res.json();
@@ -187,10 +193,15 @@ async function loadTestAvatars() {
     row.className = 'test-avatar-row';
     row.innerHTML = `
       <span>${s.label}</span>
+      <label class="test-avatar-flip-label">
+        <input type="checkbox" class="test-avatar-flip" data-species="${s.id}" />
+        Inverser l'orientation
+      </label>
       <button type="button" class="test-avatar-show" data-species="${s.id}">Faire apparaître</button>
       <button type="button" class="test-avatar-hide" data-species="${s.id}">Retirer</button>
     `;
     container.appendChild(row);
+    spriteFlipFields[s.id] = row.querySelector('.test-avatar-flip');
   });
   container.querySelectorAll('.test-avatar-show').forEach((btn) => {
     btn.addEventListener('click', () => fetch(`/api/admin/test-avatar/${btn.dataset.species}`, { method: 'POST' }));
@@ -198,8 +209,13 @@ async function loadTestAvatars() {
   container.querySelectorAll('.test-avatar-hide').forEach((btn) => {
     btn.addEventListener('click', () => fetch(`/api/admin/test-avatar/${btn.dataset.species}`, { method: 'DELETE' }));
   });
+  container.querySelectorAll('.test-avatar-flip').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      form.requestSubmit();
+    });
+  });
+  return list;
 }
-loadTestAvatars();
 
 document.getElementById('clear-test-avatars').addEventListener('click', () => {
   fetch('/api/admin/test-avatar', { method: 'DELETE' });

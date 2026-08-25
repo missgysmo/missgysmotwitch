@@ -12,10 +12,6 @@ const SPECIES_FILES = {
   unicorn: 'unicorn.png',
 };
 
-const NOT_MIRRORABLE = new Set();
-// Sprites dont le dessin d'origine regarde déjà vers la gauche (inverse la logique de mirror).
-const FACES_LEFT_BY_DEFAULT = new Set(['cat', 'cosmic-cat', 'cyber-unicorn', 'mon-avatar']);
-
 const avatars = new Map(); // login -> { el, moveTimer }
 
 let settings = {
@@ -29,6 +25,10 @@ let settings = {
   mirrorOnDirection: true,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
+  spriteFlip: {
+    cat: true, 'cosmic-cat': true, 'cyber-unicorn': true, dino: false,
+    girl: false, 'grunge-boy': false, unicorn: false, 'mon-avatar': true,
+  },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 } },
@@ -152,7 +152,6 @@ function applySkin(el, skin) {
   if (!img.src.endsWith(file)) img.src = `/overlay/sprites/${file}`;
   img.style.filter = skin.hue ? `hue-rotate(${skin.hue}deg)` : 'none';
   el.dataset.species = skin.species;
-  if (NOT_MIRRORABLE.has(skin.species)) img.style.transform = 'none';
 }
 
 function escapeHtml(str) {
@@ -163,11 +162,11 @@ function wander(login) {
   const entry = avatars.get(login);
   if (!entry) return;
   const pos = nextPos(entry);
-  if (settings.mirrorOnDirection && !NOT_MIRRORABLE.has(entry.el.dataset.species)) {
+  if (settings.mirrorOnDirection) {
     const prevX = parseFloat(entry.el.style.left) || pos.x;
     if (Math.abs(pos.x - prevX) > 1) {
       const movingLeft = pos.x < prevX;
-      const mirror = FACES_LEFT_BY_DEFAULT.has(entry.el.dataset.species) ? !movingLeft : movingLeft;
+      const mirror = settings.spriteFlip[entry.el.dataset.species] ? !movingLeft : movingLeft;
       entry.el.querySelector('.avatar').style.transform = mirror ? 'scaleX(-1)' : 'scaleX(1)';
     }
   }
