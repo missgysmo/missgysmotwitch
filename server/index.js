@@ -144,7 +144,7 @@ function isFollowerCached(login) {
 }
 
 function getSkin(login) {
-  if (isChannelOwner(login)) return { species: 'mon-avatar', hue: store.getSettings().ownerHue };
+  if (isChannelOwner(login)) return { species: 'mon-avatar', hue: 0 };
   return store.getAvatar(login) || defaultSkin(login);
 }
 
@@ -264,7 +264,7 @@ function sanitizeEventConfig(input, fallback) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerHue, ownerSize,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerColor, ownerSize,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   const d = store.DEFAULT_SETTINGS;
@@ -296,7 +296,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
       cheer: sanitizeEventConfig(events?.cheer, d.events.cheer),
       raid: sanitizeEventConfig(events?.raid, d.events.raid),
     },
-    ownerHue: Number.isFinite(ownerHue) ? ((ownerHue % 360) + 360) % 360 : d.ownerHue,
+    ownerColor: HEX_COLOR.test(ownerColor) ? ownerColor : d.ownerColor,
     ownerSize: clamp(ownerSize, 24, 200, d.ownerSize),
     spriteFlip: Object.fromEntries(
       Object.keys(d.spriteFlip).map((id) => [id, typeof spriteFlip?.[id] === 'boolean' ? spriteFlip[id] : d.spriteFlip[id]])

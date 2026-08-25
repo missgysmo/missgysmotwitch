@@ -82,34 +82,6 @@ label {
 }
 input[type="range"] { flex: 1 1 160px; min-width: 100px; }
 
-.hue-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 14px;
-  border-radius: 999px;
-  background: linear-gradient(to right,
-    hsl(0,90%,65%), hsl(60,90%,65%), hsl(120,90%,65%), hsl(180,90%,65%),
-    hsl(240,90%,65%), hsl(300,90%,65%), hsl(360,90%,65%));
-}
-.hue-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: hsl(calc(var(--hue, 0) * 1deg), 90%, 65%);
-  border: 2px solid white;
-  box-shadow: 0 0 4px rgba(0,0,0,.6);
-  cursor: pointer;
-}
-.hue-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: hsl(calc(var(--hue, 0) * 1deg), 90%, 65%);
-  border: 2px solid white;
-  box-shadow: 0 0 4px rgba(0,0,0,.6);
-  cursor: pointer;
-}
 output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.85rem; }
 
 .zone-grid {

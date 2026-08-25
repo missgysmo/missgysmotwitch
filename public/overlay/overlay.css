@@ -27,12 +27,31 @@ html, body {
   transition: left var(--avatar-transition, 4s) linear, top var(--avatar-transition, 4s) linear, opacity var(--avatar-transition, 4s) ease;
 }
 
+.avatar-visual {
+  position: relative;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+}
+
 .avatar {
+  display: block;
   width: var(--avatar-size, 64px);
   height: var(--avatar-size, 64px);
   object-fit: contain;
   image-rendering: pixelated;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+}
+
+.avatar-tint {
+  display: none;
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: color;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+  pointer-events: none;
 }
 
 .avatar-name {

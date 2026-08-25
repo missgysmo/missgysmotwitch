@@ -127,7 +127,7 @@
 
       <fieldset data-nav-panel="owner" hidden>
         <legend>Mon avatar</legend>
-        <p class="hint">Ton avatar (réservé, personnage "MissGysmo") est toujours affiché sur l'overlay, même sans écrire dans le chat. Tu peux régler sa teinte ici, indépendamment des avatars des viewers.</p>
+        <p class="hint">Ton avatar (réservé, personnage "MissGysmo") est toujours affiché sur l'overlay, même sans écrire dans le chat. Sa couleur est un calque appliqué par-dessus le dessin (utile ici car l'image contient déjà toutes les couleurs).</p>
         <label>
           Taille (px)
           <input type="range" id="ownerSize" min="24" max="200" step="2" />
@@ -135,8 +135,7 @@
         </label>
         <label>
           Couleur
-          <input type="range" id="ownerHue" class="hue-slider" min="0" max="360" step="1" />
-          <output id="ownerHue-out"></output>
+          <input type="color" id="ownerColor" />
         </label>
         <label>
           <input type="checkbox" id="ownerFlip" />
