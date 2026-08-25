@@ -13,9 +13,10 @@ const SPECIES_FILES = {
 };
 
 // Sprites dessinés de face (pas de profil) : on ne les retourne jamais selon le sens de marche.
-const NOT_MIRRORABLE = new Set(['girl']);
+const NOT_MIRRORABLE = new Set();
 // Sprites dont le dessin d'origine regarde déjà vers la gauche (inverse la logique de mirror).
-const FACES_LEFT_BY_DEFAULT = new Set();
+// Seul le dino regarde vers la droite par défaut dans ce pack de sprites.
+const FACES_LEFT_BY_DEFAULT = new Set(['cat', 'cosmic-cat', 'cyber-unicorn', 'unicorn', 'girl', 'grunge-boy', 'mon-avatar']);
 
 const avatars = new Map(); // login -> { el, moveTimer }
 
