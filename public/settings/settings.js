@@ -16,6 +16,7 @@ const fields = {
   nameFontSize: { el: document.getElementById('nameFontSize'), out: document.getElementById('nameFontSize-out'), fmt: (v) => `${v}px` },
   corridorPosition: { el: document.getElementById('corridorPosition'), out: document.getElementById('corridorPosition-out'), fmt: (v) => `${v}%` },
   ownerHue: { el: document.getElementById('ownerHue'), out: document.getElementById('ownerHue-out'), fmt: (v) => `${v}°` },
+  ownerSize: { el: document.getElementById('ownerSize'), out: document.getElementById('ownerSize-out'), fmt: (v) => `${v}px` },
 };
 
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
@@ -51,6 +52,7 @@ function updateOutputs() {
     eventFields[type].posXOut.textContent = `${eventFields[type].posX.value}%`;
     eventFields[type].posYOut.textContent = `${eventFields[type].posY.value}%`;
   }
+  fields.ownerHue.el.style.setProperty('--hue', fields.ownerHue.el.value);
   updateZonePreview();
 }
 
@@ -97,6 +99,7 @@ async function loadSettings() {
   fields.nameFontSize.el.value = s.nameTag.fontSize;
   fields.corridorPosition.el.value = s.corridorPosition;
   fields.ownerHue.el.value = s.ownerHue;
+  fields.ownerSize.el.value = s.ownerSize;
   movementPatternEl.value = s.movementPattern;
   mirrorOnDirectionEl.checked = s.mirrorOnDirection;
   transitionEffectEl.checked = s.transitionEffect;
@@ -135,6 +138,7 @@ form.addEventListener('submit', async (e) => {
     movementPattern: movementPatternEl.value,
     corridorPosition: Number(fields.corridorPosition.el.value),
     ownerHue: Number(fields.ownerHue.el.value),
+    ownerSize: Number(fields.ownerSize.el.value),
     mirrorOnDirection: mirrorOnDirectionEl.checked,
     inactivityMinutes: Number(fields.inactivityMinutes.el.value),
     transitionEffect: transitionEffectEl.checked,

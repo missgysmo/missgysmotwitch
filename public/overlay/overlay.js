@@ -25,6 +25,8 @@ let settings = {
   mirrorOnDirection: true,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
+  ownerHue: 0,
+  ownerSize: 64,
   spriteFlip: {
     cat: true, 'cosmic-cat': true, 'cyber-unicorn': true, dino: false,
     girl: false, 'grunge-boy': false, unicorn: false, 'mon-avatar': true,
@@ -45,6 +47,12 @@ function applySettings(newSettings) {
   root.setProperty('--name-font-size', `${settings.nameTag.fontSize}px`);
   root.setProperty('--name-color', settings.nameTag.color);
   document.body.classList.toggle('hide-names', !settings.nameTag.show);
+  const ownerEntry = [...avatars.values()].find((e) => e.el.dataset.species === 'mon-avatar');
+  if (ownerEntry) {
+    const img = ownerEntry.el.querySelector('.avatar');
+    img.style.width = `${settings.ownerSize}px`;
+    img.style.height = `${settings.ownerSize}px`;
+  }
 }
 
 applySettings(settings);
@@ -152,6 +160,13 @@ function applySkin(el, skin) {
   if (!img.src.endsWith(file)) img.src = `/overlay/sprites/${file}`;
   img.style.filter = skin.hue ? `hue-rotate(${skin.hue}deg)` : 'none';
   el.dataset.species = skin.species;
+  if (skin.species === 'mon-avatar') {
+    img.style.width = `${settings.ownerSize}px`;
+    img.style.height = `${settings.ownerSize}px`;
+  } else {
+    img.style.width = '';
+    img.style.height = '';
+  }
 }
 
 function escapeHtml(str) {

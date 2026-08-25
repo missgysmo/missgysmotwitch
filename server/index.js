@@ -264,7 +264,7 @@ function sanitizeEventConfig(input, fallback) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerHue,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerHue, ownerSize,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   const d = store.DEFAULT_SETTINGS;
@@ -297,6 +297,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
       raid: sanitizeEventConfig(events?.raid, d.events.raid),
     },
     ownerHue: Number.isFinite(ownerHue) ? ((ownerHue % 360) + 360) % 360 : d.ownerHue,
+    ownerSize: clamp(ownerSize, 24, 200, d.ownerSize),
     spriteFlip: Object.fromEntries(
       Object.keys(d.spriteFlip).map((id) => [id, typeof spriteFlip?.[id] === 'boolean' ? spriteFlip[id] : d.spriteFlip[id]])
     ),

@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   ownerHue: 0,
+  ownerSize: 64,
   spriteFlip: {
     cat: true,
     'cosmic-cat': true,
