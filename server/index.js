@@ -64,7 +64,10 @@ app.post('/api/admin/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// no-cache : évite qu'OBS/le navigateur affiche une version périmée d'overlay.js après un déploiement
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+}));
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
