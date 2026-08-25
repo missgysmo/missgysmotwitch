@@ -184,7 +184,7 @@ document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
   });
 });
 
-const spriteFlipFields = {};
+const spriteFlipFields = { 'mon-avatar': document.getElementById('ownerFlip') };
 
 async function loadTestAvatars() {
   const res = await fetch('/api/species');
