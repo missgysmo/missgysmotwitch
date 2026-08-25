@@ -14,6 +14,8 @@ const SPECIES_FILES = {
 
 // Sprites dessinés de face (pas de profil) : on ne les retourne jamais selon le sens de marche.
 const NOT_MIRRORABLE = new Set(['mon-avatar', 'girl', 'grunge-boy']);
+// Sprites dont le dessin d'origine regarde déjà vers la gauche (inverse la logique de mirror).
+const FACES_LEFT_BY_DEFAULT = new Set(['unicorn']);
 
 const avatars = new Map(); // login -> { el, moveTimer }
 
@@ -165,7 +167,9 @@ function wander(login) {
   if (settings.mirrorOnDirection && !NOT_MIRRORABLE.has(entry.el.dataset.species)) {
     const prevX = parseFloat(entry.el.style.left) || pos.x;
     if (Math.abs(pos.x - prevX) > 1) {
-      entry.el.querySelector('.avatar').style.transform = pos.x < prevX ? 'scaleX(-1)' : 'scaleX(1)';
+      const movingLeft = pos.x < prevX;
+      const mirror = FACES_LEFT_BY_DEFAULT.has(entry.el.dataset.species) ? !movingLeft : movingLeft;
+      entry.el.querySelector('.avatar').style.transform = mirror ? 'scaleX(-1)' : 'scaleX(1)';
     }
   }
   entry.el.style.left = `${pos.x}px`;
