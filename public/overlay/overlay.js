@@ -13,7 +13,7 @@ const SPECIES_FILES = {
 };
 
 // Sprites dessinés de face (pas de profil) : on ne les retourne jamais selon le sens de marche.
-const NOT_MIRRORABLE = new Set(['mon-avatar', 'girl', 'grunge-boy']);
+const NOT_MIRRORABLE = new Set(['girl', 'grunge-boy']);
 // Sprites dont le dessin d'origine regarde déjà vers la gauche (inverse la logique de mirror).
 const FACES_LEFT_BY_DEFAULT = new Set(['unicorn']);
 
