@@ -15,6 +15,7 @@ const fields = {
   inactivityMinutes: { el: document.getElementById('inactivityMinutes'), out: document.getElementById('inactivityMinutes-out'), fmt: (v) => `${v} min` },
   nameFontSize: { el: document.getElementById('nameFontSize'), out: document.getElementById('nameFontSize-out'), fmt: (v) => `${v}px` },
   corridorPosition: { el: document.getElementById('corridorPosition'), out: document.getElementById('corridorPosition-out'), fmt: (v) => `${v}%` },
+  ownerHue: { el: document.getElementById('ownerHue'), out: document.getElementById('ownerHue-out'), fmt: (v) => `${v}°` },
 };
 
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
@@ -95,6 +96,7 @@ async function loadSettings() {
   fields.inactivityMinutes.el.value = s.inactivityMinutes;
   fields.nameFontSize.el.value = s.nameTag.fontSize;
   fields.corridorPosition.el.value = s.corridorPosition;
+  fields.ownerHue.el.value = s.ownerHue;
   movementPatternEl.value = s.movementPattern;
   mirrorOnDirectionEl.checked = s.mirrorOnDirection;
   transitionEffectEl.checked = s.transitionEffect;
@@ -132,6 +134,7 @@ form.addEventListener('submit', async (e) => {
     },
     movementPattern: movementPatternEl.value,
     corridorPosition: Number(fields.corridorPosition.el.value),
+    ownerHue: Number(fields.ownerHue.el.value),
     mirrorOnDirection: mirrorOnDirectionEl.checked,
     inactivityMinutes: Number(fields.inactivityMinutes.el.value),
     transitionEffect: transitionEffectEl.checked,

@@ -48,6 +48,7 @@
         <button type="button" class="nav-tab-btn active" data-tab="movement">Mouvement</button>
         <button type="button" class="nav-tab-btn" data-tab="presence">Présence</button>
         <button type="button" class="nav-tab-btn" data-tab="nametag">Pseudo</button>
+        <button type="button" class="nav-tab-btn" data-tab="owner">Mon avatar</button>
         <button type="button" class="nav-tab-btn" data-tab="follow">Follow</button>
         <button type="button" class="nav-tab-btn" data-tab="subscribe">Sub</button>
         <button type="button" class="nav-tab-btn" data-tab="cheer">Cheer</button>
@@ -121,6 +122,16 @@
         <label>
           Couleur
           <input type="color" id="nameColor" />
+        </label>
+      </fieldset>
+
+      <fieldset data-nav-panel="owner" hidden>
+        <legend>Mon avatar</legend>
+        <p class="hint">Ton avatar (réservé, personnage "MissGysmo") est toujours affiché sur l'overlay, même sans écrire dans le chat. Tu peux régler sa teinte ici, indépendamment des avatars des viewers.</p>
+        <label>
+          Teinte
+          <input type="range" id="ownerHue" min="0" max="360" step="1" />
+          <output id="ownerHue-out"></output>
         </label>
       </fieldset>
 

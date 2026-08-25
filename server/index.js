@@ -85,10 +85,11 @@ function broadcast(message) {
 const testAvatars = new Map(); // login -> { species, hue }
 
 function buildState() {
-  const active = chatTracker.getActiveLogins();
+  const active = chatTracker.getActiveLogins().filter((login) => !isChannelOwner(login));
   const real = active.filter(isFollowerCached).map((login) => ({ login, skin: getSkin(login) }));
   const test = [...testAvatars.entries()].map(([login, skin]) => ({ login, skin }));
-  return { type: 'state', viewers: [...real, ...test] };
+  const owner = { login: CHANNEL, skin: getSkin(CHANNEL) };
+  return { type: 'state', viewers: [owner, ...real, ...test] };
 }
 
 function isChannelOwner(login) {
@@ -143,7 +144,7 @@ function isFollowerCached(login) {
 }
 
 function getSkin(login) {
-  if (isChannelOwner(login)) return { species: 'mon-avatar', hue: 0 };
+  if (isChannelOwner(login)) return { species: 'mon-avatar', hue: store.getSettings().ownerHue };
   return store.getAvatar(login) || defaultSkin(login);
 }
 
@@ -263,7 +264,7 @@ function sanitizeEventConfig(input, fallback) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerHue,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   const d = store.DEFAULT_SETTINGS;
@@ -295,6 +296,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
       cheer: sanitizeEventConfig(events?.cheer, d.events.cheer),
       raid: sanitizeEventConfig(events?.raid, d.events.raid),
     },
+    ownerHue: Number.isFinite(ownerHue) ? ((ownerHue % 360) + 360) % 360 : d.ownerHue,
     spriteFlip: Object.fromEntries(
       Object.keys(d.spriteFlip).map((id) => [id, typeof spriteFlip?.[id] === 'boolean' ? spriteFlip[id] : d.spriteFlip[id]])
     ),

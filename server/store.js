@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS = {
   inactivityMinutes: 10,
   transitionEffect: true,
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
+  ownerHue: 0,
   spriteFlip: {
     cat: true,
     'cosmic-cat': true,
