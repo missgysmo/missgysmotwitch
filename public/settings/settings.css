@@ -201,6 +201,31 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   color: #c9b3ff;
 }
 
+.test-avatar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.test-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+.test-avatar-row span { flex: 1; }
+.test-avatar-row button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #9147ff;
+  border-radius: 6px;
+  background: transparent;
+  color: #c9b3ff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.test-avatar-row button:hover { background: rgba(145, 71, 255, 0.15); }
+.test-avatar-row .test-avatar-hide { border-color: #3a3a45; color: #a9a9b8; }
+
 button {
   padding: 0.6rem;
   border: none;

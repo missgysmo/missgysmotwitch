@@ -177,6 +177,34 @@ document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
   });
 });
 
+async function loadTestAvatars() {
+  const res = await fetch('/api/species');
+  const list = await res.json();
+  const container = document.getElementById('test-avatar-list');
+  container.innerHTML = '';
+  list.forEach((s) => {
+    const row = document.createElement('div');
+    row.className = 'test-avatar-row';
+    row.innerHTML = `
+      <span>${s.label}</span>
+      <button type="button" class="test-avatar-show" data-species="${s.id}">Faire apparaître</button>
+      <button type="button" class="test-avatar-hide" data-species="${s.id}">Retirer</button>
+    `;
+    container.appendChild(row);
+  });
+  container.querySelectorAll('.test-avatar-show').forEach((btn) => {
+    btn.addEventListener('click', () => fetch(`/api/admin/test-avatar/${btn.dataset.species}`, { method: 'POST' }));
+  });
+  container.querySelectorAll('.test-avatar-hide').forEach((btn) => {
+    btn.addEventListener('click', () => fetch(`/api/admin/test-avatar/${btn.dataset.species}`, { method: 'DELETE' }));
+  });
+}
+loadTestAvatars();
+
+document.getElementById('clear-test-avatars').addEventListener('click', () => {
+  fetch('/api/admin/test-avatar', { method: 'DELETE' });
+});
+
 document.querySelectorAll('.test-event-btn').forEach((btn) => {
   btn.addEventListener('click', async () => {
     btn.disabled = true;

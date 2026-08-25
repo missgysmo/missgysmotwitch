@@ -52,6 +52,7 @@
         <button type="button" class="nav-tab-btn" data-tab="subscribe">Sub</button>
         <button type="button" class="nav-tab-btn" data-tab="cheer">Cheer</button>
         <button type="button" class="nav-tab-btn" data-tab="raid">Raid</button>
+        <button type="button" class="nav-tab-btn" data-tab="test">Test avatars</button>
       </nav>
       </div>
 
@@ -230,6 +231,13 @@
           <button type="button" class="test-event-btn" data-type="raid">Tester cette alerte</button>
         </div>
         <p class="hint">Le test affiche le popup sur <code>/overlay/</code> (ouvre-le dans un autre onglet ou regarde OBS). Un avatar au hasard parmi ceux affichés fera la réaction choisie — s'il n'y a aucun avatar actif, seul le popup de texte s'affiche.</p>
+      </fieldset>
+
+      <fieldset data-nav-panel="test" hidden>
+        <legend>Test des personnages</legend>
+        <p class="hint">Fait apparaître un personnage sur <code>/overlay/</code> pour vérifier son sens de déplacement, sans attendre un vrai viewer. Ouvre l'overlay dans un autre onglet ou regarde OBS.</p>
+        <div id="test-avatar-list" class="test-avatar-list"></div>
+        <button type="button" id="clear-test-avatars">Retirer tous les avatars de test</button>
       </fieldset>
 
       <button type="submit">Enregistrer</button>

@@ -81,12 +81,14 @@ function broadcast(message) {
   }
 }
 
+// Avatars de test (admin uniquement) : pour prévisualiser un personnage sur l'overlay sans vrai viewer.
+const testAvatars = new Map(); // login -> { species, hue }
+
 function buildState() {
   const active = chatTracker.getActiveLogins();
-  return {
-    type: 'state',
-    viewers: active.filter(isFollowerCached).map((login) => ({ login, skin: getSkin(login) })),
-  };
+  const real = active.filter(isFollowerCached).map((login) => ({ login, skin: getSkin(login) }));
+  const test = [...testAvatars.entries()].map(([login, skin]) => ({ login, skin }));
+  return { type: 'state', viewers: [...real, ...test] };
 }
 
 function isChannelOwner(login) {
@@ -213,6 +215,27 @@ app.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
   const test = TEST_EVENTS[req.params.type];
   if (!test) return res.status(400).json({ error: 'type invalide' });
   broadcast({ type: 'event', eventType: test.type, event: test.event });
+  res.json({ ok: true });
+});
+
+// --- Test des avatars (fait apparaître un personnage sur l'overlay sans vrai viewer) ---
+app.post('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
+  const match = species.getById(req.params.speciesId);
+  if (!match) return res.status(400).json({ error: 'species invalide' });
+  testAvatars.set(`test-${req.params.speciesId}`, { species: req.params.speciesId, hue: 0 });
+  broadcast(buildState());
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
+  testAvatars.delete(`test-${req.params.speciesId}`);
+  broadcast(buildState());
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/test-avatar', requireAdmin, (req, res) => {
+  testAvatars.clear();
+  broadcast(buildState());
   res.json({ ok: true });
 });
 
