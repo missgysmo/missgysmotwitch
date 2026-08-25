@@ -12,10 +12,8 @@ const SPECIES_FILES = {
   unicorn: 'unicorn.png',
 };
 
-// Sprites qu'on ne retourne jamais (orientation fixe) : ni profil clair, ni sens de mirror fiable en pratique.
-const NOT_MIRRORABLE = new Set(['unicorn', 'girl', 'grunge-boy']);
+const NOT_MIRRORABLE = new Set();
 // Sprites dont le dessin d'origine regarde déjà vers la gauche (inverse la logique de mirror).
-// Seul le dino regarde vers la droite par défaut dans ce pack de sprites.
 const FACES_LEFT_BY_DEFAULT = new Set(['cat', 'cosmic-cat', 'cyber-unicorn', 'mon-avatar']);
 
 const avatars = new Map(); // login -> { el, moveTimer }
