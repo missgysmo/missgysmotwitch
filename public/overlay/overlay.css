@@ -60,7 +60,7 @@ body.hide-names .avatar-name {
 .avatar-wrap.event-shake { animation: avatarShake 0.35s ease-in-out 10; }
 .avatar-wrap.event-spin { animation: avatarSpin 0.9s linear 4; }
 .avatar-wrap.event-rain {
-  transition: top 0.9s cubic-bezier(.28,1.65,.55,1), left 0.9s ease, opacity var(--avatar-transition, 4s) ease;
+  transition: top 1.5s cubic-bezier(.25,1.4,.5,1), left 1.5s ease, opacity var(--avatar-transition, 4s) ease;
 }
 
 @keyframes avatarPulse {

@@ -208,10 +208,13 @@ function buildEventText(eventType, event, cfg) {
   return cfg.text.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
 }
 
-function makeItRain(entry, color) {
-  clearTimeout(entry.moveTimer);
+const RAIN_FALL_MS = 1500;
+const RAIN_PAUSE_MS = 500;
+const RAIN_REPEATS = 3;
+
+function rainDrop(entry, color, remaining) {
   const bounds = zoneBounds();
-  const x = parseFloat(entry.el.style.left) || bounds.minX;
+  const x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
   const landingY = bounds.maxY;
 
   entry.el.style.setProperty('--event-glow', color);
@@ -226,9 +229,18 @@ function makeItRain(entry, color) {
   entry.el.style.top = `${landingY}px`;
 
   entry.moveTimer = setTimeout(() => {
-    entry.el.classList.remove('event-rain');
-    wander(entry.login);
-  }, 1400);
+    if (remaining > 1) {
+      rainDrop(entry, color, remaining - 1);
+    } else {
+      entry.el.classList.remove('event-rain');
+      wander(entry.login);
+    }
+  }, RAIN_FALL_MS + RAIN_PAUSE_MS);
+}
+
+function makeItRain(entry, color) {
+  clearTimeout(entry.moveTimer);
+  rainDrop(entry, color, RAIN_REPEATS);
 }
 
 function showEvent(eventType, event) {
