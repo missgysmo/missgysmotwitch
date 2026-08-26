@@ -40,41 +40,61 @@ async function refreshAccessToken({ clientId, clientSecret, refreshToken }) {
   return res.json();
 }
 
-async function getUserId({ clientId, accessToken, login }) {
-  const res = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(login)}`, {
-    headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` },
-  });
+// Refait la requête avec un token rafraîchi si la première tentative échoue en 401
+// (token expiré — Twitch n'indique pas de date d'expiration exploitable côté client).
+async function withFreshToken({ clientId, clientSecret }, doFetch) {
+  const tokens = store.getTokens();
+  if (!tokens) throw new Error('Pas de token Twitch — passe par /auth pour autoriser l\'app.');
+  let res = await doFetch(tokens.access_token);
+  if (res.status === 401 && tokens.refresh_token) {
+    console.log('[twitchEvents] token expiré, rafraîchissement...');
+    const refreshed = await refreshAccessToken({ clientId, clientSecret, refreshToken: tokens.refresh_token });
+    store.setTokens(refreshed);
+    res = await doFetch(refreshed.access_token);
+  }
+  return res;
+}
+
+async function getUserId({ clientId, clientSecret, login }) {
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/users?login=${encodeURIComponent(login)}`,
+    { headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
   if (!res.ok) throw new Error(`getUserId failed: ${res.status} ${await res.text()}`);
   const body = await res.json();
   if (!body.data || !body.data.length) throw new Error(`Utilisateur Twitch introuvable: ${login}`);
   return body.data[0].id;
 }
 
-async function checkFollower({ clientId, accessToken, broadcasterId, userId }) {
+async function checkFollower({ clientId, clientSecret, broadcasterId, userId }) {
   const params = new URLSearchParams({ broadcaster_id: broadcasterId, user_id: userId });
-  const res = await fetch(`https://api.twitch.tv/helix/channels/followers?${params.toString()}`, {
-    headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` },
-  });
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/channels/followers?${params.toString()}`,
+    { headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
   if (!res.ok) throw new Error(`checkFollower failed: ${res.status} ${await res.text()}`);
   const body = await res.json();
   return (body.total || 0) > 0;
 }
 
-async function subscribe({ clientId, accessToken, type, version, condition, sessionId }) {
-  const res = await fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
-    method: 'POST',
-    headers: {
-      'Client-Id': clientId,
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+async function subscribe({ clientId, clientSecret, type, version, condition, sessionId }) {
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    'https://api.twitch.tv/helix/eventsub/subscriptions',
+    {
+      method: 'POST',
+      headers: {
+        'Client-Id': clientId,
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type,
+        version,
+        condition,
+        transport: { method: 'websocket', session_id: sessionId },
+      }),
     },
-    body: JSON.stringify({
-      type,
-      version,
-      condition,
-      transport: { method: 'websocket', session_id: sessionId },
-    }),
-  });
+  ));
   if (!res.ok) {
     console.error(`[twitchEvents] échec abonnement ${type}: ${res.status} ${await res.text()}`);
   }
@@ -83,13 +103,7 @@ async function subscribe({ clientId, accessToken, type, version, condition, sess
 // Connecte le websocket EventSub et s'abonne aux events follow/sub/cheer/raid.
 // onEvent(type, event) est appelé à chaque notification.
 async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent }) {
-  let tokens = store.getTokens();
-  if (!tokens) throw new Error('Pas de token Twitch — passe par /auth pour autoriser l\'app.');
-
-  async function ensureFreshToken() {
-    // Twitch ne donne pas la date d'expiration exacte ici, on rafraîchit sur échec 401 en pratique.
-    return tokens.access_token;
-  }
+  if (!store.getTokens()) throw new Error('Pas de token Twitch — passe par /auth pour autoriser l\'app.');
 
   function connectSocket() {
     const ws = new WebSocket(EVENTSUB_WS_URL);
@@ -101,14 +115,13 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent 
       if (type === 'session_welcome') {
         const sessionId = msg.payload.session.id;
         console.log('[twitchEvents] EventSub connecté, abonnement aux events...');
-        const accessToken = await ensureFreshToken();
         const condition = { broadcaster_user_id: broadcasterId };
         const moderatorCondition = { broadcaster_user_id: broadcasterId, moderator_user_id: broadcasterId };
 
-        await subscribe({ clientId, accessToken, type: 'channel.follow', version: '2', condition: moderatorCondition, sessionId });
-        await subscribe({ clientId, accessToken, type: 'channel.subscribe', version: '1', condition, sessionId });
-        await subscribe({ clientId, accessToken, type: 'channel.cheer', version: '1', condition, sessionId });
-        await subscribe({ clientId, accessToken, type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: broadcasterId }, sessionId });
+        await subscribe({ clientId, clientSecret, type: 'channel.follow', version: '2', condition: moderatorCondition, sessionId });
+        await subscribe({ clientId, clientSecret, type: 'channel.subscribe', version: '1', condition, sessionId });
+        await subscribe({ clientId, clientSecret, type: 'channel.cheer', version: '1', condition, sessionId });
+        await subscribe({ clientId, clientSecret, type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: broadcasterId }, sessionId });
       }
 
       if (type === 'notification') {

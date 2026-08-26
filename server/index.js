@@ -104,9 +104,8 @@ const FOLLOWER_TTL_MS = 5 * 60 * 1000;
 
 async function ensureBroadcasterId() {
   if (broadcasterId) return broadcasterId;
-  const tokens = store.getTokens();
-  if (!tokens) return null;
-  broadcasterId = await twitchEvents.getUserId({ clientId: CLIENT_ID, accessToken: tokens.access_token, login: CHANNEL });
+  if (!store.getTokens()) return null;
+  broadcasterId = await twitchEvents.getUserId({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login: CHANNEL });
   return broadcasterId;
 }
 
@@ -114,11 +113,10 @@ async function checkAndCacheFollower(login) {
   if (isChannelOwner(login)) return true;
   const key = login.toLowerCase();
   try {
-    const tokens = store.getTokens();
     const bId = await ensureBroadcasterId();
-    if (!tokens || !bId) throw new Error('app pas encore autorisée via /auth');
-    const userId = await twitchEvents.getUserId({ clientId: CLIENT_ID, accessToken: tokens.access_token, login });
-    const follows = await twitchEvents.checkFollower({ clientId: CLIENT_ID, accessToken: tokens.access_token, broadcasterId: bId, userId });
+    if (!store.getTokens() || !bId) throw new Error('app pas encore autorisée via /auth');
+    const userId = await twitchEvents.getUserId({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login });
+    const follows = await twitchEvents.checkFollower({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, broadcasterId: bId, userId });
     followerCache.set(key, { follows, checkedAt: Date.now() });
     return follows;
   } catch (err) {
@@ -338,7 +336,7 @@ async function startEventSub() {
     return;
   }
   try {
-    const broadcasterId = await twitchEvents.getUserId({ clientId: CLIENT_ID, accessToken: tokens.access_token, login: CHANNEL });
+    const broadcasterId = await twitchEvents.getUserId({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login: CHANNEL });
     await twitchEvents.connectEventSub({
       clientId: CLIENT_ID,
       clientSecret: CLIENT_SECRET,
