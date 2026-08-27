@@ -10,6 +10,19 @@ const SPECIES_FILES = {
   girl: 'girl.png',
   'grunge-boy': 'grunge-boy.png',
   unicorn: 'unicorn.png',
+  alien: 'alien.png',
+  boy: 'boy.png',
+  'cyber-triceratops': 'cyber-triceratops.png',
+  'cyber-raptor': 'cyber-raptor.png',
+  'cyber-puppy': 'cyber-puppy.png',
+  'cyber-wolf': 'cyber-wolf.png',
+  'gothic-girl': 'gothic-girl.png',
+  guerriere: 'guerriere.png',
+  ninja: 'ninja.png',
+  panda: 'panda.png',
+  pizza: 'pizza.png',
+  'skate-boy': 'skate-boy.png',
+  witch: 'witch.png',
 };
 
 const avatars = new Map(); // login -> { el, moveTimer }
@@ -30,6 +43,9 @@ let settings = {
   spriteFlip: {
     cat: true, 'cosmic-cat': true, 'cyber-unicorn': true, dino: false,
     girl: false, 'grunge-boy': false, unicorn: false, 'mon-avatar': true,
+    alien: false, boy: false, 'cyber-triceratops': true, 'cyber-raptor': false,
+    'cyber-puppy': false, 'cyber-wolf': false, 'gothic-girl': false, guerriere: false,
+    ninja: false, panda: false, pizza: false, 'skate-boy': false, witch: false,
   },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },

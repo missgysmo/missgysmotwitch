@@ -9,6 +9,19 @@ const SPECIES = [
   { id: 'girl', label: 'Fille', file: 'girl.png', mirrorable: false },
   { id: 'grunge-boy', label: 'Grunge', file: 'grunge-boy.png', mirrorable: false },
   { id: 'unicorn', label: 'Licorne', file: 'unicorn.png' },
+  { id: 'alien', label: 'Alien', file: 'alien.png' },
+  { id: 'boy', label: 'Garçon casque', file: 'boy.png' },
+  { id: 'cyber-triceratops', label: 'Cyber tricératops', file: 'cyber-triceratops.png' },
+  { id: 'cyber-raptor', label: 'Cyber raptor', file: 'cyber-raptor.png' },
+  { id: 'cyber-puppy', label: 'Chiot cyber', file: 'cyber-puppy.png' },
+  { id: 'cyber-wolf', label: 'Loup cyber', file: 'cyber-wolf.png' },
+  { id: 'gothic-girl', label: 'Fille gothique', file: 'gothic-girl.png' },
+  { id: 'guerriere', label: 'Guerrière', file: 'guerriere.png' },
+  { id: 'ninja', label: 'Ninja', file: 'ninja.png' },
+  { id: 'panda', label: 'Panda', file: 'panda.png' },
+  { id: 'pizza', label: 'Pizza', file: 'pizza.png' },
+  { id: 'skate-boy', label: 'Skateur', file: 'skate-boy.png' },
+  { id: 'witch', label: 'Sorcière', file: 'witch.png' },
 ];
 
 function getSelectable() {
