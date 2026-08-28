@@ -393,16 +393,22 @@ function renderActivity(recent) {
 
 function renderPeople(people) {
   const mode = settings.followList.mode;
-  let list = [];
-  if (mode === 'followers') list = people.followers;
-  else if (mode === 'subs') list = people.subs;
-  else {
-    list = [
-      ...people.followers.map((p) => ({ ...p, tag: '💜' })),
-      ...people.subs.map((p) => ({ ...p, tag: '⭐' })),
-    ].sort((a, b) => b.since - a.since);
+  const nameItems = (list, tag) => list.map((p) => `<span class="follow-list-item">${tag} ${escapeHtml(p.displayName)}</span>`);
+
+  let items;
+  if (mode === 'followers') {
+    items = nameItems(people.followers, '💜');
+  } else if (mode === 'subs') {
+    items = nameItems(people.subs, '⭐');
+  } else {
+    // Groupé par section (Followers puis Subs) plutôt que mélangé, pour que ce soit lisible en défilant.
+    items = [
+      `<span class="follow-list-header">Followers</span>`,
+      ...nameItems(people.followers, '💜'),
+      `<span class="follow-list-header">Subs</span>`,
+      ...nameItems(people.subs, '⭐'),
+    ];
   }
-  const items = list.map((p) => `<span class="follow-list-item">${p.tag || ''} ${escapeHtml(p.displayName)}</span>`);
   followListTrackEl.innerHTML = items.join('') + items.join('');
 }
 
