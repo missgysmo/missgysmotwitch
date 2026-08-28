@@ -6,7 +6,7 @@ body {
   margin: 0;
   padding: 2rem 1rem;
 }
-main { max-width: 640px; margin: 0 auto; }
+main { max-width: 900px; margin: 0 auto; }
 h1 { font-size: 1.4rem; margin: 0 0 0.4rem; }
 p { color: #a9a9b8; font-size: 0.9rem; }
 .hint { font-size: 0.8rem; }
@@ -79,18 +79,83 @@ button:hover { background: #7d2ff0; }
   font-size: 0.85rem;
 }
 
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.zoom-controls button {
+  padding: 0.3rem 0.7rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+#zoom-level {
+  font-size: 0.8rem;
+  color: #a9a9b8;
+  min-width: 3.5em;
+  text-align: center;
+}
+
+.template-picker, .template-opacity {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  color: #a9a9b8;
+}
+#template-input {
+  font-size: 0.8rem;
+  color: #a9a9b8;
+  max-width: 160px;
+}
+#template-opacity { width: 100px; }
+
+#template-clear {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px solid #3a3a45;
+  color: #a9a9b8;
+}
+#template-clear:hover { background: rgba(255,255,255,0.05); color: #f1f1f5; }
+
 .canvas-wrap {
   background: #0c0c11;
   border: 1px solid #3a3a45;
   border-top: none;
   padding: 0.5rem;
   overflow: auto;
+  max-height: 70vh;
 }
+
+.canvas-stage {
+  position: relative;
+  margin: 0 auto;
+  background: #0c0c11;
+}
+
+#template-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 #canvas {
+  position: relative;
   display: block;
   image-rendering: pixelated;
   width: 100%;
-  height: auto;
+  height: 100%;
   cursor: crosshair;
-  background: #0c0c11;
+  background: transparent;
+}
+
+#grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px);
 }

@@ -25,8 +25,30 @@
         <div id="palette"></div>
         <select id="sticker-select"></select>
       </div>
+
+      <div class="toolbar">
+        <div class="zoom-controls">
+          <button type="button" id="zoom-out">−</button>
+          <span id="zoom-level">100%</span>
+          <button type="button" id="zoom-in">+</button>
+        </div>
+        <label class="template-picker">
+          Modèle
+          <input type="file" id="template-input" accept="image/*" />
+        </label>
+        <label class="template-opacity" id="template-opacity-wrap" hidden>
+          Opacité
+          <input type="range" id="template-opacity" min="0" max="100" value="40" />
+        </label>
+        <button type="button" id="template-clear" hidden>Retirer le modèle</button>
+      </div>
+
       <div class="canvas-wrap">
-        <canvas id="canvas"></canvas>
+        <div class="canvas-stage" id="canvas-stage">
+          <img id="template-img" hidden />
+          <canvas id="canvas"></canvas>
+          <div id="grid-overlay"></div>
+        </div>
       </div>
       <p id="cooldown-info" class="hint"></p>
     </div>

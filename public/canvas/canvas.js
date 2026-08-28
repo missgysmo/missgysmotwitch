@@ -9,6 +9,16 @@ const stickerSelect = document.getElementById('sticker-select');
 const cooldownInfoEl = document.getElementById('cooldown-info');
 const canvasEl = document.getElementById('canvas');
 const ctx = canvasEl.getContext('2d');
+const canvasStage = document.getElementById('canvas-stage');
+const gridOverlay = document.getElementById('grid-overlay');
+const zoomInBtn = document.getElementById('zoom-in');
+const zoomOutBtn = document.getElementById('zoom-out');
+const zoomLevelEl = document.getElementById('zoom-level');
+const templateInput = document.getElementById('template-input');
+const templateImg = document.getElementById('template-img');
+const templateOpacityWrap = document.getElementById('template-opacity-wrap');
+const templateOpacity = document.getElementById('template-opacity');
+const templateClearBtn = document.getElementById('template-clear');
 
 const COLORS = [
   ['#ff4757', 'Rouge'], ['#3742fa', 'Bleu'], ['#2ed573', 'Vert'], ['#ffd633', 'Jaune'],
@@ -83,9 +93,56 @@ function drawCell(x, y, cell) {
   }
 }
 
+let zoomLevel = 1;
+
+function applyZoom() {
+  const width = state.cols * CELL_PX * zoomLevel;
+  const height = state.rows * CELL_PX * zoomLevel;
+  canvasStage.style.width = `${width}px`;
+  canvasStage.style.height = `${height}px`;
+  gridOverlay.style.backgroundSize = `${CELL_PX * zoomLevel}px ${CELL_PX * zoomLevel}px`;
+  zoomLevelEl.textContent = `${Math.round(zoomLevel * 100)}%`;
+}
+
+zoomInBtn.addEventListener('click', () => {
+  zoomLevel = Math.min(6, zoomLevel + 0.25);
+  applyZoom();
+});
+zoomOutBtn.addEventListener('click', () => {
+  zoomLevel = Math.max(0.25, zoomLevel - 0.25);
+  applyZoom();
+});
+
+templateInput.addEventListener('change', () => {
+  const file = templateInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    templateImg.src = reader.result;
+    templateImg.hidden = false;
+    templateOpacityWrap.hidden = false;
+    templateClearBtn.hidden = false;
+    templateImg.style.opacity = templateOpacity.value / 100;
+  };
+  reader.readAsDataURL(file);
+});
+
+templateOpacity.addEventListener('input', () => {
+  templateImg.style.opacity = templateOpacity.value / 100;
+});
+
+templateClearBtn.addEventListener('click', () => {
+  templateImg.hidden = true;
+  templateImg.src = '';
+  templateOpacityWrap.hidden = true;
+  templateClearBtn.hidden = true;
+  templateInput.value = '';
+});
+
 function resizeCanvas() {
   canvasEl.width = state.cols * CELL_PX;
   canvasEl.height = state.rows * CELL_PX;
+  applyZoom();
 }
 
 function redraw() {
