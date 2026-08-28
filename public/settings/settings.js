@@ -425,8 +425,9 @@ function initObsLinkGenerator() {
 
   function updateUrl() {
     const checked = [...checksEl.querySelectorAll('.obslinks-module-check:checked')].map((c) => c.value);
-    const base = `${location.origin}/overlay/`;
-    urlEl.textContent = checked.length ? `${base}?modules=${checked.join(',')}` : base;
+    // Le paramètre "modules" est toujours présent : vide (?modules=) signifie "aucun module actif",
+    // absent voudrait dire "tout activé" (compatibilité avec les anciens liens sans ce paramètre).
+    urlEl.textContent = `${location.origin}/overlay/?modules=${checked.join(',')}`;
   }
 
   checksEl.addEventListener('change', updateUrl);

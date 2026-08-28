@@ -16,9 +16,13 @@ const tamagotchiBarEl = document.getElementById('tamagotchi-bar-fill');
 const raidCardEl = document.getElementById('raid-card');
 
 // Permet d'ajouter chaque module comme source OBS indépendante :
-// /overlay/?modules=avatars,chat,canvas,timers (par défaut, sans le paramètre : tous activés)
-const MODULE_PARAM = new URLSearchParams(location.search).get('modules');
-const ENABLED_MODULES = MODULE_PARAM ? new Set(MODULE_PARAM.split(',').map((m) => m.trim())) : null;
+// /overlay/?modules=avatars,chat,canvas,timers — sans le paramètre du tout : tous activés
+// (compatibilité avec les anciens liens). Avec le paramètre présent mais vide (?modules=) :
+// aucun module activé, ce qui permet au générateur du dashboard de représenter "rien coché".
+const obsUrlParams = new URLSearchParams(location.search);
+const ENABLED_MODULES = obsUrlParams.has('modules')
+  ? new Set((obsUrlParams.get('modules') || '').split(',').map((m) => m.trim()).filter(Boolean))
+  : null;
 function moduleEnabled(name) {
   return !ENABLED_MODULES || ENABLED_MODULES.has(name);
 }
