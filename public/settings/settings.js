@@ -129,6 +129,7 @@ async function loadTamagotchiSpeciesOptions() {
 
 const TAMAGOTCHI_REACTION_OPTIONS = [
   ['none', 'Aucune'],
+  ['awaken', '✨ Se dresse, yeux brillants + feuilles'],
   ['pulse', 'Sursaut'],
   ['jump', 'Saut'],
   ['shake', 'Tremble'],

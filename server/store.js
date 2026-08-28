@@ -126,12 +126,12 @@ const DEFAULT_SETTINGS = {
     boostRaid: 20,
     position: { x: 90, y: 85 },
     // réaction (animation) jouée sur la mascotte pour chaque type d'alerte
-    eventReactions: { follow: 'jump', subscribe: 'spin', cheer: 'shake', raid: 'bounce' },
+    eventReactions: { follow: 'awaken', subscribe: 'awaken', cheer: 'awaken', raid: 'awaken' },
     // actions déclenchables par les followers via une commande de chat
     chatActions: {
-      pet: { enabled: true, command: '!caresse', boost: 4, cooldownSeconds: 20, reaction: 'pulse' },
-      feed: { enabled: true, command: '!nourrir', boost: 8, cooldownSeconds: 60, reaction: 'jump' },
-      play: { enabled: true, command: '!jouer', boost: 6, cooldownSeconds: 30, reaction: 'bounce' },
+      pet: { enabled: true, command: '!caresse', boost: 4, cooldownSeconds: 20, reaction: 'awaken' },
+      feed: { enabled: true, command: '!nourrir', boost: 8, cooldownSeconds: 60, reaction: 'awaken' },
+      play: { enabled: true, command: '!jouer', boost: 6, cooldownSeconds: 30, reaction: 'awaken' },
     },
   },
   events: {

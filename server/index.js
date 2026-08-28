@@ -754,7 +754,7 @@ function sanitizeRaidCardConfig(input, fallback) {
   };
 }
 
-const TAMAGOTCHI_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'bounce'];
+const TAMAGOTCHI_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'bounce', 'awaken'];
 
 function sanitizeTamagotchiChatAction(input, fallback) {
   return {

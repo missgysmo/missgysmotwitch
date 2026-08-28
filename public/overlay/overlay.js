@@ -419,8 +419,25 @@ function renderTamagotchiMood(mood) {
   tamagotchiEl.classList.toggle('mood-sad', mood < 35);
 }
 
-const TAMAGOTCHI_REACTION_CLASSES = ['react-pulse', 'react-jump', 'react-shake', 'react-spin', 'react-bounce'];
+const TAMAGOTCHI_REACTION_CLASSES = ['react-pulse', 'react-jump', 'react-shake', 'react-spin', 'react-bounce', 'react-awaken'];
 let tamagotchiReactionTimer = null;
+function spawnTamagotchiLeaves() {
+  const LEAVES = ['🍃', '🍂', '🌿'];
+  for (let i = 0; i < 8; i++) {
+    const leaf = document.createElement('span');
+    leaf.className = 'tamagotchi-leaf';
+    leaf.textContent = LEAVES[Math.floor(Math.random() * LEAVES.length)];
+    const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.4;
+    const radius = 60 + Math.random() * 40;
+    leaf.style.setProperty('--leaf-x', `${Math.cos(angle) * radius}px`);
+    leaf.style.setProperty('--leaf-y', `${Math.sin(angle) * radius}px`);
+    leaf.style.setProperty('--leaf-r', `${Math.round(Math.random() * 360)}deg`);
+    leaf.style.animationDelay = `${Math.random() * 150}ms`;
+    tamagotchiEl.appendChild(leaf);
+    setTimeout(() => leaf.remove(), 1600);
+  }
+}
+
 function playTamagotchiReaction(reaction) {
   const cls = `react-${reaction}`;
   if (!TAMAGOTCHI_REACTION_CLASSES.includes(cls)) return;
@@ -428,8 +445,9 @@ function playTamagotchiReaction(reaction) {
   // force le reflow pour pouvoir relancer la même animation deux fois de suite
   void tamagotchiEl.offsetWidth;
   tamagotchiEl.classList.add(cls);
+  if (reaction === 'awaken') spawnTamagotchiLeaves();
   clearTimeout(tamagotchiReactionTimer);
-  tamagotchiReactionTimer = setTimeout(() => tamagotchiEl.classList.remove(cls), 1200);
+  tamagotchiReactionTimer = setTimeout(() => tamagotchiEl.classList.remove(cls), 1400);
 }
 
 let raidCardHideTimer = null;
