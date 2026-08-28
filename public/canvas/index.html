@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Graffiti collectif</title>
+  <link rel="stylesheet" href="canvas.css" />
+</head>
+<body>
+  <main>
+    <h1>Graffiti collectif</h1>
+    <p>Compose avec les autres followers sur le canvas affiché en direct sur le stream. Réservé aux followers de la chaîne.</p>
+
+    <form id="login-form">
+      <label>
+        Pseudo Twitch
+        <input type="text" id="login" placeholder="ton_pseudo" required autocomplete="off" />
+      </label>
+      <button type="submit">Vérifier</button>
+      <p id="status"></p>
+    </form>
+
+    <div id="paint-area" hidden>
+      <div class="toolbar">
+        <div id="palette"></div>
+        <select id="sticker-select"></select>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="canvas"></canvas>
+      </div>
+      <p id="cooldown-info" class="hint"></p>
+    </div>
+  </main>
+
+  <script src="canvas.js"></script>
+</body>
+</html>

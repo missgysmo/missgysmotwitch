@@ -227,54 +227,13 @@ function resolveGraffitiColor(arg) {
   return HEX_COLOR.test(hex) ? hex : null;
 }
 
-// login -> timestamp du dernier !pixel/!sticker placé (anti-spam, tout le monde peut participer)
+// login (lowercase) -> timestamp du dernier pixel/sticker placé
 const graffitiCooldowns = new Map();
-
-function handleGraffitiCommand(login, message) {
-  const settings = store.getSettings();
-  if (!settings.graffiti.enabled) return;
-
-  const pixelMatch = message.match(/^!pixel\s+(\S+)\s+(\d+)\s+(\d+)/i);
-  const stickerMatch = !pixelMatch && message.match(/^!sticker\s+(\S+)\s+(\d+)\s+(\d+)/i);
-  if (!pixelMatch && !stickerMatch) return;
-
-  const now = Date.now();
-  const last = graffitiCooldowns.get(login) || 0;
-  if (now - last < settings.graffiti.cooldownSeconds * 1000) return;
-
-  const { cols, rows } = settings.graffiti;
-
-  if (pixelMatch) {
-    const [, colorArg, xStr, yStr] = pixelMatch;
-    const x = Number(xStr);
-    const y = Number(yStr);
-    if (x < 0 || x >= cols || y < 0 || y >= rows) return;
-    const color = resolveGraffitiColor(colorArg);
-    if (!color) return;
-    const cell = { type: 'pixel', color };
-    store.setCanvasCell(x, y, cell);
-    broadcast({ type: 'canvas-update', x, y, cell });
-    graffitiCooldowns.set(login, now);
-    return;
-  }
-
-  const [, speciesId, xStr, yStr] = stickerMatch;
-  const x = Number(xStr);
-  const y = Number(yStr);
-  if (x < 0 || x >= cols || y < 0 || y >= rows) return;
-  const match = species.getById(speciesId.toLowerCase());
-  if (!match || match.reserved) return;
-  const cell = { type: 'sticker', species: match.id };
-  store.setCanvasCell(x, y, cell);
-  broadcast({ type: 'canvas-update', x, y, cell });
-  graffitiCooldowns.set(login, now);
-}
 
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(buildState()),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
   onMessage: (login, message) => {
-    handleGraffitiCommand(login, message);
     // seuls les followers (ou le streamer) ont un avatar affiché, inutile de diffuser sinon
     const cached = followerCache.get(login);
     if (!isChannelOwner(login) && !cached?.follows) return;
@@ -353,6 +312,62 @@ app.post('/api/avatar/:login', async (req, res) => {
   const skin = store.setAvatar(login, { species: speciesId, hue: hueValue });
   broadcast(buildState());
   res.json(skin);
+});
+
+// --- API graffiti collectif (page /canvas/, réservée aux followers comme les avatars) ---
+app.get('/api/canvas', (req, res) => {
+  const settings = store.getSettings();
+  const canvas = store.getCanvas();
+  res.json({ ...canvas, cooldownSeconds: settings.graffiti.cooldownSeconds, enabled: settings.graffiti.enabled });
+});
+
+app.get('/api/follow-status/:login', async (req, res) => {
+  const login = req.params.login;
+  const follows = isChannelOwner(login) ? true : await checkAndCacheFollower(login);
+  res.json({ follows });
+});
+
+app.post('/api/canvas/place', async (req, res) => {
+  const settings = store.getSettings();
+  if (!settings.graffiti.enabled) return res.status(403).json({ error: 'Le graffiti est désactivé pour le moment.' });
+
+  const login = (req.body.login || '').toLowerCase().trim();
+  if (!login) return res.status(400).json({ error: 'pseudo manquant' });
+
+  const follows = isChannelOwner(login) ? true : await checkAndCacheFollower(login);
+  if (!follows) return res.status(403).json({ error: 'Tu dois suivre la chaîne sur Twitch pour participer au graffiti.' });
+
+  const now = Date.now();
+  const last = graffitiCooldowns.get(login) || 0;
+  const cooldownMs = settings.graffiti.cooldownSeconds * 1000;
+  if (now - last < cooldownMs) {
+    return res.status(429).json({ error: 'Doucement !', retryInMs: cooldownMs - (now - last) });
+  }
+
+  const { cols, rows } = settings.graffiti;
+  const x = Number(req.body.x);
+  const y = Number(req.body.y);
+  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= cols || y < 0 || y >= rows) {
+    return res.status(400).json({ error: 'coordonnées invalides' });
+  }
+
+  let cell;
+  if (req.body.type === 'pixel') {
+    const color = resolveGraffitiColor(String(req.body.color || ''));
+    if (!color) return res.status(400).json({ error: 'couleur invalide' });
+    cell = { type: 'pixel', color };
+  } else if (req.body.type === 'sticker') {
+    const match = species.getById(String(req.body.species || '').toLowerCase());
+    if (!match || match.reserved) return res.status(400).json({ error: 'personnage invalide' });
+    cell = { type: 'sticker', species: match.id };
+  } else {
+    return res.status(400).json({ error: 'type invalide' });
+  }
+
+  store.setCanvasCell(x, y, cell);
+  broadcast({ type: 'canvas-update', x, y, cell });
+  graffitiCooldowns.set(login, now);
+  res.json({ ok: true, cooldownMs });
 });
 
 // --- API réglages overlay ---

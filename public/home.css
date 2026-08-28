@@ -20,7 +20,7 @@ body {
 }
 
 main {
-  max-width: 640px;
+  max-width: 820px;
   width: 100%;
   text-align: center;
 }
@@ -43,8 +43,12 @@ header h1 span { color: #ff5ecb; text-shadow: 0 0 12px rgba(255, 94, 203, 0.7); 
 
 .cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.25rem;
+}
+
+@media (max-width: 760px) {
+  .cards { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 520px) {
