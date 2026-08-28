@@ -70,6 +70,15 @@ function safePasswordEquals(candidate) {
   return crypto.timingSafeEqual(a, b);
 }
 
+// Railway insère plusieurs hops de proxy internes devant l'app (leur adresse change à chaque
+// requête), donc req.ip d'Express (même avec trust proxy) ne reflète pas le vrai client — on lit
+// directement le premier maillon de X-Forwarded-For, qui est toujours le client d'origine.
+function getClientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return xff.split(',')[0].trim();
+  return req.socket.remoteAddress;
+}
+
 // Petit limiteur de débit en mémoire (par IP), sans dépendance externe.
 // Nettoie lui-même ses entrées périodiques pour ne pas fuir de mémoire.
 function createRateLimiter({ windowMs, max, message }) {
@@ -85,12 +94,13 @@ function createRateLimiter({ windowMs, max, message }) {
 
   return (req, res, next) => {
     const now = Date.now();
-    const arr = (hits.get(req.ip) || []).filter((t) => now - t < windowMs);
+    const ip = getClientIp(req);
+    const arr = (hits.get(ip) || []).filter((t) => now - t < windowMs);
     if (arr.length >= max) {
       return res.status(429).json({ error: message || 'Trop de tentatives, réessaie plus tard.' });
     }
     arr.push(now);
-    hits.set(req.ip, arr);
+    hits.set(ip, arr);
     next();
   };
 }
@@ -99,14 +109,10 @@ const loginRateLimit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8, mes
 const publicApiRateLimit = createRateLimiter({ windowMs: 60 * 1000, max: 30, message: 'Trop de requêtes, ralentis un peu.' });
 
 const app = express();
-// Nécessaire derrière le proxy Railway pour que req.ip / req.secure reflètent le vrai client
-// (sinon le rate-limit ci-dessus verrait tout le monde derrière une seule IP).
+// Nécessaire pour que req.secure reflète le vrai protocole (HTTPS) derrière le proxy Railway,
+// sinon le cookie admin marqué "Secure" ne serait jamais envoyé par le navigateur en production.
 app.set('trust proxy', 1);
 app.use(express.json());
-
-app.get('/api/debug-ip', (req, res) => {
-  res.json({ ip: req.ip, ips: req.ips, secure: req.secure, proto: req.headers['x-forwarded-proto'], xff: req.headers['x-forwarded-for'] });
-});
 
 app.get(['/settings', '/settings/'], (req, res) => {
   const file = isAdmin(req) ? 'panel.html' : 'login.html';
