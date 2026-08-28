@@ -157,6 +157,54 @@ form {
   margin-bottom: 0.75rem;
 }
 
+.obslinks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.obslinks-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  background: #14141a;
+}
+
+.obslinks-row .obslinks-name {
+  flex: 0 0 170px;
+  font-weight: 600;
+  color: #f1f1f5;
+  font-size: 0.88rem;
+}
+
+.obslinks-row .obslinks-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #a9a9b8;
+}
+
+.obslinks-row button {
+  flex-shrink: 0;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #33333e;
+  border-radius: 6px;
+  background: #1c1c24;
+  color: #cfcfe0;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.obslinks-row button:hover { color: #f1f1f5; border-color: #45455a; }
+.obslinks-row.obslinks-featured { border-color: #9147ff55; background: #1d1728; }
+
 .health-status {
   display: flex;
   flex-wrap: wrap;

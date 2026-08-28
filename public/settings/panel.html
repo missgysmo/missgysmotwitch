@@ -48,6 +48,7 @@
           <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
           <button type="button" class="nav-tab-btn" data-tab="raidcard"><span class="nav-icon">🎴</span>Fiche raid</button>
           <button type="button" class="nav-tab-btn" data-tab="health"><span class="nav-icon">🩺</span>Santé du bot</button>
+          <button type="button" class="nav-tab-btn" data-tab="obslinks"><span class="nav-icon">🔗</span>Liens OBS</button>
         </div>
         <div class="nav-subtabs" data-cat-group="content" hidden>
           <button type="button" class="nav-tab-btn" data-tab="titles"><span class="nav-icon">💡</span>Titres &amp; idées</button>
@@ -399,6 +400,12 @@
         <div id="health-status" class="health-status"></div>
         <h3>Dernières erreurs</h3>
         <div id="health-errors" class="health-errors"></div>
+      </fieldset>
+
+      <fieldset data-nav-panel="obslinks" hidden>
+        <legend>Liens à ajouter dans OBS</legend>
+        <p class="hint">Une source navigateur par lien. Sépare les modules sur plusieurs scènes/sources si besoin (ex: le tchat sur une scène, les avatars sur une autre), ou utilise le lien complet pour tout avoir sur une seule source.</p>
+        <div id="obslinks-list" class="obslinks-list"></div>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>

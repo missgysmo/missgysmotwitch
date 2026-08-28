@@ -400,6 +400,43 @@ async function loadHealth() {
 
 document.getElementById('health-refresh-btn')?.addEventListener('click', loadHealth);
 
+const OBS_MODULES = [
+  { id: null, label: '🖥️ Overlay complet (tout)' },
+  { id: 'avatars', label: '🐾 Avatars des viewers' },
+  { id: 'chat', label: '💬 Chat sur l\'overlay' },
+  { id: 'canvas', label: '🎨 Graffiti collectif' },
+  { id: 'timers', label: '⏱️ Chronomètres' },
+  { id: 'activity', label: '📣 Activité récente' },
+  { id: 'people', label: '📜 Liste followers/subs' },
+  { id: 'tamagotchi', label: '🐾 Mascotte' },
+  { id: 'raidcard', label: '🎴 Fiche raid' },
+];
+
+function renderObsLinks() {
+  const base = `${location.origin}/overlay/`;
+  const rows = OBS_MODULES.map(({ id, label }) => {
+    const url = id ? `${base}?modules=${id}` : base;
+    return { label, url, featured: id === null };
+  });
+  const listEl = document.getElementById('obslinks-list');
+  if (!listEl) return;
+  listEl.innerHTML = rows.map((r, i) => `
+    <div class="obslinks-row${r.featured ? ' obslinks-featured' : ''}">
+      <span class="obslinks-name">${r.label}</span>
+      <span class="obslinks-url">${r.url}</span>
+      <button type="button" class="obslinks-copy-btn" data-index="${i}">Copier</button>
+    </div>
+  `).join('');
+  listEl.querySelectorAll('.obslinks-copy-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(rows[i].url);
+      btn.textContent = 'Copié !';
+      setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
+    });
+  });
+}
+renderObsLinks();
+
 let viewerNotesCache = {};
 let viewerNoteEditingLogin = null;
 
