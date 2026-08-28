@@ -202,6 +202,15 @@ app.get('/api/settings', requireAdmin, (req, res) => {
   res.json(store.getSettings());
 });
 
+// Liste complète des avatars connus (tous les viewers ayant déjà personnalisé, + le streamer)
+// utilisée pour les réactions "tout le monde apparaît" (ex: rebond de raid).
+function buildCast() {
+  const all = store.getAllAvatars();
+  const cast = Object.entries(all).map(([login, skin]) => ({ login, skin }));
+  cast.push({ login: CHANNEL, skin: getSkin(CHANNEL) });
+  return cast;
+}
+
 // --- Test des alertes (déclenche une fausse notification, sans passer par Twitch) ---
 const TEST_EVENTS = {
   follow: { type: 'channel.follow', event: { user_name: 'TestFollower', user_login: 'testfollower' } },
@@ -213,7 +222,7 @@ const TEST_EVENTS = {
 app.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
   const test = TEST_EVENTS[req.params.type];
   if (!test) return res.status(400).json({ error: 'type invalide' });
-  broadcast({ type: 'event', eventType: test.type, event: test.event });
+  broadcast({ type: 'event', eventType: test.type, event: test.event, cast: buildCast() });
   res.json({ ok: true });
 });
 
@@ -343,7 +352,7 @@ async function startEventSub() {
       broadcasterId,
       onEvent: (type, event) => {
         console.log(`[twitchEvents] event reçu: ${type}`);
-        broadcast({ type: 'event', eventType: type, event });
+        broadcast({ type: 'event', eventType: type, event, cast: buildCast() });
       },
     });
   } catch (err) {

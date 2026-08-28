@@ -289,30 +289,64 @@ function makeItRain(entry, color) {
   rainDrop(entry, color, RAIN_REPEATS);
 }
 
-const BOUNCE_STEP_MS = 450;
-const BOUNCE_DURATION_MS = 4500;
+const BOUNCE_FRAME_MS = 30;
+const BOUNCE_DURATION_MS = 5000;
 
-function bounceStep(entry, color, endAt) {
-  if (Date.now() >= endAt) {
+function bounceFrame(entry, state) {
+  if (Date.now() >= state.endAt) {
     entry.el.classList.remove('event-bounce');
-    wander(entry.login);
+    entry.el.style.transition = '';
+    if (entry.temporary) {
+      removeAvatarEl(entry);
+      avatars.delete(entry.login);
+    } else {
+      wander(entry.login);
+    }
     return;
   }
   const maxX = Math.max(0, window.innerWidth - settings.avatarSize);
   const maxY = Math.max(0, window.innerHeight - settings.avatarSize);
-  entry.el.style.left = `${Math.random() * maxX}px`;
-  entry.el.style.top = `${Math.random() * maxY}px`;
-  entry.moveTimer = setTimeout(() => bounceStep(entry, color, endAt), BOUNCE_STEP_MS);
+  state.x += state.vx;
+  state.y += state.vy;
+  if (state.x <= 0) { state.x = 0; state.vx = Math.abs(state.vx); }
+  else if (state.x >= maxX) { state.x = maxX; state.vx = -Math.abs(state.vx); }
+  if (state.y <= 0) { state.y = 0; state.vy = Math.abs(state.vy); }
+  else if (state.y >= maxY) { state.y = maxY; state.vy = -Math.abs(state.vy); }
+  entry.el.style.left = `${state.x}px`;
+  entry.el.style.top = `${state.y}px`;
+  entry.moveTimer = setTimeout(() => bounceFrame(entry, state), BOUNCE_FRAME_MS);
 }
 
 function makeItBounce(entry, color) {
   clearTimeout(entry.moveTimer);
   entry.el.style.setProperty('--event-glow', color);
   entry.el.classList.add('event-bounce');
-  bounceStep(entry, color, Date.now() + BOUNCE_DURATION_MS);
+  entry.el.style.transition = 'none';
+  const speed = 4 + Math.random() * 3; // px par frame
+  const angle = Math.random() * Math.PI * 2;
+  const state = {
+    x: parseFloat(entry.el.style.left) || 0,
+    y: parseFloat(entry.el.style.top) || 0,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    endAt: Date.now() + BOUNCE_DURATION_MS,
+  };
+  bounceFrame(entry, state);
 }
 
-function showEvent(eventType, event) {
+// Fait apparaître temporairement (le temps du rebond) tous les avatars connus mais absents du chat actif
+function ensureCastAvatars(cast) {
+  if (!cast) return;
+  for (const { login, skin } of cast) {
+    if (!avatars.has(login)) {
+      const entry = { el: null, moveTimer: null, login, temporary: true };
+      entry.el = createAvatarEl(login, skin, entry);
+      avatars.set(login, entry);
+    }
+  }
+}
+
+function showEvent(eventType, event, cast) {
   const key = EVENT_KEYS[eventType];
   const cfg = settings.events?.[key];
   if (!cfg || !cfg.enabled) return;
@@ -320,6 +354,7 @@ function showEvent(eventType, event) {
   if (cfg.reaction === 'rain') {
     for (const entry of avatars.values()) makeItRain(entry, cfg.color);
   } else if (cfg.reaction === 'bounce') {
+    ensureCastAvatars(cast);
     for (const entry of avatars.values()) makeItBounce(entry, cfg.color);
   } else if (cfg.reaction !== 'none') {
     const cls = `event-${cfg.reaction}`;
@@ -354,7 +389,7 @@ function connect() {
     const data = JSON.parse(msg.data);
     if (data.type === 'settings') applySettings(data.settings);
     if (data.type === 'state') syncState(data.viewers);
-    if (data.type === 'event') showEvent(data.eventType, data.event);
+    if (data.type === 'event') showEvent(data.eventType, data.event, data.cast);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);
