@@ -115,7 +115,7 @@ const DEFAULT_SETTINGS = {
   },
   tamagotchi: {
     enabled: false,
-    species: 'cat',
+    species: 'mascot',
     size: 96,
     showBar: true,
     decayPerMinute: 1,
@@ -125,6 +125,14 @@ const DEFAULT_SETTINGS = {
     boostCheer: 10,
     boostRaid: 20,
     position: { x: 90, y: 85 },
+    // réaction (animation) jouée sur la mascotte pour chaque type d'alerte
+    eventReactions: { follow: 'jump', subscribe: 'spin', cheer: 'shake', raid: 'bounce' },
+    // actions déclenchables par les followers via une commande de chat
+    chatActions: {
+      pet: { enabled: true, command: '!caresse', boost: 4, cooldownSeconds: 20, reaction: 'pulse' },
+      feed: { enabled: true, command: '!nourrir', boost: 8, cooldownSeconds: 60, reaction: 'jump' },
+      play: { enabled: true, command: '!jouer', boost: 6, cooldownSeconds: 30, reaction: 'bounce' },
+    },
   },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null },
@@ -292,6 +300,12 @@ function getSettings() {
       ...DEFAULT_SETTINGS.tamagotchi,
       ...(saved.tamagotchi || {}),
       position: { ...DEFAULT_SETTINGS.tamagotchi.position, ...(saved.tamagotchi?.position || {}) },
+      eventReactions: { ...DEFAULT_SETTINGS.tamagotchi.eventReactions, ...(saved.tamagotchi?.eventReactions || {}) },
+      chatActions: {
+        pet: { ...DEFAULT_SETTINGS.tamagotchi.chatActions.pet, ...(saved.tamagotchi?.chatActions?.pet || {}) },
+        feed: { ...DEFAULT_SETTINGS.tamagotchi.chatActions.feed, ...(saved.tamagotchi?.chatActions?.feed || {}) },
+        play: { ...DEFAULT_SETTINGS.tamagotchi.chatActions.play, ...(saved.tamagotchi?.chatActions?.play || {}) },
+      },
     },
     events: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),

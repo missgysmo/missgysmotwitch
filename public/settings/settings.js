@@ -122,7 +122,40 @@ const tamagotchiFields = {
 async function loadTamagotchiSpeciesOptions() {
   const res = await fetch('/api/species');
   const list = await res.json();
-  tamagotchiFields.species.innerHTML = list.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+  tamagotchiFields.species.innerHTML =
+    '<option value="mascot">🐾 Mascotte officielle</option>' +
+    list.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+}
+
+const TAMAGOTCHI_REACTION_OPTIONS = [
+  ['none', 'Aucune'],
+  ['pulse', 'Sursaut'],
+  ['jump', 'Saut'],
+  ['shake', 'Tremble'],
+  ['spin', 'Tourne sur lui-même'],
+  ['bounce', 'Rebondit'],
+];
+const reactionOptionsHtml = TAMAGOTCHI_REACTION_OPTIONS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+const EVENT_TYPES_FOR_TAMAGOTCHI = ['follow', 'subscribe', 'cheer', 'raid'];
+const tamagotchiEventReactionFields = {};
+for (const type of EVENT_TYPES_FOR_TAMAGOTCHI) {
+  const el = document.getElementById(`tamagotchi-reaction-${type}`);
+  if (el) el.innerHTML = reactionOptionsHtml;
+  tamagotchiEventReactionFields[type] = el;
+}
+
+const TAMAGOTCHI_ACTION_IDS = ['pet', 'feed', 'play'];
+const tamagotchiActionFields = {};
+for (const id of TAMAGOTCHI_ACTION_IDS) {
+  const reactionEl = document.getElementById(`tamagotchi-action-${id}-reaction`);
+  if (reactionEl) reactionEl.innerHTML = reactionOptionsHtml;
+  tamagotchiActionFields[id] = {
+    enabled: document.getElementById(`tamagotchi-action-${id}-enabled`),
+    command: document.getElementById(`tamagotchi-action-${id}-command`),
+    boost: document.getElementById(`tamagotchi-action-${id}-boost`),
+    cooldown: document.getElementById(`tamagotchi-action-${id}-cooldown`),
+    reaction: reactionEl,
+  };
 }
 
 document.getElementById('tamagotchi-feed-btn')?.addEventListener('click', async () => {
@@ -699,6 +732,17 @@ async function loadSettings() {
   tamagotchiFields.boostRaid.value = s.tamagotchi.boostRaid;
   tamagotchiFields.posX.value = s.tamagotchi.position.x;
   tamagotchiFields.posY.value = s.tamagotchi.position.y;
+  for (const type of EVENT_TYPES_FOR_TAMAGOTCHI) {
+    if (tamagotchiEventReactionFields[type]) tamagotchiEventReactionFields[type].value = s.tamagotchi.eventReactions[type];
+  }
+  for (const id of TAMAGOTCHI_ACTION_IDS) {
+    const a = s.tamagotchi.chatActions[id];
+    tamagotchiActionFields[id].enabled.checked = a.enabled;
+    tamagotchiActionFields[id].command.value = a.command;
+    tamagotchiActionFields[id].boost.value = a.boost;
+    tamagotchiActionFields[id].cooldown.value = a.cooldownSeconds;
+    tamagotchiActionFields[id].reaction.value = a.reaction;
+  }
   raidCardFields.enabled.checked = s.raidCard.enabled;
   raidCardFields.duration.value = s.raidCard.durationSeconds;
   raidCardFields.fontSize.value = s.raidCard.fontSize;
@@ -827,6 +871,14 @@ async function saveSettings() {
       boostCheer: Number(tamagotchiFields.boostCheer.value),
       boostRaid: Number(tamagotchiFields.boostRaid.value),
       position: { x: Number(tamagotchiFields.posX.value), y: Number(tamagotchiFields.posY.value) },
+      eventReactions: Object.fromEntries(EVENT_TYPES_FOR_TAMAGOTCHI.map((type) => [type, tamagotchiEventReactionFields[type]?.value])),
+      chatActions: Object.fromEntries(TAMAGOTCHI_ACTION_IDS.map((id) => [id, {
+        enabled: tamagotchiActionFields[id].enabled.checked,
+        command: tamagotchiActionFields[id].command.value,
+        boost: Number(tamagotchiActionFields[id].boost.value),
+        cooldownSeconds: Number(tamagotchiActionFields[id].cooldown.value),
+        reaction: tamagotchiActionFields[id].reaction.value,
+      }])),
     },
     raidCard: {
       enabled: raidCardFields.enabled.checked,

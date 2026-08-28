@@ -173,6 +173,13 @@ setInterval(() => {
   boostTamagotchi(-store.getSettings().tamagotchi.decayPerMinute);
 }, 60 * 1000);
 
+// clé "action:login" -> dernier déclenchement, pour le cooldown des actions de chat par viewer
+const tamagotchiActionCooldowns = new Map();
+function broadcastTamagotchiReaction(reaction) {
+  if (!reaction || reaction === 'none') return;
+  broadcast({ type: 'tamagotchi-reaction', reaction });
+}
+
 // includeTest: les avatars de test (onglet "Test avatars") ne doivent jamais apparaître
 // sur le stream réel — seulement dans l'aperçu sandbox (/overlay/?preview=1).
 function buildState(includeTest = false) {
@@ -294,7 +301,23 @@ const chatTracker = createChatTracker(CHANNEL, {
         text: message.slice(0, 300),
         id: meta.id,
       });
-      boostTamagotchi(store.getSettings().tamagotchi.boostChat);
+      const t = store.getSettings().tamagotchi;
+      boostTamagotchi(t.boostChat);
+      // Actions mascotte déclenchables par les followers via une commande de chat (!caresse, !nourrir, !jouer...)
+      const isFollower = isChannelOwner(login) || cached?.follows;
+      if (isFollower) {
+        const text = message.trim().toLowerCase();
+        for (const [actionId, action] of Object.entries(t.chatActions)) {
+          if (!action.enabled || text !== action.command) continue;
+          const cooldownKey = `${actionId}:${login}`;
+          const lastUse = tamagotchiActionCooldowns.get(cooldownKey) || 0;
+          if (Date.now() - lastUse < action.cooldownSeconds * 1000) break;
+          tamagotchiActionCooldowns.set(cooldownKey, Date.now());
+          boostTamagotchi(action.boost);
+          broadcastTamagotchiReaction(action.reaction);
+          break;
+        }
+      }
     } catch (err) {
       logError('chatTracker.onMessage', err);
     }
@@ -731,11 +754,23 @@ function sanitizeRaidCardConfig(input, fallback) {
   };
 }
 
+const TAMAGOTCHI_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'bounce'];
+
+function sanitizeTamagotchiChatAction(input, fallback) {
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    command: typeof input?.command === 'string' && /^!\S{1,20}$/.test(input.command.trim()) ? input.command.trim().toLowerCase() : fallback.command,
+    boost: Number.isFinite(input?.boost) ? Math.min(100, Math.max(0, input.boost)) : fallback.boost,
+    cooldownSeconds: Number.isFinite(input?.cooldownSeconds) ? Math.min(600, Math.max(0, input.cooldownSeconds)) : fallback.cooldownSeconds,
+    reaction: TAMAGOTCHI_REACTIONS.includes(input?.reaction) ? input.reaction : fallback.reaction,
+  };
+}
+
 function sanitizeTamagotchiConfig(input, fallback) {
   const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
   return {
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
-    species: species.getById(input?.species) ? input.species : fallback.species,
+    species: input?.species === 'mascot' || species.getById(input?.species) ? input.species : fallback.species,
     size: clamp(input?.size, 24, 300, fallback.size),
     showBar: typeof input?.showBar === 'boolean' ? input.showBar : fallback.showBar,
     decayPerMinute: clamp(input?.decayPerMinute, 0, 20, fallback.decayPerMinute),
@@ -747,6 +782,17 @@ function sanitizeTamagotchiConfig(input, fallback) {
     position: {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+    },
+    eventReactions: {
+      follow: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.follow) ? input.eventReactions.follow : fallback.eventReactions.follow,
+      subscribe: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.subscribe) ? input.eventReactions.subscribe : fallback.eventReactions.subscribe,
+      cheer: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.cheer) ? input.eventReactions.cheer : fallback.eventReactions.cheer,
+      raid: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.raid) ? input.eventReactions.raid : fallback.eventReactions.raid,
+    },
+    chatActions: {
+      pet: sanitizeTamagotchiChatAction(input?.chatActions?.pet, fallback.chatActions.pet),
+      feed: sanitizeTamagotchiChatAction(input?.chatActions?.feed, fallback.chatActions.feed),
+      play: sanitizeTamagotchiChatAction(input?.chatActions?.play, fallback.chatActions.play),
     },
   };
 }
@@ -875,6 +921,7 @@ function recordActivity(type, event) {
   const t = store.getSettings().tamagotchi;
   const boostByKind = { follow: t.boostFollow, subscribe: t.boostSub, cheer: t.boostCheer, raid: t.boostRaid };
   boostTamagotchi(boostByKind[kind] || 0);
+  broadcastTamagotchiReaction(t.eventReactions[kind]);
 
   if (kind === 'raid' && login) {
     twitchEvents.getChannelInfo({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login })

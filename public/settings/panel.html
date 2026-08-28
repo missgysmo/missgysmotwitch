@@ -337,6 +337,37 @@
         <label>Position horizontale <input type="range" id="tamagotchi-posx" min="0" max="100" step="1" /><output id="tamagotchi-posx-out"></output></label>
         <label>Position verticale <input type="range" id="tamagotchi-posy" min="0" max="100" step="1" /><output id="tamagotchi-posy-out"></output></label>
         <button type="button" id="tamagotchi-feed-btn">🍬 Nourrir la mascotte</button>
+
+        <h3>Réactions aux alertes</h3>
+        <p class="hint">Animation jouée par la mascotte pour chaque type d'alerte (en plus du gain d'humeur réglé au-dessus).</p>
+        <label>Follow <select id="tamagotchi-reaction-follow"></select></label>
+        <label>Sub <select id="tamagotchi-reaction-subscribe"></select></label>
+        <label>Cheer <select id="tamagotchi-reaction-cheer"></select></label>
+        <label>Raid <select id="tamagotchi-reaction-raid"></select></label>
+
+        <h3>Actions des followers via le chat</h3>
+        <p class="hint">Les followers peuvent taper ces commandes dans le chat pour interagir avec la mascotte (vérifié comme pour les avatars/le graffiti).</p>
+        <div class="tamagotchi-action-block">
+          <label><input type="checkbox" id="tamagotchi-action-pet-enabled" /> Caresser</label>
+          <label>Commande <input type="text" id="tamagotchi-action-pet-command" maxlength="21" placeholder="!caresse" /></label>
+          <label>Gain d'humeur <input type="number" id="tamagotchi-action-pet-boost" min="0" max="100" step="1" /></label>
+          <label>Cooldown par viewer (s) <input type="number" id="tamagotchi-action-pet-cooldown" min="0" max="600" step="1" /></label>
+          <label>Réaction <select id="tamagotchi-action-pet-reaction"></select></label>
+        </div>
+        <div class="tamagotchi-action-block">
+          <label><input type="checkbox" id="tamagotchi-action-feed-enabled" /> Nourrir</label>
+          <label>Commande <input type="text" id="tamagotchi-action-feed-command" maxlength="21" placeholder="!nourrir" /></label>
+          <label>Gain d'humeur <input type="number" id="tamagotchi-action-feed-boost" min="0" max="100" step="1" /></label>
+          <label>Cooldown par viewer (s) <input type="number" id="tamagotchi-action-feed-cooldown" min="0" max="600" step="1" /></label>
+          <label>Réaction <select id="tamagotchi-action-feed-reaction"></select></label>
+        </div>
+        <div class="tamagotchi-action-block">
+          <label><input type="checkbox" id="tamagotchi-action-play-enabled" /> Jouer</label>
+          <label>Commande <input type="text" id="tamagotchi-action-play-command" maxlength="21" placeholder="!jouer" /></label>
+          <label>Gain d'humeur <input type="number" id="tamagotchi-action-play-boost" min="0" max="100" step="1" /></label>
+          <label>Cooldown par viewer (s) <input type="number" id="tamagotchi-action-play-cooldown" min="0" max="600" step="1" /></label>
+          <label>Réaction <select id="tamagotchi-action-play-reaction"></select></label>
+        </div>
       </fieldset>
 
       <fieldset data-nav-panel="raidcard" hidden>

@@ -392,7 +392,7 @@ function applyTamagotchiLayout() {
   tamagotchiEl.style.left = `${t.position.x}%`;
   tamagotchiEl.style.top = `${t.position.y}%`;
   tamagotchiEl.style.width = `${t.size}px`;
-  tamagotchiImgEl.src = `/overlay/sprites/${SPECIES_FILES[t.species] || SPECIES_FILES.cat}`;
+  tamagotchiImgEl.src = t.species === 'mascot' ? '/overlay/sprites/mascot.png' : `/overlay/sprites/${SPECIES_FILES[t.species] || SPECIES_FILES.cat}`;
   tamagotchiEl.classList.toggle('hide-bar', !t.showBar);
 }
 
@@ -401,6 +401,19 @@ function renderTamagotchiMood(mood) {
   tamagotchiEl.classList.toggle('mood-happy', mood >= 70);
   tamagotchiEl.classList.toggle('mood-neutral', mood >= 35 && mood < 70);
   tamagotchiEl.classList.toggle('mood-sad', mood < 35);
+}
+
+const TAMAGOTCHI_REACTION_CLASSES = ['react-pulse', 'react-jump', 'react-shake', 'react-spin', 'react-bounce'];
+let tamagotchiReactionTimer = null;
+function playTamagotchiReaction(reaction) {
+  const cls = `react-${reaction}`;
+  if (!TAMAGOTCHI_REACTION_CLASSES.includes(cls)) return;
+  tamagotchiEl.classList.remove(...TAMAGOTCHI_REACTION_CLASSES);
+  // force le reflow pour pouvoir relancer la même animation deux fois de suite
+  void tamagotchiEl.offsetWidth;
+  tamagotchiEl.classList.add(cls);
+  clearTimeout(tamagotchiReactionTimer);
+  tamagotchiReactionTimer = setTimeout(() => tamagotchiEl.classList.remove(cls), 1200);
 }
 
 let raidCardHideTimer = null;
@@ -760,6 +773,7 @@ function connect() {
       renderPeople(data.people);
     }
     if (data.type === 'tamagotchi') renderTamagotchiMood(data.mood);
+    if (data.type === 'tamagotchi-reaction') playTamagotchiReaction(data.reaction);
     if (data.type === 'raid-card') showRaidCard(data);
   };
 

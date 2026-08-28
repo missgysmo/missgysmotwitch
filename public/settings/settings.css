@@ -130,6 +130,14 @@ form {
 
 .titles-list button:hover { color: #f1f1f5; border-color: #45455a; }
 
+.tamagotchi-action-block {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  background: #14141a;
+  margin-bottom: 0.75rem;
+}
+
 .health-status {
   display: flex;
   flex-wrap: wrap;
