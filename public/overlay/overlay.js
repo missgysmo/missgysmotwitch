@@ -290,7 +290,7 @@ function makeItRain(entry, color) {
 }
 
 const BOUNCE_FRAME_MS = 20;
-const BOUNCE_DURATION_MS = 10000;
+const BOUNCE_DURATION_MS = 16000;
 
 function bounceFrame(entry, state) {
   if (Date.now() >= state.endAt) {
@@ -322,7 +322,7 @@ function makeItBounce(entry, color) {
   entry.el.style.setProperty('--event-glow', color);
   entry.el.classList.add('event-bounce');
   entry.el.style.transition = 'none';
-  const speed = 10 + Math.random() * 8; // px par frame
+  const speed = 18 + Math.random() * 12; // px par frame
   const angle = Math.random() * Math.PI * 2;
   const state = {
     x: parseFloat(entry.el.style.left) || 0,
