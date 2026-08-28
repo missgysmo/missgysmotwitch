@@ -1,6 +1,6 @@
 const tmi = require('tmi.js');
 
-function createChatTracker(channel, { onChange, getInactivityMs } = {}) {
+function createChatTracker(channel, { onChange, getInactivityMs, onMessage } = {}) {
   const inactivityMs = getInactivityMs || (() => 10 * 60 * 1000);
   const active = new Map(); // login -> lastSeen timestamp
 
@@ -14,9 +14,10 @@ function createChatTracker(channel, { onChange, getInactivityMs } = {}) {
     if (isNew && onChange) onChange();
   }
 
-  client.on('message', (_channel, tags) => {
+  client.on('message', (_channel, tags, message) => {
     const login = (tags.username || '').toLowerCase();
     if (login) touch(login);
+    if (login && onMessage) onMessage(login, message);
   });
 
   client.on('connected', () => {

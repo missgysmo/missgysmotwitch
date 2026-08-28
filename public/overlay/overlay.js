@@ -217,6 +217,28 @@ function wander(login) {
   entry.moveTimer = setTimeout(() => wander(login), wait);
 }
 
+const CHAT_BUBBLE_MS = 5000;
+
+function showChatBubble(login, text) {
+  const entry = avatars.get(login.toLowerCase());
+  if (!entry) return;
+  const wrap = entry.el;
+
+  const existing = wrap.querySelector('.chat-bubble');
+  if (existing) existing.remove();
+
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  bubble.textContent = text;
+  wrap.insertBefore(bubble, wrap.firstChild);
+  requestAnimationFrame(() => bubble.classList.add('show'));
+
+  setTimeout(() => {
+    bubble.classList.remove('show');
+    setTimeout(() => bubble.remove(), 300);
+  }, CHAT_BUBBLE_MS);
+}
+
 function syncState(viewers) {
   const seen = new Set();
   for (const { login, skin } of viewers) {
@@ -396,6 +418,7 @@ function connect() {
     if (data.type === 'settings') applySettings(data.settings);
     if (data.type === 'state') syncState(data.viewers);
     if (data.type === 'event') showEvent(data.eventType, data.event, data.cast);
+    if (data.type === 'chat') showChatBubble(data.login, data.text);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

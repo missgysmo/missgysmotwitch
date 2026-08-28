@@ -210,6 +210,12 @@ function defaultSkin(login) {
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(buildState()),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
+  onMessage: (login, message) => {
+    // seuls les followers (ou le streamer) ont un avatar affiché, inutile de diffuser sinon
+    const cached = followerCache.get(login);
+    if (!isChannelOwner(login) && !cached?.follows) return;
+    broadcast({ type: 'chat', login, text: message.slice(0, 200) });
+  },
 });
 
 wss.on('connection', (ws) => {
