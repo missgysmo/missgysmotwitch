@@ -51,6 +51,7 @@ form {
   position: sticky;
   top: 1rem;
   align-self: start;
+  min-width: 0;
 }
 
 .settings-main {
@@ -221,6 +222,7 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   gap: 0.4rem;
   flex-wrap: wrap;
 }
+.nav-subtabs[hidden] { display: none; }
 .nav-tab-btn {
   display: flex;
   align-items: center;

@@ -5,6 +5,7 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const AVATARS_PATH = path.join(DATA_DIR, 'avatars.json');
 const TOKENS_PATH = path.join(DATA_DIR, 'tokens.json');
 const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
+const CANVAS_PATH = path.join(DATA_DIR, 'canvas.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -47,6 +48,13 @@ const DEFAULT_SETTINGS = {
     intro: { label: 'Le stream démarre dans...', durationSeconds: 300, color: '#ffffff', fontSize: 32, position: { x: 50, y: 50 } },
     pause: { label: 'De retour dans...', durationSeconds: 300, color: '#ffffff', fontSize: 32, position: { x: 50, y: 50 } },
   },
+  graffiti: {
+    enabled: true,
+    cols: 60,
+    rows: 34,
+    cooldownSeconds: 8,
+    position: { x: 2, y: 58, width: 32, height: 38 },
+  },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null },
@@ -70,6 +78,24 @@ function writeJson(filePath, data) {
 
 function getAllAvatars() {
   return readJson(AVATARS_PATH, {});
+}
+
+// Canvas graffiti collectif : cells = { "x,y": { type: 'pixel', color } | { type: 'sticker', species } }
+function getCanvas() {
+  return readJson(CANVAS_PATH, { cols: DEFAULT_SETTINGS.graffiti.cols, rows: DEFAULT_SETTINGS.graffiti.rows, cells: {} });
+}
+
+function setCanvasCell(x, y, cell) {
+  const canvas = getCanvas();
+  canvas.cells[`${x},${y}`] = cell;
+  writeJson(CANVAS_PATH, canvas);
+  return canvas;
+}
+
+function resetCanvas(cols, rows) {
+  const canvas = { cols, rows, cells: {} };
+  writeJson(CANVAS_PATH, canvas);
+  return canvas;
 }
 
 function getAvatar(login) {
@@ -107,6 +133,11 @@ function getSettings() {
     timers: {
       intro: { ...DEFAULT_SETTINGS.timers.intro, ...(saved.timers?.intro || {}), position: { ...DEFAULT_SETTINGS.timers.intro.position, ...(saved.timers?.intro?.position || {}) } },
       pause: { ...DEFAULT_SETTINGS.timers.pause, ...(saved.timers?.pause || {}), position: { ...DEFAULT_SETTINGS.timers.pause.position, ...(saved.timers?.pause?.position || {}) } },
+    },
+    graffiti: {
+      ...DEFAULT_SETTINGS.graffiti,
+      ...(saved.graffiti || {}),
+      position: { ...DEFAULT_SETTINGS.graffiti.position, ...(saved.graffiti?.position || {}) },
     },
     events: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),
