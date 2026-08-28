@@ -17,7 +17,12 @@ function createChatTracker(channel, { onChange, getInactivityMs, onMessage } = {
   client.on('message', (_channel, tags, message) => {
     const login = (tags.username || '').toLowerCase();
     if (login) touch(login);
-    if (login && onMessage) onMessage(login, message);
+    if (login && onMessage) {
+      onMessage(login, message, {
+        displayName: tags['display-name'] || login,
+        color: tags.color || null,
+      });
+    }
   });
 
   client.on('connected', () => {

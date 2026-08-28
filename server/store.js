@@ -55,6 +55,17 @@ const DEFAULT_SETTINGS = {
     cooldownSeconds: 8,
     position: { x: 2, y: 58, width: 32, height: 38 },
   },
+  chatOverlay: {
+    enabled: false,
+    maxMessages: 8,
+    fontSize: 14,
+    textColor: '#ffffff',
+    useUserColor: true,
+    bgColor: '#000000',
+    bgOpacity: 55,
+    fadeSeconds: 12,
+    position: { x: 78, y: 55, width: 20, height: 40 },
+  },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null },
@@ -138,6 +149,11 @@ function getSettings() {
       ...DEFAULT_SETTINGS.graffiti,
       ...(saved.graffiti || {}),
       position: { ...DEFAULT_SETTINGS.graffiti.position, ...(saved.graffiti?.position || {}) },
+    },
+    chatOverlay: {
+      ...DEFAULT_SETTINGS.chatOverlay,
+      ...(saved.chatOverlay || {}),
+      position: { ...DEFAULT_SETTINGS.chatOverlay.position, ...(saved.chatOverlay?.position || {}) },
     },
     events: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),

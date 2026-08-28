@@ -37,6 +37,27 @@ const graffitiFields = {
   heightOut: document.getElementById('graffiti-height-out'),
 };
 
+const chatOverlayFields = {
+  enabled: document.getElementById('chat-enabled'),
+  maxMessages: document.getElementById('chat-maxmessages'),
+  fontSize: document.getElementById('chat-fontsize'),
+  fontSizeOut: document.getElementById('chat-fontsize-out'),
+  textColor: document.getElementById('chat-textcolor'),
+  useUserColor: document.getElementById('chat-usercolor'),
+  bgColor: document.getElementById('chat-bgcolor'),
+  bgOpacity: document.getElementById('chat-bgopacity'),
+  bgOpacityOut: document.getElementById('chat-bgopacity-out'),
+  fadeSeconds: document.getElementById('chat-fadeseconds'),
+  posX: document.getElementById('chat-posx'),
+  posXOut: document.getElementById('chat-posx-out'),
+  posY: document.getElementById('chat-posy'),
+  posYOut: document.getElementById('chat-posy-out'),
+  width: document.getElementById('chat-width'),
+  widthOut: document.getElementById('chat-width-out'),
+  height: document.getElementById('chat-height'),
+  heightOut: document.getElementById('chat-height-out'),
+};
+
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
 for (const type of EVENT_TYPES) {
@@ -98,6 +119,12 @@ function updateOutputs() {
   graffitiFields.posYOut.textContent = `${graffitiFields.posY.value}%`;
   graffitiFields.widthOut.textContent = `${graffitiFields.width.value}%`;
   graffitiFields.heightOut.textContent = `${graffitiFields.height.value}%`;
+  chatOverlayFields.fontSizeOut.textContent = `${chatOverlayFields.fontSize.value}px`;
+  chatOverlayFields.bgOpacityOut.textContent = `${chatOverlayFields.bgOpacity.value}%`;
+  chatOverlayFields.posXOut.textContent = `${chatOverlayFields.posX.value}%`;
+  chatOverlayFields.posYOut.textContent = `${chatOverlayFields.posY.value}%`;
+  chatOverlayFields.widthOut.textContent = `${chatOverlayFields.width.value}%`;
+  chatOverlayFields.heightOut.textContent = `${chatOverlayFields.height.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -138,6 +165,12 @@ graffitiFields.posX.addEventListener('input', updateOutputs);
 graffitiFields.posY.addEventListener('input', updateOutputs);
 graffitiFields.width.addEventListener('input', updateOutputs);
 graffitiFields.height.addEventListener('input', updateOutputs);
+chatOverlayFields.fontSize.addEventListener('input', updateOutputs);
+chatOverlayFields.bgOpacity.addEventListener('input', updateOutputs);
+chatOverlayFields.posX.addEventListener('input', updateOutputs);
+chatOverlayFields.posY.addEventListener('input', updateOutputs);
+chatOverlayFields.width.addEventListener('input', updateOutputs);
+chatOverlayFields.height.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -190,6 +223,18 @@ async function loadSettings() {
   graffitiFields.posY.value = s.graffiti.position.y;
   graffitiFields.width.value = s.graffiti.position.width;
   graffitiFields.height.value = s.graffiti.position.height;
+  chatOverlayFields.enabled.checked = s.chatOverlay.enabled;
+  chatOverlayFields.maxMessages.value = s.chatOverlay.maxMessages;
+  chatOverlayFields.fontSize.value = s.chatOverlay.fontSize;
+  chatOverlayFields.textColor.value = s.chatOverlay.textColor;
+  chatOverlayFields.useUserColor.checked = s.chatOverlay.useUserColor;
+  chatOverlayFields.bgColor.value = s.chatOverlay.bgColor;
+  chatOverlayFields.bgOpacity.value = s.chatOverlay.bgOpacity;
+  chatOverlayFields.fadeSeconds.value = s.chatOverlay.fadeSeconds;
+  chatOverlayFields.posX.value = s.chatOverlay.position.x;
+  chatOverlayFields.posY.value = s.chatOverlay.position.y;
+  chatOverlayFields.width.value = s.chatOverlay.position.width;
+  chatOverlayFields.height.value = s.chatOverlay.position.height;
   updateOutputs();
 }
 
@@ -245,6 +290,22 @@ async function saveSettings() {
         y: Number(graffitiFields.posY.value),
         width: Number(graffitiFields.width.value),
         height: Number(graffitiFields.height.value),
+      },
+    },
+    chatOverlay: {
+      enabled: chatOverlayFields.enabled.checked,
+      maxMessages: Number(chatOverlayFields.maxMessages.value),
+      fontSize: Number(chatOverlayFields.fontSize.value),
+      textColor: chatOverlayFields.textColor.value,
+      useUserColor: chatOverlayFields.useUserColor.checked,
+      bgColor: chatOverlayFields.bgColor.value,
+      bgOpacity: Number(chatOverlayFields.bgOpacity.value),
+      fadeSeconds: Number(chatOverlayFields.fadeSeconds.value),
+      position: {
+        x: Number(chatOverlayFields.posX.value),
+        y: Number(chatOverlayFields.posY.value),
+        width: Number(chatOverlayFields.width.value),
+        height: Number(chatOverlayFields.height.value),
       },
     },
   };

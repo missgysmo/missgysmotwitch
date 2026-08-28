@@ -1,8 +1,23 @@
 const stage = document.getElementById('stage');
 const eventLayer = document.getElementById('event-layer');
+const timerLayer = document.getElementById('timer-layer');
 const GRAFFITI_CELL_PX = 8;
 const graffitiCanvas = document.getElementById('graffiti-canvas');
 const graffitiCtx = graffitiCanvas.getContext('2d');
+const chatOverlayEl = document.getElementById('chat-overlay');
+const chatOverlayListEl = document.getElementById('chat-overlay-list');
+
+// Permet d'ajouter chaque module comme source OBS indépendante :
+// /overlay/?modules=avatars,chat,canvas,timers (par défaut, sans le paramètre : tous activés)
+const MODULE_PARAM = new URLSearchParams(location.search).get('modules');
+const ENABLED_MODULES = MODULE_PARAM ? new Set(MODULE_PARAM.split(',').map((m) => m.trim())) : null;
+function moduleEnabled(name) {
+  return !ENABLED_MODULES || ENABLED_MODULES.has(name);
+}
+if (!moduleEnabled('avatars')) document.body.classList.add('module-avatars-off');
+if (!moduleEnabled('chat')) document.body.classList.add('module-chat-off');
+if (!moduleEnabled('canvas')) document.body.classList.add('module-canvas-off');
+if (!moduleEnabled('timers')) document.body.classList.add('module-timers-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -44,6 +59,10 @@ let settings = {
   ownerNameColor: '#ffd633',
   ownerSize: 64,
   graffiti: { enabled: true, cols: 60, rows: 34, cooldownSeconds: 8, position: { x: 2, y: 58, width: 32, height: 38 } },
+  chatOverlay: {
+    enabled: false, maxMessages: 8, fontSize: 14, textColor: '#ffffff', useUserColor: true,
+    bgColor: '#000000', bgOpacity: 55, fadeSeconds: 12, position: { x: 78, y: 55, width: 20, height: 40 },
+  },
   spriteFlip: {
     cat: true, 'cosmic-cat': true, 'cyber-unicorn': true, dino: false,
     girl: false, 'grunge-boy': false, unicorn: false, 'mon-avatar': true,
@@ -75,6 +94,7 @@ function applySettings(newSettings) {
     ownerEntry.el.querySelector('.avatar-name').style.color = settings.ownerNameColor;
   }
   applyGraffitiLayout();
+  applyChatOverlayLayout();
 }
 
 applySettings(settings);
@@ -275,6 +295,50 @@ function applyGraffitiLayout() {
   graffitiCanvas.style.height = `${g.position.height}%`;
 }
 
+function applyChatOverlayLayout() {
+  const c = settings.chatOverlay;
+  chatOverlayEl.style.display = c.enabled ? 'flex' : 'none';
+  chatOverlayEl.style.left = `${c.position.x}%`;
+  chatOverlayEl.style.top = `${c.position.y}%`;
+  chatOverlayEl.style.width = `${c.position.width}%`;
+  chatOverlayEl.style.height = `${c.position.height}%`;
+  chatOverlayEl.style.fontSize = `${c.fontSize}px`;
+  chatOverlayEl.style.color = c.textColor;
+  const rgb = hexToRgb(c.bgColor);
+  chatOverlayEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${c.bgOpacity / 100})`;
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function addChatLogMessage(data) {
+  const c = settings.chatOverlay;
+  if (!c.enabled) return;
+
+  const row = document.createElement('div');
+  row.className = 'chat-overlay-msg';
+  const nameEl = document.createElement('span');
+  nameEl.className = 'chat-overlay-name';
+  nameEl.textContent = `${data.displayName}: `;
+  if (c.useUserColor && data.color) nameEl.style.color = data.color;
+  row.appendChild(nameEl);
+  row.appendChild(document.createTextNode(data.text));
+  chatOverlayListEl.appendChild(row);
+
+  while (chatOverlayListEl.children.length > c.maxMessages) {
+    chatOverlayListEl.removeChild(chatOverlayListEl.firstChild);
+  }
+
+  if (c.fadeSeconds > 0) {
+    setTimeout(() => {
+      row.classList.add('fading');
+      setTimeout(() => row.remove(), 1300);
+    }, c.fadeSeconds * 1000);
+  }
+}
+
 const timerEls = {}; // id -> { el, interval }
 
 function formatTimer(ms) {
@@ -308,7 +372,7 @@ function handleTimerMessage(data) {
   el.style.color = data.cfg.color;
   el.style.fontSize = `${data.cfg.fontSize}px`;
   el.innerHTML = `<div class="timer-label">${escapeHtml(data.cfg.label)}</div><div class="timer-value"></div>`;
-  eventLayer.appendChild(el);
+  timerLayer.appendChild(el);
 
   const valueEl = el.querySelector('.timer-value');
   function tick() {
@@ -531,6 +595,7 @@ function connect() {
     if (data.type === 'timer') handleTimerMessage(data);
     if (data.type === 'canvas-init') initGraffitiCanvas(data);
     if (data.type === 'canvas-update') drawGraffitiCell(data.x, data.y, data.cell);
+    if (data.type === 'chatlog') addChatLogMessage(data);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

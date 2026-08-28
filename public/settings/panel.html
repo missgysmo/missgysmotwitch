@@ -37,6 +37,7 @@
         <div class="nav-subtabs" data-cat-group="tools" hidden>
           <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
           <button type="button" class="nav-tab-btn" data-tab="graffiti"><span class="nav-icon">🎨</span>Graffiti</button>
+          <button type="button" class="nav-tab-btn" data-tab="chatoverlay"><span class="nav-icon">💬</span>Chat</button>
         </div>
       </nav>
 
@@ -210,6 +211,29 @@
         <label>Largeur <input type="range" id="graffiti-width" min="5" max="100" step="1" /><output id="graffiti-width-out"></output></label>
         <label>Hauteur <input type="range" id="graffiti-height" min="5" max="100" step="1" /><output id="graffiti-height-out"></output></label>
         <button type="button" id="graffiti-reset-btn">Réinitialiser le graffiti</button>
+      </fieldset>
+
+      <fieldset data-nav-panel="chatoverlay" hidden>
+        <legend>Chat sur l'overlay</legend>
+        <p class="hint">Affiche les derniers messages du chat directement sur le stream, indépendamment du statut follower.</p>
+        <label>
+          <input type="checkbox" id="chat-enabled" />
+          Activer l'affichage du chat
+        </label>
+        <label>Nombre de messages affichés <input type="number" id="chat-maxmessages" min="1" max="30" step="1" /></label>
+        <label>Taille du texte <input type="range" id="chat-fontsize" min="8" max="40" step="1" /><output id="chat-fontsize-out"></output></label>
+        <label>Couleur du texte <input type="color" id="chat-textcolor" /></label>
+        <label>
+          <input type="checkbox" id="chat-usercolor" />
+          Utiliser la couleur Twitch de chaque viewer pour son pseudo
+        </label>
+        <label>Couleur de fond <input type="color" id="chat-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="chat-bgopacity" min="0" max="100" step="1" /><output id="chat-bgopacity-out"></output></label>
+        <label>Disparition après (secondes, 0 = jamais) <input type="number" id="chat-fadeseconds" min="0" max="120" step="1" /></label>
+        <label>Position horizontale <input type="range" id="chat-posx" min="0" max="100" step="1" /><output id="chat-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="chat-posy" min="0" max="100" step="1" /><output id="chat-posy-out"></output></label>
+        <label>Largeur <input type="range" id="chat-width" min="5" max="100" step="1" /><output id="chat-width-out"></output></label>
+        <label>Hauteur <input type="range" id="chat-height" min="5" max="100" step="1" /><output id="chat-height-out"></output></label>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>

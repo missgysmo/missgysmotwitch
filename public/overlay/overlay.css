@@ -17,11 +17,53 @@ html, body {
   pointer-events: none;
 }
 
+#timer-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Modules indépendants pour OBS : /overlay/?modules=avatars,chat,canvas,timers */
+body.module-avatars-off #stage,
+body.module-avatars-off #event-layer { display: none !important; }
+body.module-chat-off #chat-overlay { display: none !important; }
+body.module-canvas-off #graffiti-canvas { display: none !important; }
+body.module-timers-off #timer-layer { display: none !important; }
+
 #graffiti-canvas {
   position: fixed;
   image-rendering: pixelated;
   display: none;
 }
+
+#chat-overlay {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  padding: 8px;
+  border-radius: 8px;
+  font-family: system-ui, sans-serif;
+}
+
+#chat-overlay-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chat-overlay-msg {
+  line-height: 1.35;
+  word-wrap: break-word;
+  text-shadow: 0 1px 2px rgba(0,0,0,.8);
+  opacity: 1;
+  transition: opacity 1.2s ease;
+}
+
+.chat-overlay-msg.fading { opacity: 0; }
+
+.chat-overlay-name { font-weight: 700; }
 
 .avatar-wrap {
   position: absolute;

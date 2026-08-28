@@ -233,11 +233,20 @@ const graffitiCooldowns = new Map();
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(buildState()),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
-  onMessage: (login, message) => {
-    // seuls les followers (ou le streamer) ont un avatar affiché, inutile de diffuser sinon
+  onMessage: (login, message, meta) => {
+    // bulle au-dessus de l'avatar : seuls les followers (ou le streamer) en ont un affiché
     const cached = followerCache.get(login);
-    if (!isChannelOwner(login) && !cached?.follows) return;
-    broadcast({ type: 'chat', login, text: message.slice(0, 200) });
+    if (isChannelOwner(login) || cached?.follows) {
+      broadcast({ type: 'chat', login, text: message.slice(0, 200) });
+    }
+    // affichage du chat sur l'overlay : tout le monde, indépendant du statut follower
+    broadcast({
+      type: 'chatlog',
+      login,
+      displayName: meta.displayName,
+      color: meta.color,
+      text: message.slice(0, 300),
+    });
   },
 });
 
@@ -474,10 +483,30 @@ function sanitizeGraffitiConfig(input, fallback) {
   };
 }
 
+function sanitizeChatOverlayConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    maxMessages: clamp(input?.maxMessages, 1, 30, fallback.maxMessages),
+    fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    useUserColor: typeof input?.useUserColor === 'boolean' ? input.useUserColor : fallback.useUserColor,
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    fadeSeconds: clamp(input?.fadeSeconds, 0, 120, fallback.fadeSeconds),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
+      height: clamp(input?.position?.height, 5, 100, fallback.position.height),
+    },
+  };
+}
+
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -521,6 +550,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
       pause: sanitizeTimerConfig(timers?.pause, d.timers.pause),
     },
     graffiti: sanitizeGraffitiConfig(graffiti, d.graffiti),
+    chatOverlay: sanitizeChatOverlayConfig(chatOverlay, d.chatOverlay),
   };
 
   store.setSettings(settings);
