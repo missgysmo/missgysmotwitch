@@ -10,9 +10,13 @@
   <main>
     <div class="top-row">
       <h1>Réglages de l'overlay</h1>
-      <button id="logout" type="button">Se déconnecter</button>
+      <div class="top-row-actions">
+        <a href="/overlay/?preview=1" target="_blank" rel="noopener" class="sandbox-link-btn">🧪 Ouvrir l'aperçu sandbox</a>
+        <button id="logout" type="button">Se déconnecter</button>
+      </div>
     </div>
     <p>Ajuste la taille des avatars, leur zone de déplacement et leur vitesse. Les changements s'appliquent en direct sur l'overlay, sans rafraîchir OBS.</p>
+    <p class="hint">L'aperçu sandbox est une copie de l'overlay où les boutons "Tester" (alertes, avatars) s'affichent sans jamais toucher le vrai stream OBS.</p>
 
     <form id="form">
       <nav class="settings-nav">
@@ -38,6 +42,8 @@
           <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
           <button type="button" class="nav-tab-btn" data-tab="graffiti"><span class="nav-icon">🎨</span>Graffiti</button>
           <button type="button" class="nav-tab-btn" data-tab="chatoverlay"><span class="nav-icon">💬</span>Chat</button>
+          <button type="button" class="nav-tab-btn" data-tab="activity"><span class="nav-icon">📣</span>Activité récente</button>
+          <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
         </div>
       </nav>
 
@@ -246,6 +252,50 @@
         <label>Position verticale <input type="range" id="chat-posy" min="0" max="100" step="1" /><output id="chat-posy-out"></output></label>
         <label>Largeur <input type="range" id="chat-width" min="5" max="100" step="1" /><output id="chat-width-out"></output></label>
         <label>Hauteur <input type="range" id="chat-height" min="5" max="100" step="1" /><output id="chat-height-out"></output></label>
+      </fieldset>
+
+      <fieldset data-nav-panel="activity" hidden>
+        <legend>Défilement des activités récentes</legend>
+        <p class="hint">Bandeau qui défile avec les derniers follows/subs/cheers/raids reçus durant le live en cours (remis à zéro à chaque redémarrage du serveur).</p>
+        <label>
+          <input type="checkbox" id="activity-enabled" />
+          Activer le défilement des activités récentes
+        </label>
+        <label>Vitesse de défilement (secondes pour un tour complet) <input type="number" id="activity-speed" min="3" max="120" step="1" /></label>
+        <label>Taille du texte <input type="range" id="activity-fontsize" min="8" max="40" step="1" /><output id="activity-fontsize-out"></output></label>
+        <label>Couleur du texte <input type="color" id="activity-textcolor" /></label>
+        <label>Couleur de fond <input type="color" id="activity-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="activity-bgopacity" min="0" max="100" step="1" /><output id="activity-bgopacity-out"></output></label>
+        <label>Position horizontale <input type="range" id="activity-posx" min="0" max="100" step="1" /><output id="activity-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="activity-posy" min="0" max="100" step="1" /><output id="activity-posy-out"></output></label>
+        <label>Largeur <input type="range" id="activity-width" min="5" max="100" step="1" /><output id="activity-width-out"></output></label>
+        <label>Hauteur <input type="range" id="activity-height" min="2" max="100" step="1" /><output id="activity-height-out"></output></label>
+      </fieldset>
+
+      <fieldset data-nav-panel="followlist" hidden>
+        <legend>Liste défilante des followers/subs</legend>
+        <p class="hint">Liste complète (pas seulement le live en cours) qui se met à jour automatiquement à chaque nouveau follow/sub.</p>
+        <label>
+          <input type="checkbox" id="followlist-enabled" />
+          Activer la liste défilante
+        </label>
+        <label>
+          Contenu affiché
+          <select id="followlist-mode">
+            <option value="both">Followers + Subs</option>
+            <option value="followers">Followers uniquement</option>
+            <option value="subs">Subs uniquement</option>
+          </select>
+        </label>
+        <label>Vitesse de défilement (secondes pour un tour complet) <input type="number" id="followlist-speed" min="3" max="300" step="1" /></label>
+        <label>Taille du texte <input type="range" id="followlist-fontsize" min="8" max="40" step="1" /><output id="followlist-fontsize-out"></output></label>
+        <label>Couleur du texte <input type="color" id="followlist-textcolor" /></label>
+        <label>Couleur de fond <input type="color" id="followlist-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="followlist-bgopacity" min="0" max="100" step="1" /><output id="followlist-bgopacity-out"></output></label>
+        <label>Position horizontale <input type="range" id="followlist-posx" min="0" max="100" step="1" /><output id="followlist-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="followlist-posy" min="0" max="100" step="1" /><output id="followlist-posy-out"></output></label>
+        <label>Largeur <input type="range" id="followlist-width" min="5" max="100" step="1" /><output id="followlist-width-out"></output></label>
+        <label>Hauteur <input type="range" id="followlist-height" min="5" max="100" step="1" /><output id="followlist-height-out"></output></label>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>

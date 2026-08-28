@@ -33,6 +33,25 @@ p { color: #9a9aa8; font-size: 0.9rem; line-height: 1.5; }
 }
 .top-row button:hover { color: #f1f1f5; border-color: #45455a; }
 
+.top-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sandbox-link-btn {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #33333e;
+  border-radius: 7px;
+  background: #1c1c24;
+  color: #a9a9b8;
+  font-size: 0.8rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sandbox-link-btn:hover { color: #f1f1f5; border-color: #45455a; }
+
 form {
   margin-top: 1.5rem;
 }

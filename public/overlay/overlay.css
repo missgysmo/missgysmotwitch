@@ -29,6 +29,8 @@ body.module-avatars-off #event-layer { display: none !important; }
 body.module-chat-off #chat-overlay { display: none !important; }
 body.module-canvas-off #graffiti-canvas { display: none !important; }
 body.module-timers-off #timer-layer { display: none !important; }
+body.module-activity-off #activity-feed { display: none !important; }
+body.module-people-off #follow-list { display: none !important; }
 
 #graffiti-canvas {
   position: fixed;
@@ -63,6 +65,59 @@ body.module-timers-off #timer-layer { display: none !important; }
 }
 
 .chat-overlay-msg.fading { opacity: 0; }
+
+/* Défilement horizontal des dernières activités (follow/sub/cheer/raid) durant le live en cours */
+#activity-feed {
+  position: fixed;
+  display: none;
+  overflow: hidden;
+  border-radius: 8px;
+  font-family: system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+#activity-feed-track {
+  display: inline-flex;
+  gap: 3rem;
+  padding-left: 100%;
+  animation: scrollLeft linear infinite;
+}
+
+.activity-feed-item {
+  text-shadow: 0 1px 2px rgba(0,0,0,.8);
+}
+
+/* Défilement vertical de la liste complète des followers/subs, mise à jour en direct */
+#follow-list {
+  position: fixed;
+  display: none;
+  overflow: hidden;
+  border-radius: 8px;
+  font-family: system-ui, sans-serif;
+  padding: 8px;
+}
+
+#follow-list-track {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: scrollUp linear infinite;
+}
+
+.follow-list-item {
+  text-shadow: 0 1px 2px rgba(0,0,0,.8);
+  white-space: nowrap;
+}
+
+@keyframes scrollLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes scrollUp {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
 
 .chat-overlay-name { font-weight: 700; }
 

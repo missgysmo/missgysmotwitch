@@ -19,6 +19,16 @@ const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 const REDIRECT_URI = process.env.TWITCH_REDIRECT_URI || `http://localhost:${PORT}/auth/callback`;
 const SETTINGS_PASSWORD = process.env.SETTINGS_PASSWORD;
 
+// Au lieu de crasher le process sur une erreur inattendue, on la consigne avec l'heure exacte et on continue.
+const DEBUG_LOG_PATH = path.join(store.DATA_DIR, 'debug.log');
+function logError(label, err) {
+  const line = `[${new Date().toISOString()}] ${label}: ${err?.stack || err}\n`;
+  console.error(line);
+  fs.appendFile(DEBUG_LOG_PATH, line, () => {});
+}
+process.on('uncaughtException', (err) => logError('uncaughtException', err));
+process.on('unhandledRejection', (err) => logError('unhandledRejection', err));
+
 if (!CHANNEL) {
   console.error('TWITCH_CHANNEL manquant dans .env');
   process.exit(1);
@@ -136,13 +146,26 @@ function broadcast(message) {
   }
 }
 
+// Envoie uniquement aux overlays ouverts en mode aperçu (/overlay/?preview=1) : sert aux boutons
+// "Tester" du panel, pour que rien ne s'affiche jamais sur le stream principal pendant les essais.
+function broadcastToPreview(message) {
+  const data = JSON.stringify(message);
+  for (const client of overlayClients) {
+    if (client.isPreview && client.readyState === client.OPEN) client.send(data);
+  }
+}
+
 // Avatars de test (admin uniquement) : pour prévisualiser un personnage sur l'overlay sans vrai viewer.
 const testAvatars = new Map(); // login -> { species, hue }
+const recentActivity = []; // { kind: 'follow'|'subscribe'|'cheer'|'raid', displayName, extra, ts } — remis à zéro à chaque redémarrage du serveur
+const RECENT_ACTIVITY_MAX = 40;
 
-function buildState() {
+// includeTest: les avatars de test (onglet "Test avatars") ne doivent jamais apparaître
+// sur le stream réel — seulement dans l'aperçu sandbox (/overlay/?preview=1).
+function buildState(includeTest = false) {
   const active = chatTracker.getActiveLogins().filter((login) => !isChannelOwner(login));
   const real = active.filter(isFollowerCached).map((login) => ({ login, skin: getSkin(login) }));
-  const test = [...testAvatars.entries()].map(([login, skin]) => ({ login, skin }));
+  const test = includeTest ? [...testAvatars.entries()].map(([login, skin]) => ({ login, skin })) : [];
   const owner = { login: CHANNEL, skin: getSkin(CHANNEL) };
   return { type: 'state', viewers: [owner, ...real, ...test] };
 }
@@ -234,20 +257,24 @@ const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(buildState()),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
   onMessage: (login, message, meta) => {
-    // bulle au-dessus de l'avatar : seuls les followers (ou le streamer) en ont un affiché
-    const cached = followerCache.get(login);
-    if (isChannelOwner(login) || cached?.follows) {
-      broadcast({ type: 'chat', login, text: message.slice(0, 200) });
+    try {
+      // bulle au-dessus de l'avatar : seuls les followers (ou le streamer) en ont un affiché
+      const cached = followerCache.get(login);
+      if (isChannelOwner(login) || cached?.follows) {
+        broadcast({ type: 'chat', login, text: message.slice(0, 200) });
+      }
+      // affichage du chat sur l'overlay : tout le monde, indépendant du statut follower
+      broadcast({
+        type: 'chatlog',
+        login,
+        displayName: meta.displayName,
+        color: meta.color,
+        text: message.slice(0, 300),
+        id: meta.id,
+      });
+    } catch (err) {
+      logError('chatTracker.onMessage', err);
     }
-    // affichage du chat sur l'overlay : tout le monde, indépendant du statut follower
-    broadcast({
-      type: 'chatlog',
-      login,
-      displayName: meta.displayName,
-      color: meta.color,
-      text: message.slice(0, 300),
-      id: meta.id,
-    });
   },
   onMessageDeleted: (id) => {
     broadcast({ type: 'chatlog-delete', id });
@@ -260,16 +287,18 @@ const chatTracker = createChatTracker(CHANNEL, {
 // Chronomètres (intro / pause) : état éphémère en mémoire, pas persisté sur disque.
 const activeTimers = {}; // id -> endAt (ms epoch)
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  ws.isPreview = new URL(req.url, 'http://internal').searchParams.get('preview') === '1';
   overlayClients.add(ws);
   ws.send(JSON.stringify({ type: 'settings', settings: store.getSettings() }));
-  ws.send(JSON.stringify(buildState()));
+  ws.send(JSON.stringify(buildState(ws.isPreview)));
   for (const [id, endAt] of Object.entries(activeTimers)) {
     if (endAt > Date.now()) {
       ws.send(JSON.stringify({ type: 'timer', id, action: 'start', endAt, cfg: store.getSettings().timers[id] }));
     }
   }
   ws.send(JSON.stringify({ type: 'canvas-init', ...store.getCanvas() }));
+  ws.send(JSON.stringify({ type: 'activity', recent: recentActivity, people: store.getPeople() }));
   ws.on('close', () => overlayClients.delete(ws));
 });
 
@@ -416,28 +445,28 @@ const TEST_EVENTS = {
 app.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
   const test = TEST_EVENTS[req.params.type];
   if (!test) return res.status(400).json({ error: 'type invalide' });
-  broadcast({ type: 'event', eventType: test.type, event: test.event, cast: buildCast() });
+  broadcastToPreview({ type: 'event', eventType: test.type, event: test.event, cast: buildCast() });
   res.json({ ok: true });
 });
 
-// --- Test des avatars (fait apparaître un personnage sur l'overlay sans vrai viewer) ---
+// --- Test des avatars (fait apparaître un personnage sur l'aperçu sandbox sans vrai viewer, jamais sur le stream réel) ---
 app.post('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
   const match = species.getById(req.params.speciesId);
   if (!match) return res.status(400).json({ error: 'species invalide' });
   testAvatars.set(`test-${req.params.speciesId}`, { species: req.params.speciesId, hue: 0 });
-  broadcast(buildState());
+  broadcastToPreview(buildState(true));
   res.json({ ok: true });
 });
 
 app.delete('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
   testAvatars.delete(`test-${req.params.speciesId}`);
-  broadcast(buildState());
+  broadcastToPreview(buildState(true));
   res.json({ ok: true });
 });
 
 app.delete('/api/admin/test-avatar', requireAdmin, (req, res) => {
   testAvatars.clear();
-  broadcast(buildState());
+  broadcastToPreview(buildState(true));
   res.json({ ok: true });
 });
 
@@ -517,10 +546,47 @@ function sanitizeChatOverlayConfig(input, fallback) {
   };
 }
 
+function sanitizeActivityFeedConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    speedSeconds: clamp(input?.speedSeconds, 3, 120, fallback.speedSeconds),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
+      height: clamp(input?.position?.height, 2, 100, fallback.position.height),
+    },
+  };
+}
+
+function sanitizeFollowListConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    mode: ['followers', 'subs', 'both'].includes(input?.mode) ? input.mode : fallback.mode,
+    fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    speedSeconds: clamp(input?.speedSeconds, 3, 300, fallback.speedSeconds),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
+      height: clamp(input?.position?.height, 5, 100, fallback.position.height),
+    },
+  };
+}
+
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -565,6 +631,8 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     },
     graffiti: sanitizeGraffitiConfig(graffiti, d.graffiti),
     chatOverlay: sanitizeChatOverlayConfig(chatOverlay, d.chatOverlay),
+    activityFeed: sanitizeActivityFeedConfig(activityFeed, d.activityFeed),
+    followList: sanitizeFollowListConfig(followList, d.followList),
   };
 
   store.setSettings(settings);
@@ -602,6 +670,37 @@ app.get('/auth/callback', async (req, res) => {
   }
 });
 
+// Alimente le fil "activité récente" (session en cours) + la liste persistante des followers/subs, puis diffuse aux overlays.
+function recordActivity(type, event) {
+  let kind, displayName, login, extra = null;
+  if (type === 'channel.follow') {
+    kind = 'follow';
+    displayName = event.user_name;
+    login = event.user_login;
+    store.addPerson('followers', login, displayName);
+  } else if (type === 'channel.subscribe') {
+    kind = 'subscribe';
+    displayName = event.user_name;
+    login = event.user_login;
+    store.addPerson('subs', login, displayName);
+  } else if (type === 'channel.cheer') {
+    kind = 'cheer';
+    displayName = event.user_name;
+    login = event.user_login;
+    extra = event.bits;
+  } else if (type === 'channel.raid') {
+    kind = 'raid';
+    displayName = event.from_broadcaster_user_name;
+    login = event.from_broadcaster_user_login;
+    extra = event.viewers;
+  } else {
+    return;
+  }
+  recentActivity.unshift({ kind, displayName, login, extra, ts: Date.now() });
+  if (recentActivity.length > RECENT_ACTIVITY_MAX) recentActivity.length = RECENT_ACTIVITY_MAX;
+  broadcast({ type: 'activity', recent: recentActivity, people: store.getPeople() });
+}
+
 async function startEventSub() {
   const tokens = store.getTokens();
   if (!tokens) {
@@ -617,6 +716,7 @@ async function startEventSub() {
       onEvent: (type, event) => {
         console.log(`[twitchEvents] event reçu: ${type}`);
         broadcast({ type: 'event', eventType: type, event, cast: buildCast() });
+        recordActivity(type, event);
       },
     });
   } catch (err) {

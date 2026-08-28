@@ -6,6 +6,7 @@ const AVATARS_PATH = path.join(DATA_DIR, 'avatars.json');
 const TOKENS_PATH = path.join(DATA_DIR, 'tokens.json');
 const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
 const CANVAS_PATH = path.join(DATA_DIR, 'canvas.json');
+const PEOPLE_PATH = path.join(DATA_DIR, 'people.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -68,6 +69,25 @@ const DEFAULT_SETTINGS = {
     fadeSeconds: 12,
     position: { x: 78, y: 55, width: 20, height: 40 },
   },
+  activityFeed: {
+    enabled: false,
+    fontSize: 15,
+    textColor: '#ffffff',
+    bgColor: '#000000',
+    bgOpacity: 55,
+    speedSeconds: 18,
+    position: { x: 25, y: 92, width: 50, height: 6 },
+  },
+  followList: {
+    enabled: false,
+    mode: 'both', // 'followers' | 'subs' | 'both'
+    fontSize: 14,
+    textColor: '#ffffff',
+    bgColor: '#000000',
+    bgOpacity: 55,
+    speedSeconds: 30,
+    position: { x: 2, y: 2, width: 20, height: 50 },
+  },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null },
@@ -111,6 +131,25 @@ function resetCanvas(cols, rows) {
   const canvas = { cols, rows, cells: {} };
   writeJson(CANVAS_PATH, canvas);
   return canvas;
+}
+
+// Liste complète des followers/subs connus, mise à jour au fil des events (persiste entre les lives)
+function getPeople() {
+  return readJson(PEOPLE_PATH, { followers: [], subs: [] });
+}
+
+function addPerson(kind, login, displayName) {
+  const people = getPeople();
+  const list = people[kind] || (people[kind] = []);
+  const lower = (login || '').toLowerCase();
+  const existing = list.find((p) => p.login === lower);
+  if (existing) {
+    existing.displayName = displayName || existing.displayName;
+  } else {
+    list.unshift({ login: lower, displayName: displayName || login, since: Date.now() });
+  }
+  writeJson(PEOPLE_PATH, people);
+  return people;
 }
 
 function getAvatar(login) {
@@ -159,6 +198,16 @@ function getSettings() {
       ...(saved.chatOverlay || {}),
       position: { ...DEFAULT_SETTINGS.chatOverlay.position, ...(saved.chatOverlay?.position || {}) },
     },
+    activityFeed: {
+      ...DEFAULT_SETTINGS.activityFeed,
+      ...(saved.activityFeed || {}),
+      position: { ...DEFAULT_SETTINGS.activityFeed.position, ...(saved.activityFeed?.position || {}) },
+    },
+    followList: {
+      ...DEFAULT_SETTINGS.followList,
+      ...(saved.followList || {}),
+      position: { ...DEFAULT_SETTINGS.followList.position, ...(saved.followList?.position || {}) },
+    },
     events: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),
       subscribe: mergeEventConfig(DEFAULT_SETTINGS.events.subscribe, saved.events?.subscribe),
@@ -184,6 +233,8 @@ module.exports = {
   getCanvas,
   setCanvasCell,
   resetCanvas,
+  getPeople,
+  addPerson,
   DEFAULT_SETTINGS,
   DATA_DIR,
 };

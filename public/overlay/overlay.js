@@ -6,6 +6,10 @@ const graffitiCanvas = document.getElementById('graffiti-canvas');
 const graffitiCtx = graffitiCanvas.getContext('2d');
 const chatOverlayEl = document.getElementById('chat-overlay');
 const chatOverlayListEl = document.getElementById('chat-overlay-list');
+const activityFeedEl = document.getElementById('activity-feed');
+const activityFeedTrackEl = document.getElementById('activity-feed-track');
+const followListEl = document.getElementById('follow-list');
+const followListTrackEl = document.getElementById('follow-list-track');
 
 // Permet d'ajouter chaque module comme source OBS indépendante :
 // /overlay/?modules=avatars,chat,canvas,timers (par défaut, sans le paramètre : tous activés)
@@ -18,6 +22,8 @@ if (!moduleEnabled('avatars')) document.body.classList.add('module-avatars-off')
 if (!moduleEnabled('chat')) document.body.classList.add('module-chat-off');
 if (!moduleEnabled('canvas')) document.body.classList.add('module-canvas-off');
 if (!moduleEnabled('timers')) document.body.classList.add('module-timers-off');
+if (!moduleEnabled('activity')) document.body.classList.add('module-activity-off');
+if (!moduleEnabled('people')) document.body.classList.add('module-people-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -95,6 +101,8 @@ function applySettings(newSettings) {
   }
   applyGraffitiLayout();
   applyChatOverlayLayout();
+  applyActivityFeedLayout();
+  applyFollowListLayout();
 }
 
 applySettings(settings);
@@ -311,12 +319,72 @@ function applyChatOverlayLayout() {
   chatOverlayEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${c.bgOpacity / 100})`;
 }
 
+function applyActivityFeedLayout() {
+  const a = settings.activityFeed;
+  activityFeedEl.style.display = a.enabled ? 'block' : 'none';
+  activityFeedEl.style.left = `${a.position.x}%`;
+  activityFeedEl.style.top = `${a.position.y}%`;
+  activityFeedEl.style.width = `${a.position.width}%`;
+  activityFeedEl.style.height = `${a.position.height}%`;
+  activityFeedEl.style.fontSize = `${a.fontSize}px`;
+  activityFeedEl.style.color = a.textColor;
+  const rgb = hexToRgb(a.bgColor);
+  activityFeedEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a.bgOpacity / 100})`;
+  activityFeedTrackEl.style.animationDuration = `${a.speedSeconds}s`;
+}
+
+function applyFollowListLayout() {
+  const f = settings.followList;
+  followListEl.style.display = f.enabled ? 'block' : 'none';
+  followListEl.style.left = `${f.position.x}%`;
+  followListEl.style.top = `${f.position.y}%`;
+  followListEl.style.width = `${f.position.width}%`;
+  followListEl.style.height = `${f.position.height}%`;
+  followListEl.style.fontSize = `${f.fontSize}px`;
+  followListEl.style.color = f.textColor;
+  const rgb = hexToRgb(f.bgColor);
+  followListEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${f.bgOpacity / 100})`;
+  followListTrackEl.style.animationDuration = `${f.speedSeconds}s`;
+}
+
+const ACTIVITY_LABELS = {
+  follow: (a) => `💜 ${a.displayName} vient de follow !`,
+  subscribe: (a) => `⭐ ${a.displayName} vient de s'abonner !`,
+  cheer: (a) => `💎 ${a.displayName} a cheer ${a.extra} bits !`,
+  raid: (a) => `🚀 Raid de ${a.displayName} (${a.extra} viewers) !`,
+};
+
+function renderActivity(recent) {
+  const items = recent.slice(0, RECENT_ACTIVITY_DISPLAY_MAX).map((a) => {
+    const label = ACTIVITY_LABELS[a.kind];
+    return label ? `<span class="activity-feed-item">${escapeHtml(label(a))}</span>` : '';
+  });
+  // dupliqué pour un défilement continu sans trou visible
+  activityFeedTrackEl.innerHTML = items.join('') + items.join('');
+}
+
+function renderPeople(people) {
+  const mode = settings.followList.mode;
+  let list = [];
+  if (mode === 'followers') list = people.followers;
+  else if (mode === 'subs') list = people.subs;
+  else {
+    list = [
+      ...people.followers.map((p) => ({ ...p, tag: '💜' })),
+      ...people.subs.map((p) => ({ ...p, tag: '⭐' })),
+    ].sort((a, b) => b.since - a.since);
+  }
+  const items = list.map((p) => `<span class="follow-list-item">${p.tag || ''} ${escapeHtml(p.displayName)}</span>`);
+  followListTrackEl.innerHTML = items.join('') + items.join('');
+}
+
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
 // Couleur stable par pseudo (mode "palette"), utile quand Twitch ne fournit pas de couleur perso.
+const RECENT_ACTIVITY_DISPLAY_MAX = 15;
 const CHAT_PALETTE = ['#ff6ec7', '#18dcff', '#ffd633', '#2ed573', '#9147ff', '#ff9f43', '#ff4757', '#3742fa', '#7bed9f', '#eccc68'];
 function paletteColorFor(login) {
   let hash = 0;
@@ -616,9 +684,11 @@ function showEvent(eventType, event, cast) {
   }
 }
 
+const PREVIEW_MODE = new URLSearchParams(location.search).get('preview') === '1';
+
 function connect() {
   const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${protocol}://${location.host}/ws`);
+  const ws = new WebSocket(`${protocol}://${location.host}/ws${PREVIEW_MODE ? '?preview=1' : ''}`);
 
   ws.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
@@ -632,6 +702,10 @@ function connect() {
     if (data.type === 'chatlog') addChatLogMessage(data);
     if (data.type === 'chatlog-delete') removeChatLogMessage(data.id);
     if (data.type === 'chatlog-clear') clearChatLogMessages(data.login);
+    if (data.type === 'activity') {
+      renderActivity(data.recent);
+      renderPeople(data.people);
+    }
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

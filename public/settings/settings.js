@@ -61,6 +61,45 @@ const chatOverlayFields = {
   heightOut: document.getElementById('chat-height-out'),
 };
 
+const activityFeedFields = {
+  enabled: document.getElementById('activity-enabled'),
+  speed: document.getElementById('activity-speed'),
+  fontSize: document.getElementById('activity-fontsize'),
+  fontSizeOut: document.getElementById('activity-fontsize-out'),
+  textColor: document.getElementById('activity-textcolor'),
+  bgColor: document.getElementById('activity-bgcolor'),
+  bgOpacity: document.getElementById('activity-bgopacity'),
+  bgOpacityOut: document.getElementById('activity-bgopacity-out'),
+  posX: document.getElementById('activity-posx'),
+  posXOut: document.getElementById('activity-posx-out'),
+  posY: document.getElementById('activity-posy'),
+  posYOut: document.getElementById('activity-posy-out'),
+  width: document.getElementById('activity-width'),
+  widthOut: document.getElementById('activity-width-out'),
+  height: document.getElementById('activity-height'),
+  heightOut: document.getElementById('activity-height-out'),
+};
+
+const followListFields = {
+  enabled: document.getElementById('followlist-enabled'),
+  mode: document.getElementById('followlist-mode'),
+  speed: document.getElementById('followlist-speed'),
+  fontSize: document.getElementById('followlist-fontsize'),
+  fontSizeOut: document.getElementById('followlist-fontsize-out'),
+  textColor: document.getElementById('followlist-textcolor'),
+  bgColor: document.getElementById('followlist-bgcolor'),
+  bgOpacity: document.getElementById('followlist-bgopacity'),
+  bgOpacityOut: document.getElementById('followlist-bgopacity-out'),
+  posX: document.getElementById('followlist-posx'),
+  posXOut: document.getElementById('followlist-posx-out'),
+  posY: document.getElementById('followlist-posy'),
+  posYOut: document.getElementById('followlist-posy-out'),
+  width: document.getElementById('followlist-width'),
+  widthOut: document.getElementById('followlist-width-out'),
+  height: document.getElementById('followlist-height'),
+  heightOut: document.getElementById('followlist-height-out'),
+};
+
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
 for (const type of EVENT_TYPES) {
@@ -129,6 +168,18 @@ function updateOutputs() {
   chatOverlayFields.posYOut.textContent = `${chatOverlayFields.posY.value}%`;
   chatOverlayFields.widthOut.textContent = `${chatOverlayFields.width.value}%`;
   chatOverlayFields.heightOut.textContent = `${chatOverlayFields.height.value}%`;
+  activityFeedFields.fontSizeOut.textContent = `${activityFeedFields.fontSize.value}px`;
+  activityFeedFields.bgOpacityOut.textContent = `${activityFeedFields.bgOpacity.value}%`;
+  activityFeedFields.posXOut.textContent = `${activityFeedFields.posX.value}%`;
+  activityFeedFields.posYOut.textContent = `${activityFeedFields.posY.value}%`;
+  activityFeedFields.widthOut.textContent = `${activityFeedFields.width.value}%`;
+  activityFeedFields.heightOut.textContent = `${activityFeedFields.height.value}%`;
+  followListFields.fontSizeOut.textContent = `${followListFields.fontSize.value}px`;
+  followListFields.bgOpacityOut.textContent = `${followListFields.bgOpacity.value}%`;
+  followListFields.posXOut.textContent = `${followListFields.posX.value}%`;
+  followListFields.posYOut.textContent = `${followListFields.posY.value}%`;
+  followListFields.widthOut.textContent = `${followListFields.width.value}%`;
+  followListFields.heightOut.textContent = `${followListFields.height.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -176,6 +227,18 @@ chatOverlayFields.posX.addEventListener('input', updateOutputs);
 chatOverlayFields.posY.addEventListener('input', updateOutputs);
 chatOverlayFields.width.addEventListener('input', updateOutputs);
 chatOverlayFields.height.addEventListener('input', updateOutputs);
+activityFeedFields.fontSize.addEventListener('input', updateOutputs);
+activityFeedFields.bgOpacity.addEventListener('input', updateOutputs);
+activityFeedFields.posX.addEventListener('input', updateOutputs);
+activityFeedFields.posY.addEventListener('input', updateOutputs);
+activityFeedFields.width.addEventListener('input', updateOutputs);
+activityFeedFields.height.addEventListener('input', updateOutputs);
+followListFields.fontSize.addEventListener('input', updateOutputs);
+followListFields.bgOpacity.addEventListener('input', updateOutputs);
+followListFields.posX.addEventListener('input', updateOutputs);
+followListFields.posY.addEventListener('input', updateOutputs);
+followListFields.width.addEventListener('input', updateOutputs);
+followListFields.height.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -242,6 +305,27 @@ async function loadSettings() {
   chatOverlayFields.posY.value = s.chatOverlay.position.y;
   chatOverlayFields.width.value = s.chatOverlay.position.width;
   chatOverlayFields.height.value = s.chatOverlay.position.height;
+  activityFeedFields.enabled.checked = s.activityFeed.enabled;
+  activityFeedFields.speed.value = s.activityFeed.speedSeconds;
+  activityFeedFields.fontSize.value = s.activityFeed.fontSize;
+  activityFeedFields.textColor.value = s.activityFeed.textColor;
+  activityFeedFields.bgColor.value = s.activityFeed.bgColor;
+  activityFeedFields.bgOpacity.value = s.activityFeed.bgOpacity;
+  activityFeedFields.posX.value = s.activityFeed.position.x;
+  activityFeedFields.posY.value = s.activityFeed.position.y;
+  activityFeedFields.width.value = s.activityFeed.position.width;
+  activityFeedFields.height.value = s.activityFeed.position.height;
+  followListFields.enabled.checked = s.followList.enabled;
+  followListFields.mode.value = s.followList.mode;
+  followListFields.speed.value = s.followList.speedSeconds;
+  followListFields.fontSize.value = s.followList.fontSize;
+  followListFields.textColor.value = s.followList.textColor;
+  followListFields.bgColor.value = s.followList.bgColor;
+  followListFields.bgOpacity.value = s.followList.bgOpacity;
+  followListFields.posX.value = s.followList.position.x;
+  followListFields.posY.value = s.followList.position.y;
+  followListFields.width.value = s.followList.position.width;
+  followListFields.height.value = s.followList.position.height;
   updateOutputs();
 }
 
@@ -315,6 +399,35 @@ async function saveSettings() {
         y: Number(chatOverlayFields.posY.value),
         width: Number(chatOverlayFields.width.value),
         height: Number(chatOverlayFields.height.value),
+      },
+    },
+    activityFeed: {
+      enabled: activityFeedFields.enabled.checked,
+      fontSize: Number(activityFeedFields.fontSize.value),
+      textColor: activityFeedFields.textColor.value,
+      bgColor: activityFeedFields.bgColor.value,
+      bgOpacity: Number(activityFeedFields.bgOpacity.value),
+      speedSeconds: Number(activityFeedFields.speed.value),
+      position: {
+        x: Number(activityFeedFields.posX.value),
+        y: Number(activityFeedFields.posY.value),
+        width: Number(activityFeedFields.width.value),
+        height: Number(activityFeedFields.height.value),
+      },
+    },
+    followList: {
+      enabled: followListFields.enabled.checked,
+      mode: followListFields.mode.value,
+      fontSize: Number(followListFields.fontSize.value),
+      textColor: followListFields.textColor.value,
+      bgColor: followListFields.bgColor.value,
+      bgOpacity: Number(followListFields.bgOpacity.value),
+      speedSeconds: Number(followListFields.speed.value),
+      position: {
+        x: Number(followListFields.posX.value),
+        y: Number(followListFields.posY.value),
+        width: Number(followListFields.width.value),
+        height: Number(followListFields.height.value),
       },
     },
   };
@@ -416,6 +529,24 @@ function updatePreviewMarker() {
         Number(chatOverlayFields.height.value),
         'Chat',
         '#18dcff',
+      );
+    } else if (tool === 'activity') {
+      addPreviewBox(
+        Number(activityFeedFields.posX.value),
+        Number(activityFeedFields.posY.value),
+        Number(activityFeedFields.width.value),
+        Number(activityFeedFields.height.value),
+        'Activité récente',
+        '#ff5ecb',
+      );
+    } else if (tool === 'followlist') {
+      addPreviewBox(
+        Number(followListFields.posX.value),
+        Number(followListFields.posY.value),
+        Number(followListFields.width.value),
+        Number(followListFields.height.value),
+        'Followers/Subs',
+        '#2ed573',
       );
     }
   }
