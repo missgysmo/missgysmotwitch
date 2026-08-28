@@ -32,6 +32,7 @@ body.module-timers-off #timer-layer { display: none !important; }
 body.module-activity-off #activity-feed { display: none !important; }
 body.module-people-off #follow-list { display: none !important; }
 body.module-tamagotchi-off #tamagotchi { display: none !important; }
+body.module-raidcard-off #raid-card { display: none !important; }
 
 #graffiti-canvas {
   position: fixed;
@@ -162,6 +163,41 @@ body.module-tamagotchi-off #tamagotchi { display: none !important; }
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
+
+/* Fiche mémoire raid : avatar + dernier jeu/titre du canal qui raid */
+#raid-card {
+  position: fixed;
+  transform: translate(-50%, -50%) scale(0.9);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-family: system-ui, sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .4s ease, transform .4s ease;
+  max-width: 420px;
+}
+
+#raid-card.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.raid-card-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.4);
+}
+
+.raid-card-info { min-width: 0; }
+.raid-card-name { font-weight: 700; margin-bottom: 2px; }
+.raid-card-game, .raid-card-title { opacity: 0.85; font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.raid-card-viewers { opacity: 0.7; font-size: 0.8em; margin-top: 2px; }
 
 .chat-overlay-name { font-weight: 700; }
 

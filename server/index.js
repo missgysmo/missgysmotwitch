@@ -478,6 +478,20 @@ app.delete('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// Test de la fiche mémoire raid, sans appeler l'API Twitch (sandbox uniquement)
+app.post('/api/admin/test-raid-card', requireAdmin, (req, res) => {
+  broadcastToPreview({
+    type: 'raid-card',
+    login: 'testraider',
+    displayName: 'TestRaider',
+    avatar: '/overlay/sprites/cat.png',
+    game: 'Just Chatting',
+    title: 'Un stream de test bien sympa',
+    viewers: 25,
+  });
+  res.json({ ok: true });
+});
+
 app.post('/api/admin/title-ideas', requireAdmin, (req, res) => {
   const { game, keywords, mood } = req.body || {};
   if (typeof game !== 'string' || typeof keywords !== 'string' || game.length > 80 || keywords.length > 200) {
@@ -611,6 +625,22 @@ function sanitizeFollowListConfig(input, fallback) {
   };
 }
 
+function sanitizeRaidCardConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    durationSeconds: clamp(input?.durationSeconds, 3, 60, fallback.durationSeconds),
+    fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+    },
+  };
+}
+
 function sanitizeTamagotchiConfig(input, fallback) {
   const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
   return {
@@ -634,7 +664,7 @@ function sanitizeTamagotchiConfig(input, fallback) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi, raidCard,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -682,6 +712,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     activityFeed: sanitizeActivityFeedConfig(activityFeed, d.activityFeed),
     followList: sanitizeFollowListConfig(followList, d.followList),
     tamagotchi: sanitizeTamagotchiConfig(tamagotchi, d.tamagotchi),
+    raidCard: sanitizeRaidCardConfig(raidCard, d.raidCard),
   };
 
   store.setSettings(settings);
@@ -752,6 +783,12 @@ function recordActivity(type, event) {
   const t = store.getSettings().tamagotchi;
   const boostByKind = { follow: t.boostFollow, subscribe: t.boostSub, cheer: t.boostCheer, raid: t.boostRaid };
   boostTamagotchi(boostByKind[kind] || 0);
+
+  if (kind === 'raid' && login) {
+    twitchEvents.getChannelInfo({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login })
+      .then((info) => broadcast({ type: 'raid-card', ...info, viewers: extra }))
+      .catch((err) => logError('raid-card', err));
+  }
 }
 
 async function startEventSub() {

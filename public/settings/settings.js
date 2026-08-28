@@ -129,6 +129,25 @@ document.getElementById('tamagotchi-feed-btn')?.addEventListener('click', async 
   await fetch('/api/admin/tamagotchi/feed', { method: 'POST' });
 });
 
+const raidCardFields = {
+  enabled: document.getElementById('raidcard-enabled'),
+  duration: document.getElementById('raidcard-duration'),
+  fontSize: document.getElementById('raidcard-fontsize'),
+  fontSizeOut: document.getElementById('raidcard-fontsize-out'),
+  textColor: document.getElementById('raidcard-textcolor'),
+  bgColor: document.getElementById('raidcard-bgcolor'),
+  bgOpacity: document.getElementById('raidcard-bgopacity'),
+  bgOpacityOut: document.getElementById('raidcard-bgopacity-out'),
+  posX: document.getElementById('raidcard-posx'),
+  posXOut: document.getElementById('raidcard-posx-out'),
+  posY: document.getElementById('raidcard-posy'),
+  posYOut: document.getElementById('raidcard-posy-out'),
+};
+
+document.getElementById('raidcard-test-btn')?.addEventListener('click', async () => {
+  await fetch('/api/admin/test-raid-card', { method: 'POST' });
+});
+
 document.getElementById('titles-generate-btn')?.addEventListener('click', async () => {
   const game = document.getElementById('titles-game').value;
   const keywords = document.getElementById('titles-keywords').value;
@@ -248,6 +267,10 @@ function updateOutputs() {
   tamagotchiFields.sizeOut.textContent = `${tamagotchiFields.size.value}px`;
   tamagotchiFields.posXOut.textContent = `${tamagotchiFields.posX.value}%`;
   tamagotchiFields.posYOut.textContent = `${tamagotchiFields.posY.value}%`;
+  raidCardFields.fontSizeOut.textContent = `${raidCardFields.fontSize.value}px`;
+  raidCardFields.bgOpacityOut.textContent = `${raidCardFields.bgOpacity.value}%`;
+  raidCardFields.posXOut.textContent = `${raidCardFields.posX.value}%`;
+  raidCardFields.posYOut.textContent = `${raidCardFields.posY.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -310,6 +333,10 @@ followListFields.height.addEventListener('input', updateOutputs);
 tamagotchiFields.size.addEventListener('input', updateOutputs);
 tamagotchiFields.posX.addEventListener('input', updateOutputs);
 tamagotchiFields.posY.addEventListener('input', updateOutputs);
+raidCardFields.fontSize.addEventListener('input', updateOutputs);
+raidCardFields.bgOpacity.addEventListener('input', updateOutputs);
+raidCardFields.posX.addEventListener('input', updateOutputs);
+raidCardFields.posY.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -409,6 +436,14 @@ async function loadSettings() {
   tamagotchiFields.boostRaid.value = s.tamagotchi.boostRaid;
   tamagotchiFields.posX.value = s.tamagotchi.position.x;
   tamagotchiFields.posY.value = s.tamagotchi.position.y;
+  raidCardFields.enabled.checked = s.raidCard.enabled;
+  raidCardFields.duration.value = s.raidCard.durationSeconds;
+  raidCardFields.fontSize.value = s.raidCard.fontSize;
+  raidCardFields.textColor.value = s.raidCard.textColor;
+  raidCardFields.bgColor.value = s.raidCard.bgColor;
+  raidCardFields.bgOpacity.value = s.raidCard.bgOpacity;
+  raidCardFields.posX.value = s.raidCard.position.x;
+  raidCardFields.posY.value = s.raidCard.position.y;
   updateOutputs();
 }
 
@@ -525,6 +560,15 @@ async function saveSettings() {
       boostCheer: Number(tamagotchiFields.boostCheer.value),
       boostRaid: Number(tamagotchiFields.boostRaid.value),
       position: { x: Number(tamagotchiFields.posX.value), y: Number(tamagotchiFields.posY.value) },
+    },
+    raidCard: {
+      enabled: raidCardFields.enabled.checked,
+      durationSeconds: Number(raidCardFields.duration.value),
+      fontSize: Number(raidCardFields.fontSize.value),
+      textColor: raidCardFields.textColor.value,
+      bgColor: raidCardFields.bgColor.value,
+      bgOpacity: Number(raidCardFields.bgOpacity.value),
+      position: { x: Number(raidCardFields.posX.value), y: Number(raidCardFields.posY.value) },
     },
   };
   try {
@@ -650,6 +694,13 @@ function updatePreviewMarker() {
         Number(tamagotchiFields.posY.value),
         'Mascotte',
         '#ffd633',
+      );
+    } else if (tool === 'raidcard') {
+      addPreviewMarker(
+        Number(raidCardFields.posX.value),
+        Number(raidCardFields.posY.value),
+        'Fiche raid',
+        '#ff9f43',
       );
     }
   }

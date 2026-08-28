@@ -77,6 +77,34 @@ async function checkFollower({ clientId, clientSecret, broadcasterId, userId }) 
   return (body.total || 0) > 0;
 }
 
+// Fiche mémoire raid : avatar + dernier jeu/titre du canal qui raid, pour l'afficher sur l'overlay.
+async function getChannelInfo({ clientId, clientSecret, login }) {
+  const userRes = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/users?login=${encodeURIComponent(login)}`,
+    { headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
+  if (!userRes.ok) throw new Error(`getChannelInfo (users) failed: ${userRes.status} ${await userRes.text()}`);
+  const userBody = await userRes.json();
+  const user = userBody.data?.[0];
+  if (!user) throw new Error(`Utilisateur Twitch introuvable: ${login}`);
+
+  const channelRes = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/channels?broadcaster_id=${encodeURIComponent(user.id)}`,
+    { headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
+  if (!channelRes.ok) throw new Error(`getChannelInfo (channels) failed: ${channelRes.status} ${await channelRes.text()}`);
+  const channelBody = await channelRes.json();
+  const channel = channelBody.data?.[0] || {};
+
+  return {
+    login: user.login,
+    displayName: user.display_name,
+    avatar: user.profile_image_url,
+    game: channel.game_name || null,
+    title: channel.title || null,
+  };
+}
+
 async function subscribe({ clientId, clientSecret, type, version, condition, sessionId }) {
   const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
     'https://api.twitch.tv/helix/eventsub/subscriptions',
@@ -150,4 +178,4 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent 
   connectSocket();
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, connectEventSub };
+module.exports = { getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, connectEventSub };

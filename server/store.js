@@ -89,6 +89,15 @@ const DEFAULT_SETTINGS = {
     speedSeconds: 30,
     position: { x: 2, y: 2, width: 20, height: 50 },
   },
+  raidCard: {
+    enabled: true,
+    durationSeconds: 12,
+    fontSize: 16,
+    textColor: '#ffffff',
+    bgColor: '#000000',
+    bgOpacity: 70,
+    position: { x: 50, y: 50 },
+  },
   tamagotchi: {
     enabled: false,
     species: 'cat',
@@ -231,6 +240,11 @@ function getSettings() {
       ...DEFAULT_SETTINGS.followList,
       ...(saved.followList || {}),
       position: { ...DEFAULT_SETTINGS.followList.position, ...(saved.followList?.position || {}) },
+    },
+    raidCard: {
+      ...DEFAULT_SETTINGS.raidCard,
+      ...(saved.raidCard || {}),
+      position: { ...DEFAULT_SETTINGS.raidCard.position, ...(saved.raidCard?.position || {}) },
     },
     tamagotchi: {
       ...DEFAULT_SETTINGS.tamagotchi,

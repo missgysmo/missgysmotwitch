@@ -13,6 +13,7 @@ const followListTrackEl = document.getElementById('follow-list-track');
 const tamagotchiEl = document.getElementById('tamagotchi');
 const tamagotchiImgEl = document.getElementById('tamagotchi-img');
 const tamagotchiBarEl = document.getElementById('tamagotchi-bar-fill');
+const raidCardEl = document.getElementById('raid-card');
 
 // Permet d'ajouter chaque module comme source OBS indépendante :
 // /overlay/?modules=avatars,chat,canvas,timers (par défaut, sans le paramètre : tous activés)
@@ -28,6 +29,7 @@ if (!moduleEnabled('timers')) document.body.classList.add('module-timers-off');
 if (!moduleEnabled('activity')) document.body.classList.add('module-activity-off');
 if (!moduleEnabled('people')) document.body.classList.add('module-people-off');
 if (!moduleEnabled('tamagotchi')) document.body.classList.add('module-tamagotchi-off');
+if (!moduleEnabled('raidcard')) document.body.classList.add('module-raidcard-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -108,6 +110,7 @@ function applySettings(newSettings) {
   applyActivityFeedLayout();
   applyFollowListLayout();
   applyTamagotchiLayout();
+  applyRaidCardLayout();
 }
 
 applySettings(settings);
@@ -398,6 +401,34 @@ function renderTamagotchiMood(mood) {
   tamagotchiEl.classList.toggle('mood-happy', mood >= 70);
   tamagotchiEl.classList.toggle('mood-neutral', mood >= 35 && mood < 70);
   tamagotchiEl.classList.toggle('mood-sad', mood < 35);
+}
+
+let raidCardHideTimer = null;
+function applyRaidCardLayout() {
+  const r = settings.raidCard;
+  raidCardEl.style.left = `${r.position.x}%`;
+  raidCardEl.style.top = `${r.position.y}%`;
+  raidCardEl.style.fontSize = `${r.fontSize}px`;
+  raidCardEl.style.color = r.textColor;
+  const rgb = hexToRgb(r.bgColor);
+  raidCardEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${r.bgOpacity / 100})`;
+}
+
+function showRaidCard(data) {
+  const r = settings.raidCard;
+  if (!r.enabled) return;
+  raidCardEl.innerHTML = `
+    <img class="raid-card-avatar" src="${data.avatar || ''}" alt="" />
+    <div class="raid-card-info">
+      <div class="raid-card-name">🚀 ${escapeHtml(data.displayName || data.login)}</div>
+      ${data.game ? `<div class="raid-card-game">${escapeHtml(data.game)}</div>` : ''}
+      ${data.title ? `<div class="raid-card-title">${escapeHtml(data.title)}</div>` : ''}
+      <div class="raid-card-viewers">${data.viewers ?? '?'} viewers</div>
+    </div>
+  `;
+  raidCardEl.classList.add('visible');
+  clearTimeout(raidCardHideTimer);
+  raidCardHideTimer = setTimeout(() => raidCardEl.classList.remove('visible'), r.durationSeconds * 1000);
 }
 
 function hexToRgb(hex) {
@@ -729,6 +760,7 @@ function connect() {
       renderPeople(data.people);
     }
     if (data.type === 'tamagotchi') renderTamagotchiMood(data.mood);
+    if (data.type === 'raid-card') showRaidCard(data);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

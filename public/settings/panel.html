@@ -46,6 +46,7 @@
           <button type="button" class="nav-tab-btn" data-tab="activity"><span class="nav-icon">📣</span>Activité récente</button>
           <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
           <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
+          <button type="button" class="nav-tab-btn" data-tab="raidcard"><span class="nav-icon">🎴</span>Fiche raid</button>
         </div>
         <div class="nav-subtabs" data-cat-group="content" hidden>
           <button type="button" class="nav-tab-btn" data-tab="titles"><span class="nav-icon">💡</span>Titres &amp; idées</button>
@@ -331,6 +332,24 @@
         <label>Position horizontale <input type="range" id="tamagotchi-posx" min="0" max="100" step="1" /><output id="tamagotchi-posx-out"></output></label>
         <label>Position verticale <input type="range" id="tamagotchi-posy" min="0" max="100" step="1" /><output id="tamagotchi-posy-out"></output></label>
         <button type="button" id="tamagotchi-feed-btn">🍬 Nourrir la mascotte</button>
+      </fieldset>
+
+      <fieldset data-nav-panel="raidcard" hidden>
+        <legend>Fiche mémoire raid</legend>
+        <p class="hint">Quand quelqu'un te raid, une petite fiche apparaît avec son avatar, le jeu et le titre de son dernier stream (récupérés depuis Twitch).</p>
+        <label>
+          <input type="checkbox" id="raidcard-enabled" />
+          Activer la fiche raid
+        </label>
+        <label>Durée d'affichage (secondes) <input type="number" id="raidcard-duration" min="3" max="60" step="1" /></label>
+        <label>Taille du texte <input type="range" id="raidcard-fontsize" min="8" max="40" step="1" /><output id="raidcard-fontsize-out"></output></label>
+        <label>Couleur du texte <input type="color" id="raidcard-textcolor" /></label>
+        <label>Couleur de fond <input type="color" id="raidcard-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="raidcard-bgopacity" min="0" max="100" step="1" /><output id="raidcard-bgopacity-out"></output></label>
+        <label>Position horizontale <input type="range" id="raidcard-posx" min="0" max="100" step="1" /><output id="raidcard-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="raidcard-posy" min="0" max="100" step="1" /><output id="raidcard-posy-out"></output></label>
+        <button type="button" id="raidcard-test-btn">Tester la fiche raid</button>
+        <p class="hint">Le test s'affiche uniquement sur l'aperçu sandbox (<code>/overlay/?preview=1</code>), jamais sur le vrai stream.</p>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>
