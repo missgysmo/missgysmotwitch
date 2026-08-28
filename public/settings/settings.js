@@ -424,6 +424,8 @@ document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
   btn.addEventListener('click', () => selectTab(btn));
 });
 
+const avatarSizeFieldset = document.getElementById('avatar-size-fieldset');
+
 document.querySelectorAll('.nav-cat-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-cat-btn').forEach((b) => b.classList.toggle('active', b === btn));
@@ -432,6 +434,8 @@ document.querySelectorAll('.nav-cat-btn').forEach((btn) => {
     });
     const firstTab = document.querySelector(`.nav-subtabs[data-cat-group="${btn.dataset.cat}"] .nav-tab-btn`);
     if (firstTab) selectTab(firstTab);
+    // la taille des avatars ne concerne que la catégorie Avatars
+    avatarSizeFieldset.hidden = btn.dataset.cat !== 'avatars';
     updatePreviewMarker();
   });
 });
