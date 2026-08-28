@@ -86,17 +86,21 @@ legend {
 
 label {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  row-gap: 0.35rem;
-  column-gap: 0.6rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
   font-size: 0.87rem;
   color: #c7c7d1;
 }
-input[type="range"] { flex: 1 1 160px; min-width: 100px; }
+label:has(> input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+}
+input[type="range"] { width: 100%; }
 
 output {
-  min-width: 3.6em;
+  align-self: flex-end;
+  margin-top: -0.25rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-size: 0.8rem;
