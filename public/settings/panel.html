@@ -47,6 +47,7 @@
           <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
           <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
           <button type="button" class="nav-tab-btn" data-tab="raidcard"><span class="nav-icon">🎴</span>Fiche raid</button>
+          <button type="button" class="nav-tab-btn" data-tab="nowplaying"><span class="nav-icon">🎵</span>Musique en cours</button>
           <button type="button" class="nav-tab-btn" data-tab="health"><span class="nav-icon">🩺</span>Santé du bot</button>
           <button type="button" class="nav-tab-btn" data-tab="obslinks"><span class="nav-icon">🔗</span>Liens OBS</button>
         </div>
@@ -394,6 +395,28 @@
         <label>Position verticale <input type="range" id="raidcard-posy" min="0" max="100" step="1" /><output id="raidcard-posy-out"></output></label>
         <button type="button" id="raidcard-test-btn">Tester la fiche raid</button>
         <p class="hint">Le test s'affiche uniquement sur l'aperçu sandbox (<code>/overlay/?preview=1</code>), jamais sur le vrai stream.</p>
+      </fieldset>
+
+      <fieldset data-nav-panel="nowplaying" hidden>
+        <legend>Musique en cours (Spotify)</legend>
+        <p class="hint">Affiche automatiquement le titre, l'artiste et la pochette de ce que tu écoutes sur Spotify.</p>
+        <div id="nowplaying-status" class="nowplaying-status"></div>
+        <label>
+          <input type="checkbox" id="nowplaying-enabled" />
+          Activer l'affichage
+        </label>
+        <label>
+          <input type="checkbox" id="nowplaying-showart" />
+          Afficher la pochette d'album
+        </label>
+        <label>Taille du texte <input type="range" id="nowplaying-fontsize" min="8" max="40" step="1" /><output id="nowplaying-fontsize-out"></output></label>
+        <label>Couleur du texte <input type="color" id="nowplaying-textcolor" /></label>
+        <label>Couleur de fond <input type="color" id="nowplaying-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="nowplaying-bgopacity" min="0" max="100" step="1" /><output id="nowplaying-bgopacity-out"></output></label>
+        <label>Position horizontale <input type="range" id="nowplaying-posx" min="0" max="100" step="1" /><output id="nowplaying-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="nowplaying-posy" min="0" max="100" step="1" /><output id="nowplaying-posy-out"></output></label>
+        <label>Largeur <input type="range" id="nowplaying-width" min="5" max="100" step="1" /><output id="nowplaying-width-out"></output></label>
+        <label>Hauteur <input type="range" id="nowplaying-height" min="5" max="100" step="1" /><output id="nowplaying-height-out"></output></label>
       </fieldset>
 
       <fieldset data-nav-panel="health" hidden>

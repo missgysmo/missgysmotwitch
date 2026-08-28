@@ -14,6 +14,10 @@ const tamagotchiEl = document.getElementById('tamagotchi');
 const tamagotchiImgEl = document.getElementById('tamagotchi-img');
 const tamagotchiBarEl = document.getElementById('tamagotchi-bar-fill');
 const raidCardEl = document.getElementById('raid-card');
+const nowPlayingEl = document.getElementById('now-playing');
+const nowPlayingArtEl = document.getElementById('now-playing-art');
+const nowPlayingTitleEl = document.getElementById('now-playing-title');
+const nowPlayingArtistEl = document.getElementById('now-playing-artist');
 
 // Permet d'ajouter chaque module comme source OBS indépendante :
 // /overlay/?modules=avatars,chat,canvas,timers — sans le paramètre du tout : tous activés
@@ -34,6 +38,7 @@ if (!moduleEnabled('activity')) document.body.classList.add('module-activity-off
 if (!moduleEnabled('people')) document.body.classList.add('module-people-off');
 if (!moduleEnabled('tamagotchi')) document.body.classList.add('module-tamagotchi-off');
 if (!moduleEnabled('raidcard')) document.body.classList.add('module-raidcard-off');
+if (!moduleEnabled('nowplaying')) document.body.classList.add('module-nowplaying-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -108,6 +113,10 @@ let settings = {
     enabled: true, durationSeconds: 12, fontSize: 16, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 70,
     position: { x: 50, y: 50 },
   },
+  nowPlaying: {
+    enabled: false, showArt: true, fontSize: 15, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 60,
+    position: { x: 2, y: 88, width: 26, height: 10 },
+  },
 };
 
 function applySettings(newSettings) {
@@ -131,6 +140,7 @@ function applySettings(newSettings) {
   applyFollowListLayout();
   applyTamagotchiLayout();
   applyRaidCardLayout();
+  applyNowPlayingLayout();
 }
 
 applySettings(settings);
@@ -488,6 +498,29 @@ function showRaidCard(data) {
   raidCardHideTimer = setTimeout(() => raidCardEl.classList.remove('visible'), r.durationSeconds * 1000);
 }
 
+function applyNowPlayingLayout() {
+  const n = settings.nowPlaying;
+  nowPlayingEl.style.left = `${n.position.x}%`;
+  nowPlayingEl.style.top = `${n.position.y}%`;
+  nowPlayingEl.style.width = `${n.position.width}%`;
+  nowPlayingEl.style.height = `${n.position.height}%`;
+  nowPlayingEl.style.fontSize = `${n.fontSize}px`;
+  nowPlayingEl.style.color = n.textColor;
+  const rgb = hexToRgb(n.bgColor);
+  nowPlayingEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${n.bgOpacity / 100})`;
+  nowPlayingEl.classList.toggle('hide-art', !n.showArt);
+}
+
+function renderNowPlaying(track) {
+  const n = settings.nowPlaying;
+  const show = n.enabled && track && track.isPlaying;
+  nowPlayingEl.classList.toggle('visible', !!show);
+  if (!show) return;
+  nowPlayingArtEl.src = track.art || '';
+  nowPlayingTitleEl.textContent = track.title;
+  nowPlayingArtistEl.textContent = track.artist;
+}
+
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
@@ -819,6 +852,7 @@ function connect() {
     if (data.type === 'tamagotchi') renderTamagotchiMood(data.mood);
     if (data.type === 'tamagotchi-reaction') playTamagotchiReaction(data.reaction);
     if (data.type === 'raid-card') showRaidCard(data);
+    if (data.type === 'now-playing') renderNowPlaying(data.track);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

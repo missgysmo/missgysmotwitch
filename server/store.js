@@ -9,6 +9,7 @@ const CANVAS_PATH = path.join(DATA_DIR, 'canvas.json');
 const PEOPLE_PATH = path.join(DATA_DIR, 'people.json');
 const TAMAGOTCHI_PATH = path.join(DATA_DIR, 'tamagotchi.json');
 const VIEWER_NOTES_PATH = path.join(DATA_DIR, 'viewerNotes.json');
+const SPOTIFY_TOKENS_PATH = path.join(DATA_DIR, 'spotifyTokens.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -112,6 +113,15 @@ const DEFAULT_SETTINGS = {
     bgColor: '#000000',
     bgOpacity: 70,
     position: { x: 50, y: 50 },
+  },
+  nowPlaying: {
+    enabled: false,
+    showArt: true,
+    fontSize: 15,
+    textColor: '#ffffff',
+    bgColor: '#000000',
+    bgOpacity: 60,
+    position: { x: 2, y: 88, width: 26, height: 10 },
   },
   tamagotchi: {
     enabled: false,
@@ -256,6 +266,14 @@ function setTokens(tokens) {
   writeJson(TOKENS_PATH, tokens);
 }
 
+function getSpotifyTokens() {
+  return readJson(SPOTIFY_TOKENS_PATH, null);
+}
+
+function setSpotifyTokens(tokens) {
+  writeJson(SPOTIFY_TOKENS_PATH, tokens);
+}
+
 function mergeEventConfig(defaults, saved) {
   return { ...defaults, ...(saved || {}), position: { ...defaults.position, ...(saved?.position || {}) } };
 }
@@ -310,6 +328,11 @@ function getSettings() {
       ...(saved.raidCard || {}),
       position: { ...DEFAULT_SETTINGS.raidCard.position, ...(saved.raidCard?.position || {}) },
     },
+    nowPlaying: {
+      ...DEFAULT_SETTINGS.nowPlaying,
+      ...(saved.nowPlaying || {}),
+      position: { ...DEFAULT_SETTINGS.nowPlaying.position, ...(saved.nowPlaying?.position || {}) },
+    },
     tamagotchi: {
       ...DEFAULT_SETTINGS.tamagotchi,
       ...(saved.tamagotchi || {}),
@@ -343,6 +366,8 @@ module.exports = {
   setAvatar,
   getTokens,
   setTokens,
+  getSpotifyTokens,
+  setSpotifyTokens,
   getSettings,
   setSettings,
   getCanvas,

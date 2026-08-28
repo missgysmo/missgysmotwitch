@@ -200,6 +200,44 @@ const raidCardFields = {
   posYOut: document.getElementById('raidcard-posy-out'),
 };
 
+const nowPlayingFields = {
+  enabled: document.getElementById('nowplaying-enabled'),
+  showArt: document.getElementById('nowplaying-showart'),
+  fontSize: document.getElementById('nowplaying-fontsize'),
+  fontSizeOut: document.getElementById('nowplaying-fontsize-out'),
+  textColor: document.getElementById('nowplaying-textcolor'),
+  bgColor: document.getElementById('nowplaying-bgcolor'),
+  bgOpacity: document.getElementById('nowplaying-bgopacity'),
+  bgOpacityOut: document.getElementById('nowplaying-bgopacity-out'),
+  posX: document.getElementById('nowplaying-posx'),
+  posXOut: document.getElementById('nowplaying-posx-out'),
+  posY: document.getElementById('nowplaying-posy'),
+  posYOut: document.getElementById('nowplaying-posy-out'),
+  width: document.getElementById('nowplaying-width'),
+  widthOut: document.getElementById('nowplaying-width-out'),
+  height: document.getElementById('nowplaying-height'),
+  heightOut: document.getElementById('nowplaying-height-out'),
+};
+
+async function loadSpotifyStatus() {
+  const statusEl = document.getElementById('nowplaying-status');
+  if (!statusEl) return;
+  try {
+    const res = await fetch('/api/admin/spotify-status');
+    const data = await res.json();
+    if (!data.configured) {
+      statusEl.innerHTML = 'Spotify n\'est pas configuré côté serveur (SPOTIFY_CLIENT_ID/SECRET manquants).';
+    } else if (data.connected) {
+      statusEl.innerHTML = '🟢 Spotify connecté <a href="/auth/spotify">Se reconnecter</a>';
+    } else {
+      statusEl.innerHTML = '⚪ Spotify non connecté <a href="/auth/spotify">Se connecter à Spotify</a>';
+    }
+  } catch {
+    statusEl.textContent = 'Impossible de vérifier le statut Spotify.';
+  }
+}
+loadSpotifyStatus();
+
 document.getElementById('raidcard-test-btn')?.addEventListener('click', async () => {
   await fetch('/api/admin/test-raid-card', { method: 'POST' });
 });
@@ -427,6 +465,7 @@ const OBS_MODULES = [
   { id: 'people', label: '📜 Liste followers/subs' },
   { id: 'tamagotchi', label: '🐾 Mascotte' },
   { id: 'raidcard', label: '🎴 Fiche raid' },
+  { id: 'nowplaying', label: '🎵 Musique en cours' },
 ];
 
 function initObsLinkGenerator() {
@@ -650,6 +689,12 @@ function updateOutputs() {
   raidCardFields.bgOpacityOut.textContent = `${raidCardFields.bgOpacity.value}%`;
   raidCardFields.posXOut.textContent = `${raidCardFields.posX.value}%`;
   raidCardFields.posYOut.textContent = `${raidCardFields.posY.value}%`;
+  nowPlayingFields.fontSizeOut.textContent = `${nowPlayingFields.fontSize.value}px`;
+  nowPlayingFields.bgOpacityOut.textContent = `${nowPlayingFields.bgOpacity.value}%`;
+  nowPlayingFields.posXOut.textContent = `${nowPlayingFields.posX.value}%`;
+  nowPlayingFields.posYOut.textContent = `${nowPlayingFields.posY.value}%`;
+  nowPlayingFields.widthOut.textContent = `${nowPlayingFields.width.value}%`;
+  nowPlayingFields.heightOut.textContent = `${nowPlayingFields.height.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -716,6 +761,12 @@ raidCardFields.fontSize.addEventListener('input', updateOutputs);
 raidCardFields.bgOpacity.addEventListener('input', updateOutputs);
 raidCardFields.posX.addEventListener('input', updateOutputs);
 raidCardFields.posY.addEventListener('input', updateOutputs);
+nowPlayingFields.fontSize.addEventListener('input', updateOutputs);
+nowPlayingFields.bgOpacity.addEventListener('input', updateOutputs);
+nowPlayingFields.posX.addEventListener('input', updateOutputs);
+nowPlayingFields.posY.addEventListener('input', updateOutputs);
+nowPlayingFields.width.addEventListener('input', updateOutputs);
+nowPlayingFields.height.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -834,6 +885,16 @@ async function loadSettings() {
   raidCardFields.bgOpacity.value = s.raidCard.bgOpacity;
   raidCardFields.posX.value = s.raidCard.position.x;
   raidCardFields.posY.value = s.raidCard.position.y;
+  nowPlayingFields.enabled.checked = s.nowPlaying.enabled;
+  nowPlayingFields.showArt.checked = s.nowPlaying.showArt;
+  nowPlayingFields.fontSize.value = s.nowPlaying.fontSize;
+  nowPlayingFields.textColor.value = s.nowPlaying.textColor;
+  nowPlayingFields.bgColor.value = s.nowPlaying.bgColor;
+  nowPlayingFields.bgOpacity.value = s.nowPlaying.bgOpacity;
+  nowPlayingFields.posX.value = s.nowPlaying.position.x;
+  nowPlayingFields.posY.value = s.nowPlaying.position.y;
+  nowPlayingFields.width.value = s.nowPlaying.position.width;
+  nowPlayingFields.height.value = s.nowPlaying.position.height;
   for (const key of SOCIAL_PLATFORM_KEYS) {
     socialLinkFields[key].enabled.checked = s.socialPlatforms[key];
     socialLinkFields[key].link.value = s.socialLinks[key];
@@ -972,6 +1033,20 @@ async function saveSettings() {
       bgOpacity: Number(raidCardFields.bgOpacity.value),
       position: { x: Number(raidCardFields.posX.value), y: Number(raidCardFields.posY.value) },
     },
+    nowPlaying: {
+      enabled: nowPlayingFields.enabled.checked,
+      showArt: nowPlayingFields.showArt.checked,
+      fontSize: Number(nowPlayingFields.fontSize.value),
+      textColor: nowPlayingFields.textColor.value,
+      bgColor: nowPlayingFields.bgColor.value,
+      bgOpacity: Number(nowPlayingFields.bgOpacity.value),
+      position: {
+        x: Number(nowPlayingFields.posX.value),
+        y: Number(nowPlayingFields.posY.value),
+        width: Number(nowPlayingFields.width.value),
+        height: Number(nowPlayingFields.height.value),
+      },
+    },
     socialLinks: Object.fromEntries(SOCIAL_PLATFORM_KEYS.map((key) => [key, socialLinkFields[key].link.value])),
     socialPlatforms: Object.fromEntries(SOCIAL_PLATFORM_KEYS.map((key) => [key, socialLinkFields[key].enabled.checked])),
   };
@@ -1106,6 +1181,15 @@ function updatePreviewMarker() {
         Number(raidCardFields.posY.value),
         'Fiche raid',
         '#ff9f43',
+      );
+    } else if (tool === 'nowplaying') {
+      addPreviewBox(
+        Number(nowPlayingFields.posX.value),
+        Number(nowPlayingFields.posY.value),
+        Number(nowPlayingFields.width.value),
+        Number(nowPlayingFields.height.value),
+        'Musique',
+        '#2ed573',
       );
     }
   }

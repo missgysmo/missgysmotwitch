@@ -11,6 +11,7 @@ const store = require('./store');
 const species = require('./species');
 const { createChatTracker } = require('./twitchChat');
 const twitchEvents = require('./twitchEvents');
+const spotifyEvents = require('./spotifyEvents');
 const { generateTitleIdeas } = require('./titleIdeas');
 const { generateSocialPosts } = require('./socialPosts');
 
@@ -20,6 +21,9 @@ const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 const REDIRECT_URI = process.env.TWITCH_REDIRECT_URI || `http://localhost:${PORT}/auth/callback`;
 const SETTINGS_PASSWORD = process.env.SETTINGS_PASSWORD;
+const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
+const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || `http://localhost:${PORT}/auth/spotify/callback`;
 
 // Au lieu de crasher le process sur une erreur inattendue, on la consigne avec l'heure exacte et on continue.
 const DEBUG_LOG_PATH = path.join(store.DATA_DIR, 'debug.log');
@@ -426,6 +430,7 @@ wss.on('connection', (ws, req) => {
   ws.send(JSON.stringify({ type: 'canvas-init', ...store.getCanvas() }));
   ws.send(JSON.stringify({ type: 'activity', recent: recentActivity, people: store.getPeople() }));
   ws.send(JSON.stringify({ type: 'tamagotchi', mood: tamagotchiMood }));
+  ws.send(JSON.stringify({ type: 'now-playing', track: lastNowPlayingTrack }));
   ws.on('close', () => overlayClients.delete(ws));
 });
 
@@ -867,6 +872,24 @@ function sanitizeRaidCardConfig(input, fallback) {
   };
 }
 
+function sanitizeNowPlayingConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    showArt: typeof input?.showArt === 'boolean' ? input.showArt : fallback.showArt,
+    fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
+      height: clamp(input?.position?.height, 5, 100, fallback.position.height),
+    },
+  };
+}
+
 const TAMAGOTCHI_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'bounce', 'awaken'];
 
 function sanitizeTamagotchiChatAction(input, fallback) {
@@ -927,7 +950,7 @@ function dedupeTamagotchiCommands(actions) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi, raidCard, socialLinks, socialPlatforms,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -976,6 +999,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     followList: sanitizeFollowListConfig(followList, d.followList),
     tamagotchi: sanitizeTamagotchiConfig(tamagotchi, d.tamagotchi),
     raidCard: sanitizeRaidCardConfig(raidCard, d.raidCard),
+    nowPlaying: sanitizeNowPlayingConfig(nowPlaying, d.nowPlaying),
     socialLinks: sanitizeSocialLinks(socialLinks, d.socialLinks),
     socialPlatforms: sanitizeSocialPlatforms(socialPlatforms, d.socialPlatforms),
   };
@@ -1014,6 +1038,58 @@ app.get('/auth/callback', async (req, res) => {
     res.status(500).send("Échec de l'autorisation Twitch, voir les logs serveur.");
   }
 });
+
+// --- OAuth Spotify (module "musique en cours") ---
+let spotifyOauthState = null;
+const spotifyStore = { getTokens: store.getSpotifyTokens, setTokens: store.setSpotifyTokens };
+
+app.get('/api/admin/spotify-status', requireAdmin, (req, res) => {
+  res.json({ connected: !!store.getSpotifyTokens(), configured: !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) });
+});
+
+app.get('/auth/spotify', requireAdmin, (req, res) => {
+  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
+    return res.status(500).send("SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET manquant(s) dans les variables d'environnement.");
+  }
+  spotifyOauthState = crypto.randomBytes(16).toString('hex');
+  const url = spotifyEvents.getAuthUrl({ clientId: SPOTIFY_CLIENT_ID, redirectUri: SPOTIFY_REDIRECT_URI, state: spotifyOauthState });
+  res.redirect(url);
+});
+
+app.get('/auth/spotify/callback', async (req, res) => {
+  const { code, state } = req.query;
+  if (!code || state !== spotifyOauthState) return res.status(400).send('État OAuth invalide.');
+  try {
+    const tokens = await spotifyEvents.exchangeCode({ clientId: SPOTIFY_CLIENT_ID, clientSecret: SPOTIFY_CLIENT_SECRET, redirectUri: SPOTIFY_REDIRECT_URI, code });
+    store.setSpotifyTokens(tokens);
+    res.send('Spotify connecté ! Le titre en cours apparaîtra sur l\'overlay si le module est activé. Tu peux fermer cet onglet.');
+    console.log('[spotify] token obtenu et sauvegardé.');
+  } catch (err) {
+    console.error('[spotify] échec échange de code:', err.message);
+    res.status(500).send("Échec de l'autorisation Spotify, voir les logs serveur.");
+  }
+});
+
+// Interroge Spotify toutes les 8s pour savoir ce qui est en écoute, et ne diffuse
+// que lorsque ça change (nouveau titre, pause/lecture) pour ne pas spammer l'overlay.
+let lastNowPlayingKey;
+let lastNowPlayingTrack = null;
+async function pollSpotify() {
+  const settings = store.getSettings();
+  if (!settings.nowPlaying.enabled || !SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !store.getSpotifyTokens()) return;
+  try {
+    const track = await spotifyEvents.getCurrentlyPlaying(spotifyStore, { clientId: SPOTIFY_CLIENT_ID, clientSecret: SPOTIFY_CLIENT_SECRET });
+    const key = track ? `${track.trackId}:${track.isPlaying}` : null;
+    if (key !== lastNowPlayingKey) {
+      lastNowPlayingKey = key;
+      lastNowPlayingTrack = track;
+      broadcast({ type: 'now-playing', track });
+    }
+  } catch (err) {
+    logError('spotify-poll', err);
+  }
+}
+setInterval(pollSpotify, 8000).unref();
 
 // Alimente le fil "activité récente" (session en cours) + la liste persistante des followers/subs, puis diffuse aux overlays.
 function recordActivity(type, event) {
