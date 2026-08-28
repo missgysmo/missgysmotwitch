@@ -198,6 +198,21 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   background: var(--marker-color, #ffd633);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--marker-color, #ffd633) 25%, transparent), 0 0 8px var(--marker-color, #ffd633);
 }
+
+.preview-box {
+  position: absolute;
+  border: 2px dashed var(--marker-color, #ffd633);
+  background: color-mix(in srgb, var(--marker-color, #ffd633) 12%, transparent);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.preview-box .preview-marker-label {
+  position: static;
+  margin: 0;
+  transform: none;
+}
 .preview-marker-label {
   position: absolute;
   top: 100%;

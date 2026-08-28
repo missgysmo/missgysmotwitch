@@ -350,6 +350,18 @@ function addPreviewMarker(x, y, label, color) {
   previewMarkersEl.appendChild(marker);
 }
 
+function addPreviewBox(x, y, width, height, label, color) {
+  const box = document.createElement('div');
+  box.className = 'preview-box';
+  box.style.setProperty('--marker-color', color);
+  box.style.left = `${x}%`;
+  box.style.top = `${y}%`;
+  box.style.width = `${width}%`;
+  box.style.height = `${height}%`;
+  box.innerHTML = `<span class="preview-marker-label">${label}</span>`;
+  previewMarkersEl.appendChild(box);
+}
+
 function updatePreviewMarker() {
   const category = document.querySelector('.nav-cat-btn.active')?.dataset.cat;
   previewMarkersEl.innerHTML = '';
@@ -367,12 +379,34 @@ function updatePreviewMarker() {
       );
     }
   } else if (category === 'tools') {
-    for (const type of TIMER_TYPES) {
-      addPreviewMarker(
-        Number(timerFields[type].posX.value),
-        Number(timerFields[type].posY.value),
-        TIMER_MARKER_LABELS[type],
-        TIMER_MARKER_COLORS[type],
+    const activeTab = document.querySelector('.nav-subtabs[data-cat-group="tools"] .nav-tab-btn.active');
+    const tool = activeTab?.dataset.tab;
+    if (tool === 'timers') {
+      for (const type of TIMER_TYPES) {
+        addPreviewMarker(
+          Number(timerFields[type].posX.value),
+          Number(timerFields[type].posY.value),
+          TIMER_MARKER_LABELS[type],
+          TIMER_MARKER_COLORS[type],
+        );
+      }
+    } else if (tool === 'graffiti') {
+      addPreviewBox(
+        Number(graffitiFields.posX.value),
+        Number(graffitiFields.posY.value),
+        Number(graffitiFields.width.value),
+        Number(graffitiFields.height.value),
+        'Graffiti',
+        '#ff9f43',
+      );
+    } else if (tool === 'chatoverlay') {
+      addPreviewBox(
+        Number(chatOverlayFields.posX.value),
+        Number(chatOverlayFields.posY.value),
+        Number(chatOverlayFields.width.value),
+        Number(chatOverlayFields.height.value),
+        'Chat',
+        '#18dcff',
       );
     }
   }
