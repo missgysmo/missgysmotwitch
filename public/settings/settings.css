@@ -173,6 +173,28 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   gap: 0.5rem;
 }
 .event-block h3 { margin: 0; font-size: 0.85rem; color: #c9b3ff; }
+.timer-block {
+  border-top: 1px solid #3a3a45;
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.timer-block:first-of-type { border-top: none; padding-top: 0; }
+.timer-block h3 { margin: 0; font-size: 0.85rem; color: #c9b3ff; }
+.timer-controls { display: flex; gap: 0.5rem; }
+.timer-start-btn, .timer-stop-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.timer-start-btn { border: none; background: #9147ff; color: white; }
+.timer-start-btn:hover { background: #7d2ff0; }
+.timer-stop-btn { border: 1px solid #3a3a45; background: transparent; color: #a9a9b8; }
+.timer-stop-btn:hover { color: #f1f1f5; }
+
 .sound-row {
   display: flex;
   align-items: center;

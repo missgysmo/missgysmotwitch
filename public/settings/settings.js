@@ -41,6 +41,22 @@ for (const type of EVENT_TYPES) {
   };
 }
 
+const TIMER_TYPES = ['intro', 'pause'];
+const timerFields = {};
+for (const type of TIMER_TYPES) {
+  timerFields[type] = {
+    label: document.getElementById(`timer-${type}-label`),
+    duration: document.getElementById(`timer-${type}-duration`),
+    color: document.getElementById(`timer-${type}-color`),
+    size: document.getElementById(`timer-${type}-size`),
+    sizeOut: document.getElementById(`timer-${type}-size-out`),
+    posX: document.getElementById(`timer-${type}-posx`),
+    posXOut: document.getElementById(`timer-${type}-posx-out`),
+    posY: document.getElementById(`timer-${type}-posy`),
+    posYOut: document.getElementById(`timer-${type}-posy-out`),
+  };
+}
+
 const movementPatternEl = document.getElementById('movementPattern');
 const mirrorOnDirectionEl = document.getElementById('mirrorOnDirection');
 const transitionEffectEl = document.getElementById('transitionEffect');
@@ -55,6 +71,11 @@ function updateOutputs() {
     eventFields[type].sizeOut.textContent = `${eventFields[type].size.value}px`;
     eventFields[type].posXOut.textContent = `${eventFields[type].posX.value}%`;
     eventFields[type].posYOut.textContent = `${eventFields[type].posY.value}%`;
+  }
+  for (const type of TIMER_TYPES) {
+    timerFields[type].sizeOut.textContent = `${timerFields[type].size.value}px`;
+    timerFields[type].posXOut.textContent = `${timerFields[type].posX.value}%`;
+    timerFields[type].posYOut.textContent = `${timerFields[type].posY.value}%`;
   }
   updateZonePreview();
 }
@@ -85,6 +106,11 @@ for (const type of EVENT_TYPES) {
   eventFields[type].size.addEventListener('input', updateOutputs);
   eventFields[type].posX.addEventListener('input', updateOutputs);
   eventFields[type].posY.addEventListener('input', updateOutputs);
+}
+for (const type of TIMER_TYPES) {
+  timerFields[type].size.addEventListener('input', updateOutputs);
+  timerFields[type].posX.addEventListener('input', updateOutputs);
+  timerFields[type].posY.addEventListener('input', updateOutputs);
 }
 
 async function loadSettings() {
@@ -122,11 +148,18 @@ async function loadSettings() {
   for (const id in spriteFlipFields) {
     spriteFlipFields[id].checked = !!s.spriteFlip[id];
   }
+  for (const type of TIMER_TYPES) {
+    timerFields[type].label.value = s.timers[type].label;
+    timerFields[type].duration.value = s.timers[type].durationSeconds;
+    timerFields[type].color.value = s.timers[type].color;
+    timerFields[type].size.value = s.timers[type].fontSize;
+    timerFields[type].posX.value = s.timers[type].position.x;
+    timerFields[type].posY.value = s.timers[type].position.y;
+  }
   updateOutputs();
 }
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+async function saveSettings() {
   statusEl.textContent = 'Enregistrement...';
   const payload = {
     avatarSize: Number(fields.avatarSize.el.value),
@@ -161,6 +194,13 @@ form.addEventListener('submit', async (e) => {
       position: { x: Number(eventFields[type].posX.value), y: Number(eventFields[type].posY.value) },
     }])),
     spriteFlip: Object.fromEntries(Object.entries(spriteFlipFields).map(([id, cb]) => [id, cb.checked])),
+    timers: Object.fromEntries(TIMER_TYPES.map((type) => [type, {
+      label: timerFields[type].label.value,
+      durationSeconds: Number(timerFields[type].duration.value),
+      color: timerFields[type].color.value,
+      fontSize: Number(timerFields[type].size.value),
+      position: { x: Number(timerFields[type].posX.value), y: Number(timerFields[type].posY.value) },
+    }])),
   };
   try {
     const res = await fetch('/api/settings', {
@@ -174,6 +214,11 @@ form.addEventListener('submit', async (e) => {
     statusEl.textContent = 'Erreur lors de l\'enregistrement.';
     console.error(err);
   }
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  saveSettings();
 });
 
 loadTestAvatars().then(loadSettings);
@@ -262,6 +307,24 @@ for (const type of EVENT_TYPES) {
     updateSoundStatus(type, null);
   });
 }
+
+document.querySelectorAll('.timer-start-btn').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      await saveSettings();
+      await fetch(`/api/admin/timer/${btn.dataset.timer}/start`, { method: 'POST' });
+    } finally {
+      btn.disabled = false;
+    }
+  });
+});
+
+document.querySelectorAll('.timer-stop-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    fetch(`/api/admin/timer/${btn.dataset.timer}/stop`, { method: 'POST' });
+  });
+});
 
 document.querySelectorAll('.test-event-btn').forEach((btn) => {
   btn.addEventListener('click', async () => {

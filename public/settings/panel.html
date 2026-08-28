@@ -49,6 +49,7 @@
         <button type="button" class="nav-tab-btn" data-tab="presence">Présence</button>
         <button type="button" class="nav-tab-btn" data-tab="nametag">Pseudo</button>
         <button type="button" class="nav-tab-btn" data-tab="owner">Mon avatar</button>
+        <button type="button" class="nav-tab-btn" data-tab="timers">Chronomètres</button>
         <button type="button" class="nav-tab-btn" data-tab="follow">Follow</button>
         <button type="button" class="nav-tab-btn" data-tab="subscribe">Sub</button>
         <button type="button" class="nav-tab-btn" data-tab="cheer">Cheer</button>
@@ -141,6 +142,39 @@
           <input type="checkbox" id="ownerFlip" />
           Inverser l'orientation
         </label>
+      </fieldset>
+
+      <fieldset data-nav-panel="timers" hidden>
+        <legend>Chronomètres</legend>
+        <p class="hint">Décomptes affichés sur l'overlay. Démarre-les/arrête-les en direct depuis ici.</p>
+
+        <div class="timer-block">
+          <h3>Intro de live</h3>
+          <label>Texte <input type="text" id="timer-intro-label" maxlength="100" /></label>
+          <label>Durée (secondes) <input type="number" id="timer-intro-duration" min="5" max="7200" step="5" /></label>
+          <label>Couleur <input type="color" id="timer-intro-color" /></label>
+          <label>Taille <input type="range" id="timer-intro-size" min="12" max="80" step="1" /><output id="timer-intro-size-out"></output></label>
+          <label>Position horizontale <input type="range" id="timer-intro-posx" min="0" max="100" step="1" /><output id="timer-intro-posx-out"></output></label>
+          <label>Position verticale <input type="range" id="timer-intro-posy" min="0" max="100" step="1" /><output id="timer-intro-posy-out"></output></label>
+          <div class="timer-controls">
+            <button type="button" class="timer-start-btn" data-timer="intro">Démarrer</button>
+            <button type="button" class="timer-stop-btn" data-timer="intro">Arrêter</button>
+          </div>
+        </div>
+
+        <div class="timer-block">
+          <h3>Pause / AFK</h3>
+          <label>Texte <input type="text" id="timer-pause-label" maxlength="100" /></label>
+          <label>Durée (secondes) <input type="number" id="timer-pause-duration" min="5" max="7200" step="5" /></label>
+          <label>Couleur <input type="color" id="timer-pause-color" /></label>
+          <label>Taille <input type="range" id="timer-pause-size" min="12" max="80" step="1" /><output id="timer-pause-size-out"></output></label>
+          <label>Position horizontale <input type="range" id="timer-pause-posx" min="0" max="100" step="1" /><output id="timer-pause-posx-out"></output></label>
+          <label>Position verticale <input type="range" id="timer-pause-posy" min="0" max="100" step="1" /><output id="timer-pause-posy-out"></output></label>
+          <div class="timer-controls">
+            <button type="button" class="timer-start-btn" data-timer="pause">Démarrer</button>
+            <button type="button" class="timer-stop-btn" data-timer="pause">Arrêter</button>
+          </div>
+        </div>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>

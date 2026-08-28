@@ -217,6 +217,57 @@ function wander(login) {
   entry.moveTimer = setTimeout(() => wander(login), wait);
 }
 
+const timerEls = {}; // id -> { el, interval }
+
+function formatTimer(ms) {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function handleTimerMessage(data) {
+  const existing = timerEls[data.id];
+
+  if (data.action === 'stop' || (data.action === 'start' && data.endAt <= Date.now())) {
+    if (existing) {
+      clearInterval(existing.interval);
+      existing.el.remove();
+      delete timerEls[data.id];
+    }
+    return;
+  }
+
+  if (existing) {
+    clearInterval(existing.interval);
+    existing.el.remove();
+  }
+
+  const el = document.createElement('div');
+  el.className = 'timer-box';
+  el.style.left = `${data.cfg.position.x}%`;
+  el.style.top = `${data.cfg.position.y}%`;
+  el.style.color = data.cfg.color;
+  el.style.fontSize = `${data.cfg.fontSize}px`;
+  el.innerHTML = `<div class="timer-label">${escapeHtml(data.cfg.label)}</div><div class="timer-value"></div>`;
+  eventLayer.appendChild(el);
+
+  const valueEl = el.querySelector('.timer-value');
+  function tick() {
+    const remaining = data.endAt - Date.now();
+    if (remaining <= 0) {
+      valueEl.textContent = formatTimer(0);
+      clearInterval(timerEls[data.id].interval);
+      setTimeout(() => { el.remove(); delete timerEls[data.id]; }, 1500);
+      return;
+    }
+    valueEl.textContent = formatTimer(remaining);
+  }
+  tick();
+  const interval = setInterval(tick, 250);
+  timerEls[data.id] = { el, interval };
+}
+
 const CHAT_BUBBLE_MS = 5000;
 
 function showChatBubble(login, text) {
@@ -419,6 +470,7 @@ function connect() {
     if (data.type === 'state') syncState(data.viewers);
     if (data.type === 'event') showEvent(data.eventType, data.event, data.cast);
     if (data.type === 'chat') showChatBubble(data.login, data.text);
+    if (data.type === 'timer') handleTimerMessage(data);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

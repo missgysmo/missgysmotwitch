@@ -143,3 +143,24 @@ body.hide-names .avatar-name {
   80% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -50%) translateY(-20px) scale(0.9); }
 }
+
+.timer-box {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  text-shadow: 0 2px 8px rgba(0,0,0,.7), 0 0 3px rgba(0,0,0,.9);
+}
+
+.timer-label {
+  font-size: 0.4em;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-bottom: 0.15em;
+}
+
+.timer-value {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}

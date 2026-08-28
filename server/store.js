@@ -43,6 +43,10 @@ const DEFAULT_SETTINGS = {
     'skate-boy': false,
     witch: false,
   },
+  timers: {
+    intro: { label: 'Le stream démarre dans...', durationSeconds: 300, color: '#ffffff', fontSize: 32, position: { x: 50, y: 50 } },
+    pause: { label: 'De retour dans...', durationSeconds: 300, color: '#ffffff', fontSize: 32, position: { x: 50, y: 50 } },
+  },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null },
@@ -100,6 +104,10 @@ function getSettings() {
     zone: { ...DEFAULT_SETTINGS.zone, ...(saved.zone || {}) },
     nameTag: { ...DEFAULT_SETTINGS.nameTag, ...(saved.nameTag || {}) },
     spriteFlip: { ...DEFAULT_SETTINGS.spriteFlip, ...(saved.spriteFlip || {}) },
+    timers: {
+      intro: { ...DEFAULT_SETTINGS.timers.intro, ...(saved.timers?.intro || {}), position: { ...DEFAULT_SETTINGS.timers.intro.position, ...(saved.timers?.intro?.position || {}) } },
+      pause: { ...DEFAULT_SETTINGS.timers.pause, ...(saved.timers?.pause || {}), position: { ...DEFAULT_SETTINGS.timers.pause.position, ...(saved.timers?.pause?.position || {}) } },
+    },
     events: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),
       subscribe: mergeEventConfig(DEFAULT_SETTINGS.events.subscribe, saved.events?.subscribe),

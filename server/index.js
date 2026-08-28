@@ -218,11 +218,36 @@ const chatTracker = createChatTracker(CHANNEL, {
   },
 });
 
+// Chronomètres (intro / pause) : état éphémère en mémoire, pas persisté sur disque.
+const activeTimers = {}; // id -> endAt (ms epoch)
+
 wss.on('connection', (ws) => {
   overlayClients.add(ws);
   ws.send(JSON.stringify({ type: 'settings', settings: store.getSettings() }));
   ws.send(JSON.stringify(buildState()));
+  for (const [id, endAt] of Object.entries(activeTimers)) {
+    if (endAt > Date.now()) {
+      ws.send(JSON.stringify({ type: 'timer', id, action: 'start', endAt, cfg: store.getSettings().timers[id] }));
+    }
+  }
   ws.on('close', () => overlayClients.delete(ws));
+});
+
+app.post('/api/admin/timer/:id/start', requireAdmin, (req, res) => {
+  const id = req.params.id;
+  const settings = store.getSettings();
+  if (!settings.timers[id]) return res.status(400).json({ error: 'chronomètre invalide' });
+  const endAt = Date.now() + settings.timers[id].durationSeconds * 1000;
+  activeTimers[id] = endAt;
+  broadcast({ type: 'timer', id, action: 'start', endAt, cfg: settings.timers[id] });
+  res.json({ ok: true, endAt });
+});
+
+app.post('/api/admin/timer/:id/stop', requireAdmin, (req, res) => {
+  const id = req.params.id;
+  delete activeTimers[id];
+  broadcast({ type: 'timer', id, action: 'stop' });
+  res.json({ ok: true });
 });
 
 // --- API personnalisation ---
@@ -332,10 +357,24 @@ function sanitizeEventConfig(input, fallback) {
   };
 }
 
+function sanitizeTimerConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    label: typeof input?.label === 'string' && input.label.trim() ? input.label.slice(0, 100) : fallback.label,
+    durationSeconds: clamp(input?.durationSeconds, 5, 7200, fallback.durationSeconds),
+    color: HEX_COLOR.test(input?.color) ? input.color : fallback.color,
+    fontSize: clamp(input?.fontSize, 12, 80, fallback.fontSize),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+    },
+  };
+}
+
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -374,6 +413,10 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     spriteFlip: Object.fromEntries(
       Object.keys(d.spriteFlip).map((id) => [id, typeof spriteFlip?.[id] === 'boolean' ? spriteFlip[id] : d.spriteFlip[id]])
     ),
+    timers: {
+      intro: sanitizeTimerConfig(timers?.intro, d.timers.intro),
+      pause: sanitizeTimerConfig(timers?.pause, d.timers.pause),
+    },
   };
 
   store.setSettings(settings);
