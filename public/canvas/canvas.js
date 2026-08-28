@@ -19,6 +19,8 @@ const templateImg = document.getElementById('template-img');
 const templateOpacityWrap = document.getElementById('template-opacity-wrap');
 const templateOpacity = document.getElementById('template-opacity');
 const templateClearBtn = document.getElementById('template-clear');
+const eraseBtn = document.getElementById('erase-btn');
+const cellInfoEl = document.getElementById('cell-info');
 
 const COLORS = [
   ['#ff4757', 'Rouge'], ['#3742fa', 'Bleu'], ['#2ed573', 'Vert'], ['#ffd633', 'Jaune'],
@@ -46,11 +48,19 @@ function buildPalette() {
       document.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
       btn.classList.add('active');
       stickerSelect.value = '';
+      eraseBtn.classList.remove('active');
     });
     paletteEl.appendChild(btn);
   });
 }
 buildPalette();
+
+eraseBtn.addEventListener('click', () => {
+  brush = { type: 'erase' };
+  document.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
+  eraseBtn.classList.add('active');
+  stickerSelect.value = '';
+});
 
 async function loadSpecies() {
   const res = await fetch('/api/species');
@@ -64,6 +74,7 @@ stickerSelect.addEventListener('change', () => {
   if (!stickerSelect.value) return;
   brush = { type: 'sticker', species: stickerSelect.value };
   document.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
+  eraseBtn.classList.remove('active');
 });
 
 const stickerImages = {};
@@ -215,7 +226,7 @@ canvasEl.addEventListener('click', async (e) => {
 
   const body = { login, x, y, type: brush.type };
   if (brush.type === 'pixel') body.color = brush.color;
-  else body.species = brush.species;
+  else if (brush.type === 'sticker') body.species = brush.species;
 
   try {
     const res = await fetch('/api/canvas/place', {
@@ -234,6 +245,23 @@ canvasEl.addEventListener('click', async (e) => {
     statusEl.textContent = 'Erreur réseau, réessaie.';
     console.error(err);
   }
+});
+
+canvasEl.addEventListener('mousemove', (e) => {
+  const rect = canvasEl.getBoundingClientRect();
+  const x = Math.floor(((e.clientX - rect.left) / rect.width) * state.cols);
+  const y = Math.floor(((e.clientY - rect.top) / rect.height) * state.rows);
+  const cell = state.cells[`${x},${y}`];
+  if (!cell) {
+    cellInfoEl.textContent = '';
+    return;
+  }
+  const what = cell.type === 'pixel' ? 'une couleur' : `un sticker (${cell.species})`;
+  cellInfoEl.textContent = cell.login ? `${what} posé par ${cell.login}` : what;
+});
+
+canvasEl.addEventListener('mouseleave', () => {
+  cellInfoEl.textContent = '';
 });
 
 loginForm.addEventListener('submit', async (e) => {

@@ -98,7 +98,9 @@ function getCanvas() {
 
 function setCanvasCell(x, y, cell) {
   const canvas = getCanvas();
-  canvas.cells[`${x},${y}`] = cell;
+  const key = `${x},${y}`;
+  if (cell) canvas.cells[key] = cell;
+  else delete canvas.cells[key];
   writeJson(CANVAS_PATH, canvas);
   return canvas;
 }

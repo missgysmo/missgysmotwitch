@@ -79,6 +79,25 @@ button:hover { background: #7d2ff0; }
   font-size: 0.85rem;
 }
 
+#erase-btn {
+  background: transparent;
+  border: 1px solid #3a3a45;
+  color: #a9a9b8;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+}
+#erase-btn:hover { background: rgba(255,255,255,0.05); color: #f1f1f5; }
+#erase-btn.active {
+  background: #9147ff;
+  border-color: #9147ff;
+  color: white;
+}
+
+#cell-info {
+  min-height: 1.2em;
+  color: #c9b3ff;
+}
+
 .zoom-controls {
   display: flex;
   align-items: center;

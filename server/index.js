@@ -364,11 +364,16 @@ app.post('/api/canvas/place', async (req, res) => {
   if (req.body.type === 'pixel') {
     const color = resolveGraffitiColor(String(req.body.color || ''));
     if (!color) return res.status(400).json({ error: 'couleur invalide' });
-    cell = { type: 'pixel', color };
+    cell = { type: 'pixel', color, login };
   } else if (req.body.type === 'sticker') {
     const match = species.getById(String(req.body.species || '').toLowerCase());
     if (!match || match.reserved) return res.status(400).json({ error: 'personnage invalide' });
-    cell = { type: 'sticker', species: match.id };
+    cell = { type: 'sticker', species: match.id, login };
+  } else if (req.body.type === 'erase') {
+    const existing = store.getCanvas().cells[`${x},${y}`];
+    if (!existing) return res.status(400).json({ error: 'Cette case est déjà vide.' });
+    if (existing.login !== login) return res.status(403).json({ error: 'Tu ne peux effacer que tes propres pixels.' });
+    cell = null;
   } else {
     return res.status(400).json({ error: 'type invalide' });
   }
