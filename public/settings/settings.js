@@ -228,12 +228,25 @@ document.getElementById('logout')?.addEventListener('click', async () => {
   location.reload();
 });
 
+function selectTab(btn) {
+  document.querySelectorAll('.nav-tab-btn').forEach((b) => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('[data-nav-panel]').forEach((panel) => {
+    panel.hidden = panel.dataset.navPanel !== btn.dataset.tab;
+  });
+}
+
 document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => selectTab(btn));
+});
+
+document.querySelectorAll('.nav-cat-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.nav-tab-btn').forEach((b) => b.classList.toggle('active', b === btn));
-    document.querySelectorAll('[data-nav-panel]').forEach((panel) => {
-      panel.hidden = panel.dataset.navPanel !== btn.dataset.tab;
+    document.querySelectorAll('.nav-cat-btn').forEach((b) => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.nav-subtabs').forEach((group) => {
+      group.hidden = group.dataset.catGroup !== btn.dataset.cat;
     });
+    const firstTab = document.querySelector(`.nav-subtabs[data-cat-group="${btn.dataset.cat}"] .nav-tab-btn`);
+    if (firstTab) selectTab(firstTab);
   });
 });
 

@@ -15,6 +15,30 @@
     <p>Ajuste la taille des avatars, leur zone de déplacement et leur vitesse. Les changements s'appliquent en direct sur l'overlay, sans rafraîchir OBS.</p>
 
     <form id="form">
+      <nav class="settings-nav">
+        <div class="nav-categories">
+          <button type="button" class="nav-cat-btn active" data-cat="avatars">Avatars</button>
+          <button type="button" class="nav-cat-btn" data-cat="alerts">Alertes</button>
+          <button type="button" class="nav-cat-btn" data-cat="tools">Outils</button>
+        </div>
+        <div class="nav-subtabs" data-cat-group="avatars">
+          <button type="button" class="nav-tab-btn active" data-tab="movement"><span class="nav-icon">🧭</span>Mouvement</button>
+          <button type="button" class="nav-tab-btn" data-tab="presence"><span class="nav-icon">⏳</span>Présence</button>
+          <button type="button" class="nav-tab-btn" data-tab="nametag"><span class="nav-icon">🏷️</span>Pseudo</button>
+          <button type="button" class="nav-tab-btn" data-tab="owner"><span class="nav-icon">👑</span>Mon avatar</button>
+          <button type="button" class="nav-tab-btn" data-tab="test"><span class="nav-icon">🧪</span>Test avatars</button>
+        </div>
+        <div class="nav-subtabs" data-cat-group="alerts" hidden>
+          <button type="button" class="nav-tab-btn" data-tab="follow"><span class="nav-icon">💜</span>Follow</button>
+          <button type="button" class="nav-tab-btn" data-tab="subscribe"><span class="nav-icon">⭐</span>Sub</button>
+          <button type="button" class="nav-tab-btn" data-tab="cheer"><span class="nav-icon">💎</span>Cheer</button>
+          <button type="button" class="nav-tab-btn" data-tab="raid"><span class="nav-icon">🚀</span>Raid</button>
+        </div>
+        <div class="nav-subtabs" data-cat-group="tools" hidden>
+          <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
+        </div>
+      </nav>
+
       <div class="settings-layout">
       <div class="settings-sidebar">
       <fieldset>
@@ -43,28 +67,6 @@
           </div>
         </div>
       </fieldset>
-
-      <nav class="settings-nav">
-        <div class="nav-group">
-          <span class="nav-group-label">Avatars</span>
-          <button type="button" class="nav-tab-btn active" data-tab="movement"><span class="nav-icon">🧭</span>Mouvement</button>
-          <button type="button" class="nav-tab-btn" data-tab="presence"><span class="nav-icon">⏳</span>Présence</button>
-          <button type="button" class="nav-tab-btn" data-tab="nametag"><span class="nav-icon">🏷️</span>Pseudo</button>
-          <button type="button" class="nav-tab-btn" data-tab="owner"><span class="nav-icon">👑</span>Mon avatar</button>
-          <button type="button" class="nav-tab-btn" data-tab="test"><span class="nav-icon">🧪</span>Test avatars</button>
-        </div>
-        <div class="nav-group">
-          <span class="nav-group-label">Alertes</span>
-          <button type="button" class="nav-tab-btn" data-tab="follow"><span class="nav-icon">💜</span>Follow</button>
-          <button type="button" class="nav-tab-btn" data-tab="subscribe"><span class="nav-icon">⭐</span>Sub</button>
-          <button type="button" class="nav-tab-btn" data-tab="cheer"><span class="nav-icon">💎</span>Cheer</button>
-          <button type="button" class="nav-tab-btn" data-tab="raid"><span class="nav-icon">🚀</span>Raid</button>
-        </div>
-        <div class="nav-group">
-          <span class="nav-group-label">Outils</span>
-          <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
-        </div>
-      </nav>
       </div>
 
       <div class="settings-main">
