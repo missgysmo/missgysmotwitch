@@ -104,6 +104,10 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(express.json());
 
+app.get('/api/debug-ip', (req, res) => {
+  res.json({ ip: req.ip, ips: req.ips, xff: req.headers['x-forwarded-for'] });
+});
+
 app.get(['/settings', '/settings/'], (req, res) => {
   const file = isAdmin(req) ? 'panel.html' : 'login.html';
   res.sendFile(path.join(__dirname, '..', 'public', 'settings', file));
