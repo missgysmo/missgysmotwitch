@@ -51,7 +51,7 @@ let settings = {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 } },
     cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 } },
-    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'rain', position: { x: 50, y: 14 } },
+    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 } },
   },
 };
 
@@ -289,6 +289,29 @@ function makeItRain(entry, color) {
   rainDrop(entry, color, RAIN_REPEATS);
 }
 
+const BOUNCE_STEP_MS = 450;
+const BOUNCE_DURATION_MS = 4500;
+
+function bounceStep(entry, color, endAt) {
+  if (Date.now() >= endAt) {
+    entry.el.classList.remove('event-bounce');
+    wander(entry.login);
+    return;
+  }
+  const maxX = Math.max(0, window.innerWidth - settings.avatarSize);
+  const maxY = Math.max(0, window.innerHeight - settings.avatarSize);
+  entry.el.style.left = `${Math.random() * maxX}px`;
+  entry.el.style.top = `${Math.random() * maxY}px`;
+  entry.moveTimer = setTimeout(() => bounceStep(entry, color, endAt), BOUNCE_STEP_MS);
+}
+
+function makeItBounce(entry, color) {
+  clearTimeout(entry.moveTimer);
+  entry.el.style.setProperty('--event-glow', color);
+  entry.el.classList.add('event-bounce');
+  bounceStep(entry, color, Date.now() + BOUNCE_DURATION_MS);
+}
+
 function showEvent(eventType, event) {
   const key = EVENT_KEYS[eventType];
   const cfg = settings.events?.[key];
@@ -296,6 +319,8 @@ function showEvent(eventType, event) {
 
   if (cfg.reaction === 'rain') {
     for (const entry of avatars.values()) makeItRain(entry, cfg.color);
+  } else if (cfg.reaction === 'bounce') {
+    for (const entry of avatars.values()) makeItBounce(entry, cfg.color);
   } else if (cfg.reaction !== 'none') {
     const cls = `event-${cfg.reaction}`;
     for (const entry of avatars.values()) {

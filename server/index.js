@@ -241,7 +241,7 @@ app.delete('/api/admin/test-avatar', requireAdmin, (req, res) => {
 const MOVEMENT_PATTERNS = ['random', 'horizontal', 'vertical', 'circular'];
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
-const EVENT_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'rain'];
+const EVENT_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'rain', 'bounce'];
 
 function sanitizeEventConfig(input, fallback) {
   const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
