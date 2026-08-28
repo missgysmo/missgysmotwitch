@@ -50,6 +50,7 @@
         </div>
         <div class="nav-subtabs" data-cat-group="content" hidden>
           <button type="button" class="nav-tab-btn" data-tab="titles"><span class="nav-icon">💡</span>Titres &amp; idées</button>
+          <button type="button" class="nav-tab-btn" data-tab="socialposts"><span class="nav-icon">📢</span>Posts réseaux sociaux</button>
         </div>
       </nav>
 
@@ -514,6 +515,42 @@
           <ul id="titles-list" class="titles-list"></ul>
           <h3>Tags suggérés</h3>
           <div id="titles-tags" class="titles-tags"></div>
+        </div>
+      </fieldset>
+
+      <fieldset data-nav-panel="socialposts" hidden>
+        <legend>Générateur de posts réseaux sociaux</legend>
+        <p class="hint">Génère un post pour Twitter/X, Discord et Instagram en même temps. Purement local, rien n'est envoyé ailleurs.</p>
+        <label>
+          Moment
+          <select id="social-moment">
+            <option value="live">Je passe en live maintenant</option>
+            <option value="announcement">J'annonce un live à venir</option>
+            <option value="ending">Le live vient de se terminer</option>
+          </select>
+        </label>
+        <label>Jeu / catégorie <input type="text" id="social-game" maxlength="80" placeholder="ex : Stardew Valley" /></label>
+        <label>Message / précision <input type="text" id="social-message" maxlength="200" placeholder="ex : premier run, ambiance chill" /></label>
+        <label>
+          Ambiance
+          <select id="social-mood">
+            <option value="chill">Chill / détente</option>
+            <option value="hype">Hype / énergique</option>
+            <option value="decouverte">Découverte / premier run</option>
+            <option value="retro">Rétro / nostalgie</option>
+            <option value="communaute">Communauté / interactif</option>
+            <option value="challenge">Challenge / difficile</option>
+          </select>
+        </label>
+        <label>Lien à inclure <input type="text" id="social-link" maxlength="200" placeholder="ex : twitch.tv/missgysmo" /></label>
+        <button type="button" id="social-generate-btn">✨ Générer les posts</button>
+        <div id="social-results" class="titles-results" hidden>
+          <h3>Twitter / X</h3>
+          <div class="social-post-block"><pre id="social-twitter"></pre><button type="button" class="titles-copy-btn" data-target="social-twitter">Copier</button></div>
+          <h3>Discord</h3>
+          <div class="social-post-block"><pre id="social-discord"></pre><button type="button" class="titles-copy-btn" data-target="social-discord">Copier</button></div>
+          <h3>Instagram</h3>
+          <div class="social-post-block"><pre id="social-instagram"></pre><button type="button" class="titles-copy-btn" data-target="social-instagram">Copier</button></div>
         </div>
       </fieldset>
 

@@ -184,6 +184,42 @@ function escapeHtmlPanel(str) {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+document.getElementById('social-generate-btn')?.addEventListener('click', async () => {
+  const game = document.getElementById('social-game').value;
+  const message = document.getElementById('social-message').value;
+  const mood = document.getElementById('social-mood').value;
+  const moment = document.getElementById('social-moment').value;
+  const link = document.getElementById('social-link').value;
+  const btn = document.getElementById('social-generate-btn');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/social-posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game, message, mood, moment, link }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const { twitter, discord, instagram } = await res.json();
+    document.getElementById('social-twitter').textContent = twitter;
+    document.getElementById('social-discord').textContent = discord;
+    document.getElementById('social-instagram').textContent = instagram;
+    document.getElementById('social-results').hidden = false;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.querySelectorAll('.social-post-block .titles-copy-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const text = document.getElementById(btn.dataset.target)?.textContent || '';
+    navigator.clipboard?.writeText(text);
+    btn.textContent = 'Copié !';
+    setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
+  });
+});
+
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
 for (const type of EVENT_TYPES) {

@@ -118,6 +118,40 @@ form {
 
 .titles-list button:hover { color: #f1f1f5; border-color: #45455a; }
 
+.social-post-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  background: #14141a;
+  margin-bottom: 1rem;
+}
+
+.social-post-block pre {
+  flex: 1;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  color: #d8d8e6;
+  font-size: 0.85rem;
+}
+
+.social-post-block button {
+  flex-shrink: 0;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #33333e;
+  border-radius: 6px;
+  background: #1c1c24;
+  color: #a9a9b8;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.social-post-block button:hover { color: #f1f1f5; border-color: #45455a; }
+
 .titles-tags {
   display: flex;
   flex-wrap: wrap;
