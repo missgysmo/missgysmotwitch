@@ -139,6 +139,9 @@ body.module-nowplaying-off #now-playing { display: none !important; }
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  /* translate gère le déplacement autonome (walkRadius), transitionné pour un vrai pas plutôt qu'un saut.
+     scale (flip de direction) n'est volontairement pas transitionné : voir walkTamagotchi() dans overlay.js. */
+  transition: translate 1.8s ease-in-out;
 }
 
 #tamagotchi-img {
@@ -232,6 +235,29 @@ body.module-nowplaying-off #now-playing { display: none !important; }
 @keyframes tamagotchiBounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
+}
+
+/* Déplacement autonome (walkRadius) : petit dandinement pendant que le conteneur se déplace */
+#tamagotchi.walking #tamagotchi-img { animation: tamagotchiWalkBob 0.4s ease-in-out infinite; }
+
+@keyframes tamagotchiWalkBob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(-3deg); }
+}
+
+/* Gestes de repos joués aléatoirement entre deux déplacements, pour varier la posture par défaut */
+#tamagotchi.idle-stretch #tamagotchi-img { animation: tamagotchiStretch 1.6s ease-in-out; }
+#tamagotchi.idle-look-left #tamagotchi-img { animation: tamagotchiLookSide 1.6s ease-in-out; }
+#tamagotchi.idle-look-right #tamagotchi-img { animation: tamagotchiLookSide 1.6s ease-in-out reverse; }
+
+@keyframes tamagotchiStretch {
+  0%, 100% { transform: scaleY(1) scaleX(1) translateY(0); }
+  50% { transform: scaleY(1.12) scaleX(0.94) translateY(-5px); }
+}
+
+@keyframes tamagotchiLookSide {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  30%, 70% { transform: rotate(-9deg) translateX(-3px); }
 }
 
 /* Fiche mémoire raid : avatar + dernier jeu/titre du canal qui raid */

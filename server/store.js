@@ -135,6 +135,8 @@ const DEFAULT_SETTINGS = {
     boostCheer: 10,
     boostRaid: 20,
     position: { x: 90, y: 85 },
+    // rayon (en % de l'écran) autour de sa position dans lequel elle se déplace toute seule ; 0 = reste immobile
+    walkRadius: 10,
     // réaction (animation) jouée sur la mascotte pour chaque type d'alerte
     eventReactions: { follow: 'awaken', subscribe: 'awaken', cheer: 'awaken', raid: 'awaken' },
     // actions déclenchables par les followers via une commande de chat

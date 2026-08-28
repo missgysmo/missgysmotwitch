@@ -919,6 +919,7 @@ function sanitizeTamagotchiConfig(input, fallback) {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),
     },
+    walkRadius: clamp(input?.walkRadius, 0, 40, fallback.walkRadius),
     eventReactions: {
       follow: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.follow) ? input.eventReactions.follow : fallback.eventReactions.follow,
       subscribe: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.subscribe) ? input.eventReactions.subscribe : fallback.eventReactions.subscribe,

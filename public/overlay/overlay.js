@@ -19,6 +19,15 @@ const nowPlayingArtEl = document.getElementById('now-playing-art');
 const nowPlayingTitleEl = document.getElementById('now-playing-title');
 const nowPlayingArtistEl = document.getElementById('now-playing-artist');
 
+// Déplacement + gestes de repos de la mascotte : un seul sprite, donc tout est simulé par
+// transformation CSS sur l'image (pas de vraies poses dessinées) plutôt qu'un changement d'image.
+// Déclarés ici (avant applySettings() plus bas) pour éviter une erreur d'accès avant initialisation.
+let tamagotchiBehaviorStarted = false;
+let tamagotchiWalkTimer = null;
+let tamagotchiWalkEndTimer = null;
+let tamagotchiIdleTimer = null;
+const TAMAGOTCHI_IDLE_GESTURES = ['idle-stretch', 'idle-look-left', 'idle-look-right'];
+
 // Permet d'ajouter chaque module comme source OBS indépendante :
 // /overlay/?modules=avatars,chat,canvas,timers — sans le paramètre du tout : tous activés
 // (compatibilité avec les anciens liens). Avec le paramètre présent mais vide (?modules=) :
@@ -106,7 +115,7 @@ let settings = {
     position: { x: 2, y: 2, width: 20, height: 50 },
   },
   tamagotchi: {
-    enabled: false, species: 'mascot', size: 96, showBar: true,
+    enabled: false, species: 'mascot', size: 96, showBar: true, walkRadius: 10,
     position: { x: 90, y: 85 },
   },
   raidCard: {
@@ -430,6 +439,60 @@ function applyTamagotchiLayout() {
   tamagotchiEl.style.width = `${t.size}px`;
   tamagotchiImgEl.src = t.species === 'mascot' ? '/overlay/sprites/mascot.png' : `/overlay/sprites/${SPECIES_FILES[t.species] || SPECIES_FILES.cat}`;
   tamagotchiEl.classList.toggle('hide-bar', !t.showBar);
+  startTamagotchiBehavior();
+}
+
+function tamagotchiMoodFactor() {
+  if (tamagotchiEl.classList.contains('mood-sad')) return 1.6; // triste : bouge moins souvent
+  if (tamagotchiEl.classList.contains('mood-happy')) return 0.65; // contente : plus agitée
+  return 1;
+}
+
+function walkTamagotchi() {
+  const t = settings.tamagotchi;
+  if (!t.enabled || t.walkRadius <= 0) return;
+  const radiusPx = (t.walkRadius / 100) * Math.min(window.innerWidth, window.innerHeight);
+  const angle = Math.random() * Math.PI * 2;
+  const dist = Math.random() * radiusPx;
+  const dx = Math.cos(angle) * dist;
+  const dy = Math.sin(angle) * dist;
+  tamagotchiEl.classList.remove(...TAMAGOTCHI_IDLE_GESTURES);
+  tamagotchiEl.classList.add('walking');
+  // translate/scale séparés (pas transform combiné) : le flip de direction doit être instantané,
+  // sinon le passage transitoire par scaleX(0) pendant l'interpolation écrase le sprite en une ligne.
+  tamagotchiEl.style.translate = `${dx}px ${dy}px`;
+  tamagotchiEl.style.scale = `${dx < 0 ? -1 : 1} 1`;
+  clearTimeout(tamagotchiWalkEndTimer);
+  tamagotchiWalkEndTimer = setTimeout(() => tamagotchiEl.classList.remove('walking'), 1800);
+}
+
+function scheduleNextTamagotchiWalk() {
+  clearTimeout(tamagotchiWalkTimer);
+  const delay = (6000 + Math.random() * 8000) * tamagotchiMoodFactor();
+  tamagotchiWalkTimer = setTimeout(() => {
+    walkTamagotchi();
+    scheduleNextTamagotchiWalk();
+  }, delay);
+}
+
+function scheduleNextTamagotchiIdleGesture() {
+  clearTimeout(tamagotchiIdleTimer);
+  const delay = (4000 + Math.random() * 6000) * tamagotchiMoodFactor();
+  tamagotchiIdleTimer = setTimeout(() => {
+    if (settings.tamagotchi.enabled && !tamagotchiEl.classList.contains('walking')) {
+      const gesture = TAMAGOTCHI_IDLE_GESTURES[Math.floor(Math.random() * TAMAGOTCHI_IDLE_GESTURES.length)];
+      tamagotchiEl.classList.add(gesture);
+      setTimeout(() => tamagotchiEl.classList.remove(gesture), 1800);
+    }
+    scheduleNextTamagotchiIdleGesture();
+  }, delay);
+}
+
+function startTamagotchiBehavior() {
+  if (tamagotchiBehaviorStarted) return;
+  tamagotchiBehaviorStarted = true;
+  scheduleNextTamagotchiWalk();
+  scheduleNextTamagotchiIdleGesture();
 }
 
 function renderTamagotchiMood(mood) {

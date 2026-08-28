@@ -117,6 +117,8 @@ const tamagotchiFields = {
   posXOut: document.getElementById('tamagotchi-posx-out'),
   posY: document.getElementById('tamagotchi-posy'),
   posYOut: document.getElementById('tamagotchi-posy-out'),
+  walkRadius: document.getElementById('tamagotchi-walkradius'),
+  walkRadiusOut: document.getElementById('tamagotchi-walkradius-out'),
 };
 
 async function loadTamagotchiSpeciesOptions() {
@@ -685,6 +687,7 @@ function updateOutputs() {
   tamagotchiFields.sizeOut.textContent = `${tamagotchiFields.size.value}px`;
   tamagotchiFields.posXOut.textContent = `${tamagotchiFields.posX.value}%`;
   tamagotchiFields.posYOut.textContent = `${tamagotchiFields.posY.value}%`;
+  tamagotchiFields.walkRadiusOut.textContent = `${tamagotchiFields.walkRadius.value}%`;
   raidCardFields.fontSizeOut.textContent = `${raidCardFields.fontSize.value}px`;
   raidCardFields.bgOpacityOut.textContent = `${raidCardFields.bgOpacity.value}%`;
   raidCardFields.posXOut.textContent = `${raidCardFields.posX.value}%`;
@@ -757,6 +760,7 @@ followListFields.height.addEventListener('input', updateOutputs);
 tamagotchiFields.size.addEventListener('input', updateOutputs);
 tamagotchiFields.posX.addEventListener('input', updateOutputs);
 tamagotchiFields.posY.addEventListener('input', updateOutputs);
+tamagotchiFields.walkRadius.addEventListener('input', updateOutputs);
 raidCardFields.fontSize.addEventListener('input', updateOutputs);
 raidCardFields.bgOpacity.addEventListener('input', updateOutputs);
 raidCardFields.posX.addEventListener('input', updateOutputs);
@@ -866,6 +870,7 @@ async function loadSettings() {
   tamagotchiFields.boostRaid.value = s.tamagotchi.boostRaid;
   tamagotchiFields.posX.value = s.tamagotchi.position.x;
   tamagotchiFields.posY.value = s.tamagotchi.position.y;
+  tamagotchiFields.walkRadius.value = s.tamagotchi.walkRadius;
   for (const type of EVENT_TYPES_FOR_TAMAGOTCHI) {
     if (tamagotchiEventReactionFields[type]) tamagotchiEventReactionFields[type].value = s.tamagotchi.eventReactions[type];
   }
@@ -1015,6 +1020,7 @@ async function saveSettings() {
       boostCheer: Number(tamagotchiFields.boostCheer.value),
       boostRaid: Number(tamagotchiFields.boostRaid.value),
       position: { x: Number(tamagotchiFields.posX.value), y: Number(tamagotchiFields.posY.value) },
+      walkRadius: Number(tamagotchiFields.walkRadius.value),
       eventReactions: Object.fromEntries(EVENT_TYPES_FOR_TAMAGOTCHI.map((type) => [type, tamagotchiEventReactionFields[type]?.value])),
       chatActions: Object.fromEntries(TAMAGOTCHI_ACTION_IDS.map((id) => [id, {
         enabled: tamagotchiActionFields[id].enabled.checked,
