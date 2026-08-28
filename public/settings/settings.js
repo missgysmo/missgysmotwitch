@@ -250,7 +250,7 @@ for (const type of EVENT_TYPES) {
       if (!res.ok) throw new Error(body.error || 'échec');
       updateSoundStatus(type, body.sound);
     } catch (err) {
-      eventFields[type].soundStatus.textContent = "Échec de l'envoi";
+      eventFields[type].soundStatus.textContent = `Échec de l'envoi : ${err.message}`;
       console.error(err);
     } finally {
       eventFields[type].soundFile.value = '';

@@ -78,11 +78,20 @@ app.use('/sounds', express.static(SOUNDS_DIR, { maxAge: '1y' }));
 
 const soundUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 3 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => cb(null, /^audio\//.test(file.mimetype)),
+  limits: { fileSize: 8 * 1024 * 1024 },
 });
 
-app.post('/api/admin/sound/:type', requireAdmin, soundUpload.single('sound'), (req, res) => {
+app.post('/api/admin/sound/:type', requireAdmin, (req, res) => {
+  soundUpload.single('sound')(req, res, (err) => {
+    if (err) {
+      const message = err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (8 Mo max)' : err.message;
+      return res.status(400).json({ error: message });
+    }
+    handleSoundUpload(req, res);
+  });
+});
+
+function handleSoundUpload(req, res) {
   const type = req.params.type;
   const settings = store.getSettings();
   if (!settings.events[type]) return res.status(400).json({ error: 'type invalide' });
@@ -99,7 +108,7 @@ app.post('/api/admin/sound/:type', requireAdmin, soundUpload.single('sound'), (r
 
   broadcast({ type: 'settings', settings });
   res.json({ ok: true, sound: filename });
-});
+}
 
 app.delete('/api/admin/sound/:type', requireAdmin, (req, res) => {
   const type = req.params.type;
