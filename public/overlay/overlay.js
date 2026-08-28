@@ -1,5 +1,8 @@
 const stage = document.getElementById('stage');
 const eventLayer = document.getElementById('event-layer');
+const GRAFFITI_CELL_PX = 8;
+const graffitiCanvas = document.getElementById('graffiti-canvas');
+const graffitiCtx = graffitiCanvas.getContext('2d');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -40,6 +43,7 @@ let settings = {
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   ownerNameColor: '#ffd633',
   ownerSize: 64,
+  graffiti: { enabled: true, cols: 60, rows: 34, cooldownSeconds: 8, position: { x: 2, y: 58, width: 32, height: 38 } },
   spriteFlip: {
     cat: true, 'cosmic-cat': true, 'cyber-unicorn': true, dino: false,
     girl: false, 'grunge-boy': false, unicorn: false, 'mon-avatar': true,
@@ -70,6 +74,7 @@ function applySettings(newSettings) {
     ownerEntry.el.querySelector('.avatar').style.height = size;
     ownerEntry.el.querySelector('.avatar-name').style.color = settings.ownerNameColor;
   }
+  applyGraffitiLayout();
 }
 
 applySettings(settings);
@@ -215,6 +220,59 @@ function wander(login) {
   // sinon l'avatar est sans cesse redirigé avant d'atteindre sa destination
   const wait = Math.max(settings.moveIntervalMs, settings.transitionSeconds * 1000) + Math.random() * settings.moveVarianceMs;
   entry.moveTimer = setTimeout(() => wander(login), wait);
+}
+
+// --- Graffiti collectif (!pixel / !sticker) ---
+let graffitiState = { cols: 60, rows: 34, cells: {} };
+const stickerImages = {};
+function getStickerImage(species) {
+  if (!stickerImages[species]) {
+    const img = new Image();
+    img.src = `/overlay/sprites/${SPECIES_FILES[species] || SPECIES_FILES.cat}`;
+    stickerImages[species] = img;
+  }
+  return stickerImages[species];
+}
+
+function drawGraffitiCell(x, y, cell) {
+  const px = x * GRAFFITI_CELL_PX;
+  const py = y * GRAFFITI_CELL_PX;
+  graffitiCtx.clearRect(px, py, GRAFFITI_CELL_PX, GRAFFITI_CELL_PX);
+  if (!cell) return;
+  if (cell.type === 'pixel') {
+    graffitiCtx.fillStyle = cell.color;
+    graffitiCtx.fillRect(px, py, GRAFFITI_CELL_PX, GRAFFITI_CELL_PX);
+  } else if (cell.type === 'sticker') {
+    const size = GRAFFITI_CELL_PX * 3;
+    const img = getStickerImage(cell.species);
+    const draw = () => graffitiCtx.drawImage(img, px - GRAFFITI_CELL_PX, py - GRAFFITI_CELL_PX, size, size);
+    if (img.complete) draw();
+    else img.addEventListener('load', draw, { once: true });
+  }
+}
+
+function redrawGraffitiCanvas() {
+  graffitiCtx.clearRect(0, 0, graffitiCanvas.width, graffitiCanvas.height);
+  for (const key in graffitiState.cells) {
+    const [x, y] = key.split(',').map(Number);
+    drawGraffitiCell(x, y, graffitiState.cells[key]);
+  }
+}
+
+function initGraffitiCanvas(data) {
+  graffitiState = { cols: data.cols, rows: data.rows, cells: data.cells || {} };
+  graffitiCanvas.width = graffitiState.cols * GRAFFITI_CELL_PX;
+  graffitiCanvas.height = graffitiState.rows * GRAFFITI_CELL_PX;
+  redrawGraffitiCanvas();
+}
+
+function applyGraffitiLayout() {
+  const g = settings.graffiti;
+  graffitiCanvas.style.display = g.enabled ? 'block' : 'none';
+  graffitiCanvas.style.left = `${g.position.x}%`;
+  graffitiCanvas.style.top = `${g.position.y}%`;
+  graffitiCanvas.style.width = `${g.position.width}%`;
+  graffitiCanvas.style.height = `${g.position.height}%`;
 }
 
 const timerEls = {}; // id -> { el, interval }
@@ -471,6 +529,8 @@ function connect() {
     if (data.type === 'event') showEvent(data.eventType, data.event, data.cast);
     if (data.type === 'chat') showChatBubble(data.login, data.text);
     if (data.type === 'timer') handleTimerMessage(data);
+    if (data.type === 'canvas-init') initGraffitiCanvas(data);
+    if (data.type === 'canvas-update') drawGraffitiCell(data.x, data.y, data.cell);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

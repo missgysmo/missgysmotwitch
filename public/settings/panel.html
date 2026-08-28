@@ -36,6 +36,7 @@
         </div>
         <div class="nav-subtabs" data-cat-group="tools" hidden>
           <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
+          <button type="button" class="nav-tab-btn" data-tab="graffiti"><span class="nav-icon">🎨</span>Graffiti</button>
         </div>
       </nav>
 
@@ -187,6 +188,29 @@
             <button type="button" class="timer-stop-btn" data-timer="pause">Arrêter</button>
           </div>
         </div>
+      </fieldset>
+
+      <fieldset data-nav-panel="graffiti" hidden>
+        <legend>Graffiti collectif</legend>
+        <p class="hint">
+          Une zone de l'overlay où les viewers composent ensemble en tapant dans le chat :
+          <code>!pixel &lt;couleur&gt; &lt;x&gt; &lt;y&gt;</code> (couleurs : rouge, bleu, vert, jaune, violet, blanc, noir, orange, rose, cyan, ou un code hex)
+          et <code>!sticker &lt;personnage&gt; &lt;x&gt; &lt;y&gt;</code> (nom du personnage, ex: cat, dino, ninja).
+          x/y sont des coordonnées de grille, cooldown par viewer réglable ci-dessous.
+        </p>
+        <label>
+          <input type="checkbox" id="graffiti-enabled" />
+          Activer le graffiti
+        </label>
+        <label>Colonnes (largeur de la grille) <input type="number" id="graffiti-cols" min="10" max="150" step="1" /></label>
+        <label>Lignes (hauteur de la grille) <input type="number" id="graffiti-rows" min="10" max="150" step="1" /></label>
+        <p class="hint">Changer le nombre de colonnes/lignes efface le graffiti en cours (les coordonnées ne correspondent plus).</p>
+        <label>Cooldown par viewer (secondes) <input type="number" id="graffiti-cooldown" min="1" max="120" step="1" /></label>
+        <label>Position horizontale <input type="range" id="graffiti-posx" min="0" max="100" step="1" /><output id="graffiti-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="graffiti-posy" min="0" max="100" step="1" /><output id="graffiti-posy-out"></output></label>
+        <label>Largeur <input type="range" id="graffiti-width" min="5" max="100" step="1" /><output id="graffiti-width-out"></output></label>
+        <label>Hauteur <input type="range" id="graffiti-height" min="5" max="100" step="1" /><output id="graffiti-height-out"></output></label>
+        <button type="button" id="graffiti-reset-btn">Réinitialiser le graffiti</button>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>

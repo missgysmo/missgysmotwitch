@@ -22,6 +22,21 @@ const fields = {
 
 const ownerNameColorEl = document.getElementById('ownerNameColor');
 
+const graffitiFields = {
+  enabled: document.getElementById('graffiti-enabled'),
+  cols: document.getElementById('graffiti-cols'),
+  rows: document.getElementById('graffiti-rows'),
+  cooldown: document.getElementById('graffiti-cooldown'),
+  posX: document.getElementById('graffiti-posx'),
+  posXOut: document.getElementById('graffiti-posx-out'),
+  posY: document.getElementById('graffiti-posy'),
+  posYOut: document.getElementById('graffiti-posy-out'),
+  width: document.getElementById('graffiti-width'),
+  widthOut: document.getElementById('graffiti-width-out'),
+  height: document.getElementById('graffiti-height'),
+  heightOut: document.getElementById('graffiti-height-out'),
+};
+
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
 for (const type of EVENT_TYPES) {
@@ -79,6 +94,10 @@ function updateOutputs() {
     timerFields[type].posXOut.textContent = `${timerFields[type].posX.value}%`;
     timerFields[type].posYOut.textContent = `${timerFields[type].posY.value}%`;
   }
+  graffitiFields.posXOut.textContent = `${graffitiFields.posX.value}%`;
+  graffitiFields.posYOut.textContent = `${graffitiFields.posY.value}%`;
+  graffitiFields.widthOut.textContent = `${graffitiFields.width.value}%`;
+  graffitiFields.heightOut.textContent = `${graffitiFields.height.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -115,6 +134,10 @@ for (const type of TIMER_TYPES) {
   timerFields[type].posX.addEventListener('input', updateOutputs);
   timerFields[type].posY.addEventListener('input', updateOutputs);
 }
+graffitiFields.posX.addEventListener('input', updateOutputs);
+graffitiFields.posY.addEventListener('input', updateOutputs);
+graffitiFields.width.addEventListener('input', updateOutputs);
+graffitiFields.height.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -159,6 +182,14 @@ async function loadSettings() {
     timerFields[type].posX.value = s.timers[type].position.x;
     timerFields[type].posY.value = s.timers[type].position.y;
   }
+  graffitiFields.enabled.checked = s.graffiti.enabled;
+  graffitiFields.cols.value = s.graffiti.cols;
+  graffitiFields.rows.value = s.graffiti.rows;
+  graffitiFields.cooldown.value = s.graffiti.cooldownSeconds;
+  graffitiFields.posX.value = s.graffiti.position.x;
+  graffitiFields.posY.value = s.graffiti.position.y;
+  graffitiFields.width.value = s.graffiti.position.width;
+  graffitiFields.height.value = s.graffiti.position.height;
   updateOutputs();
 }
 
@@ -204,6 +235,18 @@ async function saveSettings() {
       fontSize: Number(timerFields[type].size.value),
       position: { x: Number(timerFields[type].posX.value), y: Number(timerFields[type].posY.value) },
     }])),
+    graffiti: {
+      enabled: graffitiFields.enabled.checked,
+      cols: Number(graffitiFields.cols.value),
+      rows: Number(graffitiFields.rows.value),
+      cooldownSeconds: Number(graffitiFields.cooldown.value),
+      position: {
+        x: Number(graffitiFields.posX.value),
+        y: Number(graffitiFields.posY.value),
+        width: Number(graffitiFields.width.value),
+        height: Number(graffitiFields.height.value),
+      },
+    },
   };
   try {
     const res = await fetch('/api/settings', {
@@ -336,6 +379,10 @@ async function loadTestAvatars() {
 
 document.getElementById('clear-test-avatars').addEventListener('click', () => {
   fetch('/api/admin/test-avatar', { method: 'DELETE' });
+});
+
+document.getElementById('graffiti-reset-btn').addEventListener('click', () => {
+  fetch('/api/admin/canvas/reset', { method: 'POST' });
 });
 
 function updateSoundStatus(type, sound) {

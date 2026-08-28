@@ -17,6 +17,12 @@ html, body {
   pointer-events: none;
 }
 
+#graffiti-canvas {
+  position: fixed;
+  image-rendering: pixelated;
+  display: none;
+}
+
 .avatar-wrap {
   position: absolute;
   display: flex;

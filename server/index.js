@@ -207,10 +207,74 @@ function defaultSkin(login) {
   return { species: selectable[hash % selectable.length].id, hue: 0 };
 }
 
+const GRAFFITI_COLORS = {
+  rouge: '#ff4757', red: '#ff4757',
+  bleu: '#3742fa', blue: '#3742fa',
+  vert: '#2ed573', green: '#2ed573',
+  jaune: '#ffd633', yellow: '#ffd633',
+  violet: '#9147ff', purple: '#9147ff',
+  blanc: '#ffffff', white: '#ffffff',
+  noir: '#17171d', black: '#17171d',
+  orange: '#ff9f43',
+  rose: '#ff6ec7', pink: '#ff6ec7',
+  cyan: '#18dcff',
+};
+
+function resolveGraffitiColor(arg) {
+  const named = GRAFFITI_COLORS[arg.toLowerCase()];
+  if (named) return named;
+  const hex = arg.startsWith('#') ? arg : `#${arg}`;
+  return HEX_COLOR.test(hex) ? hex : null;
+}
+
+// login -> timestamp du dernier !pixel/!sticker placé (anti-spam, tout le monde peut participer)
+const graffitiCooldowns = new Map();
+
+function handleGraffitiCommand(login, message) {
+  const settings = store.getSettings();
+  if (!settings.graffiti.enabled) return;
+
+  const pixelMatch = message.match(/^!pixel\s+(\S+)\s+(\d+)\s+(\d+)/i);
+  const stickerMatch = !pixelMatch && message.match(/^!sticker\s+(\S+)\s+(\d+)\s+(\d+)/i);
+  if (!pixelMatch && !stickerMatch) return;
+
+  const now = Date.now();
+  const last = graffitiCooldowns.get(login) || 0;
+  if (now - last < settings.graffiti.cooldownSeconds * 1000) return;
+
+  const { cols, rows } = settings.graffiti;
+
+  if (pixelMatch) {
+    const [, colorArg, xStr, yStr] = pixelMatch;
+    const x = Number(xStr);
+    const y = Number(yStr);
+    if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+    const color = resolveGraffitiColor(colorArg);
+    if (!color) return;
+    const cell = { type: 'pixel', color };
+    store.setCanvasCell(x, y, cell);
+    broadcast({ type: 'canvas-update', x, y, cell });
+    graffitiCooldowns.set(login, now);
+    return;
+  }
+
+  const [, speciesId, xStr, yStr] = stickerMatch;
+  const x = Number(xStr);
+  const y = Number(yStr);
+  if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+  const match = species.getById(speciesId.toLowerCase());
+  if (!match || match.reserved) return;
+  const cell = { type: 'sticker', species: match.id };
+  store.setCanvasCell(x, y, cell);
+  broadcast({ type: 'canvas-update', x, y, cell });
+  graffitiCooldowns.set(login, now);
+}
+
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(buildState()),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
   onMessage: (login, message) => {
+    handleGraffitiCommand(login, message);
     // seuls les followers (ou le streamer) ont un avatar affiché, inutile de diffuser sinon
     const cached = followerCache.get(login);
     if (!isChannelOwner(login) && !cached?.follows) return;
