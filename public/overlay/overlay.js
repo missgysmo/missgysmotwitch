@@ -88,6 +88,22 @@ let settings = {
     cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 } },
     raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 } },
   },
+  activityFeed: {
+    enabled: false, fontSize: 15, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 55, speedSeconds: 18,
+    position: { x: 25, y: 92, width: 50, height: 6 },
+  },
+  followList: {
+    enabled: false, mode: 'both', fontSize: 14, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 55, speedSeconds: 30,
+    position: { x: 2, y: 2, width: 20, height: 50 },
+  },
+  tamagotchi: {
+    enabled: false, species: 'mascot', size: 96, showBar: true,
+    position: { x: 90, y: 85 },
+  },
+  raidCard: {
+    enabled: true, durationSeconds: 12, fontSize: 16, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 70,
+    position: { x: 50, y: 50 },
+  },
 };
 
 function applySettings(newSettings) {
