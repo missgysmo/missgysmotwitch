@@ -45,16 +45,25 @@
       </fieldset>
 
       <nav class="settings-nav">
-        <button type="button" class="nav-tab-btn active" data-tab="movement">Mouvement</button>
-        <button type="button" class="nav-tab-btn" data-tab="presence">Présence</button>
-        <button type="button" class="nav-tab-btn" data-tab="nametag">Pseudo</button>
-        <button type="button" class="nav-tab-btn" data-tab="owner">Mon avatar</button>
-        <button type="button" class="nav-tab-btn" data-tab="timers">Chronomètres</button>
-        <button type="button" class="nav-tab-btn" data-tab="follow">Follow</button>
-        <button type="button" class="nav-tab-btn" data-tab="subscribe">Sub</button>
-        <button type="button" class="nav-tab-btn" data-tab="cheer">Cheer</button>
-        <button type="button" class="nav-tab-btn" data-tab="raid">Raid</button>
-        <button type="button" class="nav-tab-btn" data-tab="test">Test avatars</button>
+        <div class="nav-group">
+          <span class="nav-group-label">Avatars</span>
+          <button type="button" class="nav-tab-btn active" data-tab="movement"><span class="nav-icon">🧭</span>Mouvement</button>
+          <button type="button" class="nav-tab-btn" data-tab="presence"><span class="nav-icon">⏳</span>Présence</button>
+          <button type="button" class="nav-tab-btn" data-tab="nametag"><span class="nav-icon">🏷️</span>Pseudo</button>
+          <button type="button" class="nav-tab-btn" data-tab="owner"><span class="nav-icon">👑</span>Mon avatar</button>
+          <button type="button" class="nav-tab-btn" data-tab="test"><span class="nav-icon">🧪</span>Test avatars</button>
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-label">Alertes</span>
+          <button type="button" class="nav-tab-btn" data-tab="follow"><span class="nav-icon">💜</span>Follow</button>
+          <button type="button" class="nav-tab-btn" data-tab="subscribe"><span class="nav-icon">⭐</span>Sub</button>
+          <button type="button" class="nav-tab-btn" data-tab="cheer"><span class="nav-icon">💎</span>Cheer</button>
+          <button type="button" class="nav-tab-btn" data-tab="raid"><span class="nav-icon">🚀</span>Raid</button>
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-label">Outils</span>
+          <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
+        </div>
       </nav>
       </div>
 
@@ -317,8 +326,10 @@
         <button type="button" id="clear-test-avatars">Retirer tous les avatars de test</button>
       </fieldset>
 
-      <button type="submit">Enregistrer</button>
-      <p id="status"></p>
+      <div class="save-bar">
+        <button type="submit">Enregistrer</button>
+        <p id="status"></p>
+      </div>
       </div>
       </div>
     </form>
