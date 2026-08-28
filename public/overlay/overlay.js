@@ -290,7 +290,7 @@ function makeItRain(entry, color) {
 }
 
 const BOUNCE_FRAME_MS = 20;
-const BOUNCE_DURATION_MS = 5000;
+const BOUNCE_DURATION_MS = 10000;
 
 function bounceFrame(entry, state) {
   if (Date.now() >= state.endAt) {
