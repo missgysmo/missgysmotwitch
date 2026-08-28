@@ -130,6 +130,49 @@ form {
 
 .titles-list button:hover { color: #f1f1f5; border-color: #45455a; }
 
+.health-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.9rem 0;
+}
+
+.health-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #2a2a35;
+  background: #14141a;
+  font-size: 0.82rem;
+  color: #cfcfe0;
+}
+
+.health-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.health-dot.ok { background: #2ed573; }
+.health-dot.bad { background: #ff4757; }
+
+.health-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.health-error-line {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #2a2a35;
+  border-radius: 6px;
+  background: #14141a;
+  color: #ff9f9f;
+  font-size: 0.78rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .viewernotes-list {
   display: flex;
   flex-direction: column;

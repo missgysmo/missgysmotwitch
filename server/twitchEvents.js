@@ -143,7 +143,7 @@ async function subscribe({ clientId, clientSecret, type, version, condition, ses
 
 // Connecte le websocket EventSub et s'abonne aux events follow/sub/cheer/raid.
 // onEvent(type, event) est appelé à chaque notification.
-async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent }) {
+async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent, onStatusChange }) {
   if (!store.getTokens()) throw new Error('Pas de token Twitch — passe par /auth pour autoriser l\'app.');
 
   function connectSocket() {
@@ -163,6 +163,7 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent 
         await subscribe({ clientId, clientSecret, type: 'channel.subscribe', version: '1', condition, sessionId });
         await subscribe({ clientId, clientSecret, type: 'channel.cheer', version: '1', condition, sessionId });
         await subscribe({ clientId, clientSecret, type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: broadcasterId }, sessionId });
+        if (onStatusChange) onStatusChange(true);
       }
 
       if (type === 'notification') {
@@ -180,6 +181,7 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent 
 
     ws.on('close', () => {
       console.log('[twitchEvents] connexion EventSub fermée, nouvelle tentative dans 5s...');
+      if (onStatusChange) onStatusChange(false);
       setTimeout(connectSocket, 5000);
     });
 

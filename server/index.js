@@ -266,9 +266,18 @@ function resolveGraffitiColor(arg) {
 // login (lowercase) -> timestamp du dernier pixel/sticker placé
 const graffitiCooldowns = new Map();
 
+// Moniteur de santé du bot : statut chat/EventSub, pour l'onglet "Santé du bot" du dashboard
+const botHealth = {
+  startedAt: Date.now(),
+  eventSubConnected: false,
+};
+
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(buildState()),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
+  onStatusChange: (connected) => {
+    if (!connected) logError('twitchChat', new Error('Déconnecté du chat Twitch'));
+  },
   onMessage: (login, message, meta) => {
     try {
       // bulle au-dessus de l'avatar : seuls les followers (ou le streamer) en ont un affiché
@@ -499,6 +508,25 @@ app.post('/api/admin/title-ideas', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'entrée invalide' });
   }
   res.json(generateTitleIdeas({ game, keywords, mood }));
+});
+
+// --- Moniteur de santé du bot ---
+app.get('/api/admin/health', requireAdmin, (req, res) => {
+  let recentErrors = [];
+  try {
+    const raw = fs.readFileSync(DEBUG_LOG_PATH, 'utf8');
+    recentErrors = raw.trim().split('\n').filter(Boolean).slice(-10).reverse();
+  } catch {
+    // pas encore d'erreurs consignées
+  }
+  const chatStatus = chatTracker.getStatus();
+  res.json({
+    chat: chatStatus,
+    eventSub: { connected: botHealth.eventSubConnected },
+    overlayClients: overlayClients.size,
+    uptimeSeconds: Math.floor((Date.now() - botHealth.startedAt) / 1000),
+    recentErrors,
+  });
 });
 
 // --- Carnet de bord des réguliers : notes privées admin, jamais exposées côté overlay/viewer ---
@@ -871,6 +899,10 @@ async function startEventSub() {
         console.log(`[twitchEvents] event reçu: ${type}`);
         broadcast({ type: 'event', eventType: type, event, cast: buildCast() });
         recordActivity(type, event);
+      },
+      onStatusChange: (connected) => {
+        botHealth.eventSubConnected = connected;
+        if (!connected) logError('twitchEvents', new Error('Déconnecté d\'EventSub'));
       },
     });
   } catch (err) {

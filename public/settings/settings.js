@@ -320,6 +320,39 @@ document.getElementById('thankyou-generate-btn')?.addEventListener('click', asyn
   }
 });
 
+function formatUptime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m} min`;
+}
+
+function formatAgo(ts) {
+  if (!ts) return 'jamais';
+  const seconds = Math.floor((Date.now() - ts) / 1000);
+  if (seconds < 60) return `il y a ${seconds}s`;
+  if (seconds < 3600) return `il y a ${Math.floor(seconds / 60)} min`;
+  return `il y a ${Math.floor(seconds / 3600)}h`;
+}
+
+async function loadHealth() {
+  const res = await fetch('/api/admin/health');
+  if (!res.ok) return;
+  const h = await res.json();
+  const statusEl = document.getElementById('health-status');
+  statusEl.innerHTML = `
+    <div class="health-badge"><span class="health-dot ${h.chat.connected ? 'ok' : 'bad'}"></span>Chat Twitch : ${h.chat.connected ? 'connecté' : 'déconnecté'} (dernier message ${formatAgo(h.chat.lastMessageAt)})</div>
+    <div class="health-badge"><span class="health-dot ${h.eventSub.connected ? 'ok' : 'bad'}"></span>Events (follow/sub/cheer/raid) : ${h.eventSub.connected ? 'connecté' : 'déconnecté'}</div>
+    <div class="health-badge"><span class="health-dot ok"></span>${h.overlayClients} overlay(s) connecté(s)</div>
+    <div class="health-badge"><span class="health-dot ok"></span>En ligne depuis ${formatUptime(h.uptimeSeconds)}</div>
+  `;
+  const errorsEl = document.getElementById('health-errors');
+  errorsEl.innerHTML = h.recentErrors.length
+    ? h.recentErrors.map((line) => `<div class="health-error-line">${escapeHtmlPanel(line)}</div>`).join('')
+    : '<p class="hint">Aucune erreur récente.</p>';
+}
+
+document.getElementById('health-refresh-btn')?.addEventListener('click', loadHealth);
+
 let viewerNotesCache = {};
 let viewerNoteEditingLogin = null;
 
@@ -827,6 +860,7 @@ form.addEventListener('submit', (e) => {
 });
 
 Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions(), loadViewerNotes()]).then(loadSettings);
+loadHealth();
 
 document.getElementById('logout')?.addEventListener('click', async () => {
   await fetch('/api/admin/logout', { method: 'POST' });

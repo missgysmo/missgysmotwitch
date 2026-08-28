@@ -47,6 +47,7 @@
           <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
           <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
           <button type="button" class="nav-tab-btn" data-tab="raidcard"><span class="nav-icon">🎴</span>Fiche raid</button>
+          <button type="button" class="nav-tab-btn" data-tab="health"><span class="nav-icon">🩺</span>Santé du bot</button>
         </div>
         <div class="nav-subtabs" data-cat-group="content" hidden>
           <button type="button" class="nav-tab-btn" data-tab="titles"><span class="nav-icon">💡</span>Titres &amp; idées</button>
@@ -354,6 +355,15 @@
         <label>Position verticale <input type="range" id="raidcard-posy" min="0" max="100" step="1" /><output id="raidcard-posy-out"></output></label>
         <button type="button" id="raidcard-test-btn">Tester la fiche raid</button>
         <p class="hint">Le test s'affiche uniquement sur l'aperçu sandbox (<code>/overlay/?preview=1</code>), jamais sur le vrai stream.</p>
+      </fieldset>
+
+      <fieldset data-nav-panel="health" hidden>
+        <legend>Santé du bot</legend>
+        <p class="hint">État des connexions Twitch (chat + events) et des dernières erreurs consignées automatiquement.</p>
+        <button type="button" id="health-refresh-btn">🔄 Actualiser</button>
+        <div id="health-status" class="health-status"></div>
+        <h3>Dernières erreurs</h3>
+        <div id="health-errors" class="health-errors"></div>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>
