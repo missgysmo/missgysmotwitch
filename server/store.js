@@ -8,6 +8,7 @@ const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
 const CANVAS_PATH = path.join(DATA_DIR, 'canvas.json');
 const PEOPLE_PATH = path.join(DATA_DIR, 'people.json');
 const TAMAGOTCHI_PATH = path.join(DATA_DIR, 'tamagotchi.json');
+const VIEWER_NOTES_PATH = path.join(DATA_DIR, 'viewerNotes.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -199,6 +200,25 @@ function setTamagotchiState(state) {
   return state;
 }
 
+// Carnet de bord privé des viewers réguliers : notes admin seulement, jamais exposées côté overlay/viewer.
+function getViewerNotes() {
+  return readJson(VIEWER_NOTES_PATH, {});
+}
+
+function setViewerNote(login, data) {
+  const notes = getViewerNotes();
+  const lower = login.toLowerCase();
+  notes[lower] = { ...data, login: lower, updatedAt: Date.now() };
+  writeJson(VIEWER_NOTES_PATH, notes);
+  return notes[lower];
+}
+
+function deleteViewerNote(login) {
+  const notes = getViewerNotes();
+  delete notes[login.toLowerCase()];
+  writeJson(VIEWER_NOTES_PATH, notes);
+}
+
 function getAvatar(login) {
   const avatars = getAllAvatars();
   return avatars[login.toLowerCase()] || null;
@@ -302,6 +322,9 @@ module.exports = {
   addPerson,
   getTamagotchiState,
   setTamagotchiState,
+  getViewerNotes,
+  setViewerNote,
+  deleteViewerNote,
   DEFAULT_SETTINGS,
   DATA_DIR,
 };

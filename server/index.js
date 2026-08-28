@@ -501,6 +501,26 @@ app.post('/api/admin/title-ideas', requireAdmin, (req, res) => {
   res.json(generateTitleIdeas({ game, keywords, mood }));
 });
 
+// --- Carnet de bord des réguliers : notes privées admin, jamais exposées côté overlay/viewer ---
+app.get('/api/admin/viewer-notes', requireAdmin, (req, res) => {
+  res.json(store.getViewerNotes());
+});
+
+app.post('/api/admin/viewer-notes/:login', requireAdmin, (req, res) => {
+  const { note, tags } = req.body || {};
+  if (typeof note !== 'string' || note.length > 2000) return res.status(400).json({ error: 'note invalide' });
+  if (!Array.isArray(tags) || tags.some((t) => typeof t !== 'string' || t.length > 30) || tags.length > 10) {
+    return res.status(400).json({ error: 'tags invalides' });
+  }
+  const saved = store.setViewerNote(req.params.login, { note, tags });
+  res.json(saved);
+});
+
+app.delete('/api/admin/viewer-notes/:login', requireAdmin, (req, res) => {
+  store.deleteViewerNote(req.params.login);
+  res.json({ ok: true });
+});
+
 app.get('/api/admin/thank-you-card/:login', requireAdmin, async (req, res) => {
   try {
     const profile = await twitchEvents.getUserProfile({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login: req.params.login });

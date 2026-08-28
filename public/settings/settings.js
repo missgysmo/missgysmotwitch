@@ -320,6 +320,88 @@ document.getElementById('thankyou-generate-btn')?.addEventListener('click', asyn
   }
 });
 
+let viewerNotesCache = {};
+let viewerNoteEditingLogin = null;
+
+async function loadViewerNotes() {
+  const res = await fetch('/api/admin/viewer-notes');
+  viewerNotesCache = await res.json();
+  renderViewerNotes();
+}
+
+function renderViewerNotes() {
+  const query = document.getElementById('viewernotes-search').value.trim().toLowerCase();
+  const listEl = document.getElementById('viewernotes-list');
+  const entries = Object.values(viewerNotesCache)
+    .filter((n) => !query || n.login.includes(query) || (n.tags || []).some((t) => t.toLowerCase().includes(query)))
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+  if (!entries.length) {
+    listEl.innerHTML = '<p class="hint">Aucune note pour le moment.</p>';
+    return;
+  }
+  listEl.innerHTML = entries.map((n) => `
+    <div class="viewernote-card" data-login="${escapeHtmlPanel(n.login)}">
+      <div class="viewernote-card-head">
+        <span class="viewernote-card-name">${escapeHtmlPanel(n.login)}</span>
+        <div class="viewernote-card-actions">
+          <button type="button" class="viewernote-edit-btn">Modifier</button>
+          <button type="button" class="viewernote-delete-btn">Supprimer</button>
+        </div>
+      </div>
+      <div class="viewernote-card-tags">${(n.tags || []).map((t) => `<span>${escapeHtmlPanel(t)}</span>`).join('')}</div>
+      <div class="viewernote-card-text">${escapeHtmlPanel(n.note || '')}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('viewernotes-search')?.addEventListener('input', renderViewerNotes);
+
+document.getElementById('viewernotes-list')?.addEventListener('click', async (e) => {
+  const card = e.target.closest('.viewernote-card');
+  if (!card) return;
+  const login = card.dataset.login;
+  if (e.target.classList.contains('viewernote-edit-btn')) {
+    const n = viewerNotesCache[login];
+    document.getElementById('viewernote-login').value = n.login;
+    document.getElementById('viewernote-tags').value = (n.tags || []).join(', ');
+    document.getElementById('viewernote-text').value = n.note || '';
+    viewerNoteEditingLogin = login;
+    document.getElementById('viewernote-cancel-btn').hidden = false;
+  } else if (e.target.classList.contains('viewernote-delete-btn')) {
+    if (!confirm(`Supprimer la note pour ${login} ?`)) return;
+    await fetch(`/api/admin/viewer-notes/${encodeURIComponent(login)}`, { method: 'DELETE' });
+    delete viewerNotesCache[login];
+    renderViewerNotes();
+  }
+});
+
+document.getElementById('viewernote-cancel-btn')?.addEventListener('click', () => {
+  viewerNoteEditingLogin = null;
+  document.getElementById('viewernote-login').value = '';
+  document.getElementById('viewernote-tags').value = '';
+  document.getElementById('viewernote-text').value = '';
+  document.getElementById('viewernote-cancel-btn').hidden = true;
+});
+
+document.getElementById('viewernote-save-btn')?.addEventListener('click', async () => {
+  const loginInput = document.getElementById('viewernote-login');
+  const login = (viewerNoteEditingLogin || loginInput.value.trim()).toLowerCase();
+  if (!login) return;
+  const tags = document.getElementById('viewernote-tags').value.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 10);
+  const note = document.getElementById('viewernote-text').value;
+  const res = await fetch(`/api/admin/viewer-notes/${encodeURIComponent(login)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ note, tags }),
+  });
+  if (res.ok) {
+    const saved = await res.json();
+    viewerNotesCache[saved.login] = saved;
+    renderViewerNotes();
+    document.getElementById('viewernote-cancel-btn').click();
+  }
+});
+
 document.getElementById('thankyou-download-btn')?.addEventListener('click', () => {
   const canvas = document.getElementById('thankyou-canvas');
   try {
@@ -744,7 +826,7 @@ form.addEventListener('submit', (e) => {
   saveSettings();
 });
 
-Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions()]).then(loadSettings);
+Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions(), loadViewerNotes()]).then(loadSettings);
 
 document.getElementById('logout')?.addEventListener('click', async () => {
   await fetch('/api/admin/logout', { method: 'POST' });

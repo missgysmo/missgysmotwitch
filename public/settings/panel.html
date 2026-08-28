@@ -53,6 +53,7 @@
           <button type="button" class="nav-tab-btn" data-tab="sociallinks"><span class="nav-icon">🔗</span>Réseaux sociaux</button>
           <button type="button" class="nav-tab-btn" data-tab="socialposts"><span class="nav-icon">📢</span>Posts réseaux sociaux</button>
           <button type="button" class="nav-tab-btn" data-tab="thankyou"><span class="nav-icon">🎁</span>Carte de remerciement</button>
+          <button type="button" class="nav-tab-btn" data-tab="viewernotes"><span class="nav-icon">📇</span>Carnet de réguliers</button>
         </div>
       </nav>
 
@@ -595,6 +596,19 @@
           <canvas id="thankyou-canvas" width="800" height="450"></canvas>
           <button type="button" id="thankyou-download-btn">Télécharger en PNG</button>
         </div>
+      </fieldset>
+
+      <fieldset data-nav-panel="viewernotes" hidden>
+        <legend>Carnet de bord des réguliers</legend>
+        <p class="hint">Notes privées sur tes viewers (jamais affichées sur l'overlay ni visibles par eux) : historique, préférences, anecdotes...</p>
+        <label>Rechercher <input type="text" id="viewernotes-search" placeholder="pseudo ou tag..." /></label>
+        <div id="viewernotes-list" class="viewernotes-list"></div>
+        <h3>Ajouter / modifier une note</h3>
+        <label>Pseudo Twitch <input type="text" id="viewernote-login" maxlength="30" placeholder="ex : missgysmo" /></label>
+        <label>Tags (séparés par des virgules) <input type="text" id="viewernote-tags" maxlength="200" placeholder="ex : régulier, modo, fan de chats" /></label>
+        <label>Note <textarea id="viewernote-text" maxlength="2000" rows="4" placeholder="ex : adore les jeux cosy, a un chat qui s'appelle Mochi..."></textarea></label>
+        <button type="button" id="viewernote-save-btn">💾 Enregistrer la note</button>
+        <button type="button" id="viewernote-cancel-btn" hidden>Annuler la modification</button>
       </fieldset>
 
       <div class="save-bar">

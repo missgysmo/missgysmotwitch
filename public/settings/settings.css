@@ -130,6 +130,66 @@ form {
 
 .titles-list button:hover { color: #f1f1f5; border-color: #45455a; }
 
+.viewernotes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.75rem 0 1.25rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.viewernote-card {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  background: #14141a;
+}
+
+.viewernote-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.viewernote-card-name { font-weight: 600; color: #f1f1f5; }
+
+.viewernote-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.35rem 0;
+}
+
+.viewernote-card-tags span {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #23232d;
+  color: #cfcfe0;
+  font-size: 0.72rem;
+}
+
+.viewernote-card-text {
+  color: #a9a9b8;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.viewernote-card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+.viewernote-card-actions button {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #33333e;
+  border-radius: 6px;
+  background: #1c1c24;
+  color: #a9a9b8;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.viewernote-card-actions button:hover { color: #f1f1f5; border-color: #45455a; }
+
 .social-link-row {
   display: flex;
   align-items: center;
@@ -494,7 +554,7 @@ input:focus-visible, select:focus-visible, button:focus-visible {
 }
 .test-event-btn:hover { background: rgba(145, 71, 255, 0.15); }
 .test-event-btn:disabled { opacity: 0.6; cursor: default; }
-input[type="text"], input[type="number"] {
+input[type="text"], input[type="number"], textarea {
   flex: 1;
   background: #14141a;
   border: 1px solid #33333e;
@@ -503,6 +563,8 @@ input[type="text"], input[type="number"] {
   padding: 0.4rem 0.55rem;
   font-size: 0.85rem;
   min-width: 90px;
+  font-family: inherit;
+  resize: vertical;
 }
 .hint code {
   background: #17171d;
