@@ -323,7 +323,9 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
-  const d = store.DEFAULT_SETTINGS;
+  // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
+  // sinon un champ absent du payload (ex: "sound", géré à part par l'upload) se réinitialise à chaque sauvegarde.
+  const d = store.getSettings();
 
   const settings = {
     avatarSize: clamp(avatarSize, 24, 200, d.avatarSize),
