@@ -605,6 +605,16 @@ app.post('/api/admin/test-raid-card', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// Test d'une réaction de la mascotte, sandbox uniquement (n'affecte jamais le vrai stream ni son humeur)
+app.post('/api/admin/test-tamagotchi-reaction/:reaction', requireAdmin, (req, res) => {
+  const { reaction } = req.params;
+  if (!TAMAGOTCHI_REACTIONS.includes(reaction) || reaction === 'none') {
+    return res.status(400).json({ error: 'réaction invalide' });
+  }
+  broadcastToPreview({ type: 'tamagotchi-reaction', reaction });
+  res.json({ ok: true });
+});
+
 app.post('/api/admin/title-ideas', requireAdmin, (req, res) => {
   const { game, keywords, mood } = req.body || {};
   if (typeof game !== 'string' || typeof keywords !== 'string' || game.length > 80 || keywords.length > 200) {

@@ -130,6 +130,25 @@ form {
 
 .titles-list button:hover { color: #f1f1f5; border-color: #45455a; }
 
+.tamagotchi-test-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tamagotchi-test-row button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #33333e;
+  border-radius: 7px;
+  background: #1c1c24;
+  color: #cfcfe0;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.tamagotchi-test-row button:hover { color: #f1f1f5; border-color: #45455a; }
+
 .tamagotchi-action-block {
   padding: 0.8rem 0.9rem;
   border: 1px solid #2a2a35;

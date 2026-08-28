@@ -137,6 +137,19 @@ const TAMAGOTCHI_REACTION_OPTIONS = [
   ['bounce', 'Rebondit'],
 ];
 const reactionOptionsHtml = TAMAGOTCHI_REACTION_OPTIONS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+
+const tamagotchiTestRowEl = document.getElementById('tamagotchi-test-row');
+if (tamagotchiTestRowEl) {
+  tamagotchiTestRowEl.innerHTML = TAMAGOTCHI_REACTION_OPTIONS
+    .filter(([v]) => v !== 'none')
+    .map(([v, l]) => `<button type="button" class="tamagotchi-test-btn" data-reaction="${v}">${l}</button>`)
+    .join('');
+  tamagotchiTestRowEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.tamagotchi-test-btn');
+    if (!btn) return;
+    await fetch(`/api/admin/test-tamagotchi-reaction/${btn.dataset.reaction}`, { method: 'POST' });
+  });
+}
 const EVENT_TYPES_FOR_TAMAGOTCHI = ['follow', 'subscribe', 'cheer', 'raid'];
 const tamagotchiEventReactionFields = {};
 for (const type of EVENT_TYPES_FOR_TAMAGOTCHI) {
