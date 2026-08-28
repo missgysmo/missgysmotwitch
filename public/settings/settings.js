@@ -2,6 +2,8 @@ const form = document.getElementById('form');
 const statusEl = document.getElementById('status');
 const zoneBox = document.getElementById('zone-box');
 const corridorLine = document.getElementById('corridor-line');
+const zonePreviewEl = document.querySelector('.zone-preview');
+const previewMarkersEl = document.getElementById('preview-markers');
 
 const fields = {
   avatarSize: { el: document.getElementById('avatarSize'), out: document.getElementById('avatarSize-out'), fmt: (v) => `${v}px` },
@@ -78,6 +80,7 @@ function updateOutputs() {
     timerFields[type].posYOut.textContent = `${timerFields[type].posY.value}%`;
   }
   updateZonePreview();
+  updatePreviewMarker();
 }
 
 function updateZonePreview() {
@@ -228,11 +231,55 @@ document.getElementById('logout')?.addEventListener('click', async () => {
   location.reload();
 });
 
+const EVENT_MARKER_LABELS = { follow: 'Follow', subscribe: 'Sub', cheer: 'Cheer', raid: 'Raid' };
+const EVENT_MARKER_COLORS = { follow: '#ff5ecb', subscribe: '#ffd633', cheer: '#18dcff', raid: '#ff9f43' };
+const TIMER_MARKER_LABELS = { intro: 'Intro', pause: 'Pause/AFK' };
+const TIMER_MARKER_COLORS = { intro: '#9147ff', pause: '#2ed573' };
+
+function addPreviewMarker(x, y, label, color) {
+  const marker = document.createElement('div');
+  marker.className = 'preview-marker';
+  marker.style.setProperty('--marker-color', color);
+  marker.style.left = `${x}%`;
+  marker.style.top = `${y}%`;
+  marker.innerHTML = `<span class="preview-marker-label">${label}</span>`;
+  previewMarkersEl.appendChild(marker);
+}
+
+function updatePreviewMarker() {
+  const category = document.querySelector('.nav-cat-btn.active')?.dataset.cat;
+  previewMarkersEl.innerHTML = '';
+  zonePreviewEl.classList.toggle('markers-mode', category !== 'avatars');
+
+  if (category === 'alerts') {
+    const activeTab = document.querySelector('.nav-subtabs[data-cat-group="alerts"] .nav-tab-btn.active');
+    const type = activeTab?.dataset.tab;
+    if (type && eventFields[type]) {
+      addPreviewMarker(
+        Number(eventFields[type].posX.value),
+        Number(eventFields[type].posY.value),
+        EVENT_MARKER_LABELS[type],
+        EVENT_MARKER_COLORS[type],
+      );
+    }
+  } else if (category === 'tools') {
+    for (const type of TIMER_TYPES) {
+      addPreviewMarker(
+        Number(timerFields[type].posX.value),
+        Number(timerFields[type].posY.value),
+        TIMER_MARKER_LABELS[type],
+        TIMER_MARKER_COLORS[type],
+      );
+    }
+  }
+}
+
 function selectTab(btn) {
   document.querySelectorAll('.nav-tab-btn').forEach((b) => b.classList.toggle('active', b === btn));
   document.querySelectorAll('[data-nav-panel]').forEach((panel) => {
     panel.hidden = panel.dataset.navPanel !== btn.dataset.tab;
   });
+  updatePreviewMarker();
 }
 
 document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
@@ -247,6 +294,7 @@ document.querySelectorAll('.nav-cat-btn').forEach((btn) => {
     });
     const firstTab = document.querySelector(`.nav-subtabs[data-cat-group="${btn.dataset.cat}"] .nav-tab-btn`);
     if (firstTab) selectTab(firstTab);
+    updatePreviewMarker();
   });
 });
 

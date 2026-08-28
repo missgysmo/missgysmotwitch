@@ -230,7 +230,15 @@ wss.on('connection', (ws) => {
       ws.send(JSON.stringify({ type: 'timer', id, action: 'start', endAt, cfg: store.getSettings().timers[id] }));
     }
   }
+  ws.send(JSON.stringify({ type: 'canvas-init', ...store.getCanvas() }));
   ws.on('close', () => overlayClients.delete(ws));
+});
+
+app.post('/api/admin/canvas/reset', requireAdmin, (req, res) => {
+  const settings = store.getSettings();
+  const canvas = store.resetCanvas(settings.graffiti.cols, settings.graffiti.rows);
+  broadcast({ type: 'canvas-init', ...canvas });
+  res.json({ ok: true });
 });
 
 app.post('/api/admin/timer/:id/start', requireAdmin, (req, res) => {
@@ -371,10 +379,26 @@ function sanitizeTimerConfig(input, fallback) {
   };
 }
 
+function sanitizeGraffitiConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    cols: clamp(input?.cols, 10, 150, fallback.cols),
+    rows: clamp(input?.rows, 10, 150, fallback.rows),
+    cooldownSeconds: clamp(input?.cooldownSeconds, 1, 120, fallback.cooldownSeconds),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
+      height: clamp(input?.position?.height, 5, 100, fallback.position.height),
+    },
+  };
+}
+
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -417,10 +441,18 @@ app.post('/api/settings', requireAdmin, (req, res) => {
       intro: sanitizeTimerConfig(timers?.intro, d.timers.intro),
       pause: sanitizeTimerConfig(timers?.pause, d.timers.pause),
     },
+    graffiti: sanitizeGraffitiConfig(graffiti, d.graffiti),
   };
 
   store.setSettings(settings);
   broadcast({ type: 'settings', settings });
+
+  // les coordonnées existantes ne veulent plus rien dire si la grille change de taille
+  if (settings.graffiti.cols !== d.graffiti.cols || settings.graffiti.rows !== d.graffiti.rows) {
+    const canvas = store.resetCanvas(settings.graffiti.cols, settings.graffiti.rows);
+    broadcast({ type: 'canvas-init', ...canvas });
+  }
+
   res.json(settings);
 });
 

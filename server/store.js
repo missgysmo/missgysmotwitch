@@ -161,6 +161,9 @@ module.exports = {
   setTokens,
   getSettings,
   setSettings,
+  getCanvas,
+  setCanvasCell,
+  resetCanvas,
   DEFAULT_SETTINGS,
   DATA_DIR,
 };

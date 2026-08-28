@@ -152,6 +152,8 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   color: #5b5b68;
   pointer-events: none;
 }
+.zone-preview.markers-mode #zone-box { display: none; }
+
 #zone-box {
   position: absolute;
   border: 1px dashed #9147ff;
@@ -185,6 +187,30 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   top: 0;
   bottom: 0;
   width: 2px;
+}
+
+.preview-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--marker-color, #ffd633);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--marker-color, #ffd633) 25%, transparent), 0 0 8px var(--marker-color, #ffd633);
+}
+.preview-marker-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #17171d;
+  background: var(--marker-color, #ffd633);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
 }
 
 .settings-nav {
