@@ -193,7 +193,7 @@ function getPeople() {
   return readJson(PEOPLE_PATH, { followers: [], subs: [] });
 }
 
-function addPerson(kind, login, displayName) {
+function addPerson(kind, login, displayName, since) {
   const people = getPeople();
   const list = people[kind] || (people[kind] = []);
   const lower = (login || '').toLowerCase();
@@ -201,7 +201,7 @@ function addPerson(kind, login, displayName) {
   if (existing) {
     existing.displayName = displayName || existing.displayName;
   } else {
-    list.unshift({ login: lower, displayName: displayName || login, since: Date.now() });
+    list.unshift({ login: lower, displayName: displayName || login, since: since || Date.now() });
   }
   writeJson(PEOPLE_PATH, people);
   return people;

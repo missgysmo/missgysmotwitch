@@ -204,6 +204,24 @@ document.getElementById('raidcard-test-btn')?.addEventListener('click', async ()
   await fetch('/api/admin/test-raid-card', { method: 'POST' });
 });
 
+document.getElementById('followlist-resync-btn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('followlist-resync-btn');
+  const statusEl = document.getElementById('followlist-resync-status');
+  btn.disabled = true;
+  statusEl.hidden = false;
+  statusEl.textContent = 'Synchronisation en cours...';
+  try {
+    const res = await fetch('/api/admin/people/resync', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur');
+    statusEl.textContent = `Terminé : ${data.followers} follower(s), ${data.subs} sub(s) importés.`;
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 document.getElementById('titles-generate-btn')?.addEventListener('click', async () => {
   const game = document.getElementById('titles-game').value;
   const keywords = document.getElementById('titles-keywords').value;

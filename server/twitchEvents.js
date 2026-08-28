@@ -77,6 +77,50 @@ async function checkFollower({ clientId, clientSecret, broadcasterId, userId }) 
   return (body.total || 0) > 0;
 }
 
+// Liste complète des followers actuels (pagination Twitch), pour préremplir la liste
+// défilante du dashboard au lieu de partir d'une liste vide qui ne se remplit qu'avec
+// les nouveaux follows à venir.
+async function getAllFollowers({ clientId, clientSecret, broadcasterId }) {
+  const results = [];
+  let cursor = null;
+  do {
+    const params = new URLSearchParams({ broadcaster_id: broadcasterId, first: '100' });
+    if (cursor) params.set('after', cursor);
+    const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+      `https://api.twitch.tv/helix/channels/followers?${params.toString()}`,
+      { headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+    ));
+    if (!res.ok) throw new Error(`getAllFollowers failed: ${res.status} ${await res.text()}`);
+    const body = await res.json();
+    for (const f of body.data || []) {
+      results.push({ login: f.user_login, displayName: f.user_name, since: new Date(f.followed_at).getTime() });
+    }
+    cursor = body.pagination?.cursor || null;
+  } while (cursor);
+  return results;
+}
+
+// Idem pour les abonnés actuels — nécessite le token du streamer lui-même (scope channel:read:subscriptions).
+async function getAllSubscribers({ clientId, clientSecret, broadcasterId }) {
+  const results = [];
+  let cursor = null;
+  do {
+    const params = new URLSearchParams({ broadcaster_id: broadcasterId, first: '100' });
+    if (cursor) params.set('after', cursor);
+    const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+      `https://api.twitch.tv/helix/subscriptions?${params.toString()}`,
+      { headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+    ));
+    if (!res.ok) throw new Error(`getAllSubscribers failed: ${res.status} ${await res.text()}`);
+    const body = await res.json();
+    for (const s of body.data || []) {
+      results.push({ login: s.user_login, displayName: s.user_name, since: Date.now() });
+    }
+    cursor = body.pagination?.cursor || null;
+  } while (cursor);
+  return results;
+}
+
 // Juste le pseudo affiché + l'avatar d'un viewer (carte de remerciement, etc.)
 async function getUserProfile({ clientId, clientSecret, login }) {
   const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
@@ -212,4 +256,4 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
   connectSocket();
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile, connectEventSub };
+module.exports = { getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile, getAllFollowers, getAllSubscribers, connectEventSub };
