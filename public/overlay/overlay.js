@@ -231,7 +231,8 @@ function syncState(viewers) {
     }
   }
   for (const [login, entry] of avatars) {
-    if (!seen.has(login)) {
+    // ne retire pas un avatar temporaire (ex: rebond de raid) avant la fin de sa réaction
+    if (!seen.has(login) && !entry.temporary) {
       removeAvatarEl(entry);
       avatars.delete(login);
     }
