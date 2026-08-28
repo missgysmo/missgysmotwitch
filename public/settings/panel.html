@@ -50,7 +50,9 @@
         </div>
         <div class="nav-subtabs" data-cat-group="content" hidden>
           <button type="button" class="nav-tab-btn" data-tab="titles"><span class="nav-icon">💡</span>Titres &amp; idées</button>
+          <button type="button" class="nav-tab-btn" data-tab="sociallinks"><span class="nav-icon">🔗</span>Réseaux sociaux</button>
           <button type="button" class="nav-tab-btn" data-tab="socialposts"><span class="nav-icon">📢</span>Posts réseaux sociaux</button>
+          <button type="button" class="nav-tab-btn" data-tab="thankyou"><span class="nav-icon">🎁</span>Carte de remerciement</button>
         </div>
       </nav>
 
@@ -518,9 +520,34 @@
         </div>
       </fieldset>
 
+      <fieldset data-nav-panel="sociallinks" hidden>
+        <legend>Réseaux sociaux</legend>
+        <p class="hint">Renseigne tes liens et choisis sur quels réseaux tu veux poster : ça détermine quels posts le générateur "Posts réseaux sociaux" propose, avec le bon lien inséré à chaque fois.</p>
+        <div class="social-link-row">
+          <label><input type="checkbox" id="social-enable-twitter" /> Twitter / X</label>
+          <input type="text" id="social-link-twitter" maxlength="200" placeholder="ex : twitter.com/missgysmo" />
+        </div>
+        <div class="social-link-row">
+          <label><input type="checkbox" id="social-enable-discord" /> Discord</label>
+          <input type="text" id="social-link-discord" maxlength="200" placeholder="ex : discord.gg/xxxxx" />
+        </div>
+        <div class="social-link-row">
+          <label><input type="checkbox" id="social-enable-instagram" /> Instagram</label>
+          <input type="text" id="social-link-instagram" maxlength="200" placeholder="ex : instagram.com/missgysmo" />
+        </div>
+        <div class="social-link-row">
+          <label><input type="checkbox" id="social-enable-tiktok" /> TikTok</label>
+          <input type="text" id="social-link-tiktok" maxlength="200" placeholder="ex : tiktok.com/@missgysmo" />
+        </div>
+        <div class="social-link-row">
+          <label><input type="checkbox" id="social-enable-youtube" /> YouTube</label>
+          <input type="text" id="social-link-youtube" maxlength="200" placeholder="ex : youtube.com/@missgysmo" />
+        </div>
+      </fieldset>
+
       <fieldset data-nav-panel="socialposts" hidden>
         <legend>Générateur de posts réseaux sociaux</legend>
-        <p class="hint">Génère un post pour Twitter/X, Discord et Instagram en même temps. Purement local, rien n'est envoyé ailleurs.</p>
+        <p class="hint">Génère un post pour chaque réseau activé dans l'onglet "Réseaux sociaux", avec le lien configuré. Purement local, rien n'est envoyé ailleurs.</p>
         <label>
           Moment
           <select id="social-moment">
@@ -542,15 +569,31 @@
             <option value="challenge">Challenge / difficile</option>
           </select>
         </label>
-        <label>Lien à inclure <input type="text" id="social-link" maxlength="200" placeholder="ex : twitch.tv/missgysmo" /></label>
         <button type="button" id="social-generate-btn">✨ Générer les posts</button>
-        <div id="social-results" class="titles-results" hidden>
-          <h3>Twitter / X</h3>
-          <div class="social-post-block"><pre id="social-twitter"></pre><button type="button" class="titles-copy-btn" data-target="social-twitter">Copier</button></div>
-          <h3>Discord</h3>
-          <div class="social-post-block"><pre id="social-discord"></pre><button type="button" class="titles-copy-btn" data-target="social-discord">Copier</button></div>
-          <h3>Instagram</h3>
-          <div class="social-post-block"><pre id="social-instagram"></pre><button type="button" class="titles-copy-btn" data-target="social-instagram">Copier</button></div>
+        <p class="hint" id="social-none-hint" hidden>Aucun réseau activé — configure-les dans l'onglet "Réseaux sociaux".</p>
+        <div id="social-results" class="titles-results" hidden></div>
+      </fieldset>
+
+      <fieldset data-nav-panel="thankyou" hidden>
+        <legend>Carte de remerciement</legend>
+        <p class="hint">Génère une petite image à partager pour remercier un follower/sub/raider en particulier (avatar Twitch récupéré automatiquement).</p>
+        <label>Pseudo Twitch <input type="text" id="thankyou-login" maxlength="30" placeholder="ex : missgysmo" /></label>
+        <label>
+          Type
+          <select id="thankyou-type">
+            <option value="follow">Follow</option>
+            <option value="subscribe">Sub</option>
+            <option value="cheer">Cheer</option>
+            <option value="raid">Raid</option>
+            <option value="custom">Autre / personnalisé</option>
+          </select>
+        </label>
+        <label>Message personnalisé (optionnel) <input type="text" id="thankyou-message" maxlength="120" placeholder="ex : merci pour ta fidélité !" /></label>
+        <button type="button" id="thankyou-generate-btn">🎁 Générer la carte</button>
+        <p id="thankyou-error" class="hint" hidden></p>
+        <div id="thankyou-preview-wrap" hidden>
+          <canvas id="thankyou-canvas" width="800" height="450"></canvas>
+          <button type="button" id="thankyou-download-btn">Télécharger en PNG</button>
         </div>
       </fieldset>
 

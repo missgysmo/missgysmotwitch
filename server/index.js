@@ -501,15 +501,26 @@ app.post('/api/admin/title-ideas', requireAdmin, (req, res) => {
   res.json(generateTitleIdeas({ game, keywords, mood }));
 });
 
+app.get('/api/admin/thank-you-card/:login', requireAdmin, async (req, res) => {
+  try {
+    const profile = await twitchEvents.getUserProfile({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login: req.params.login });
+    res.json(profile);
+  } catch (err) {
+    logError('thank-you-card', err);
+    res.status(404).json({ error: "Viewer introuvable sur Twitch" });
+  }
+});
+
 app.post('/api/admin/social-posts', requireAdmin, (req, res) => {
-  const { game, message, mood, moment, link } = req.body || {};
-  if ([game, message, mood, moment, link].some((v) => v !== undefined && typeof v !== 'string')) {
+  const { game, message, mood, moment } = req.body || {};
+  if ([game, message, mood, moment].some((v) => v !== undefined && typeof v !== 'string')) {
     return res.status(400).json({ error: 'entrée invalide' });
   }
-  if ((game || '').length > 80 || (message || '').length > 200 || (link || '').length > 200) {
+  if ((game || '').length > 80 || (message || '').length > 200) {
     return res.status(400).json({ error: 'entrée invalide' });
   }
-  res.json(generateSocialPosts({ game, message, mood, moment, link }));
+  const { socialLinks, socialPlatforms } = store.getSettings();
+  res.json(generateSocialPosts({ game, message, mood, moment, links: socialLinks, platforms: socialPlatforms }));
 });
 
 // --- Mascotte Tamagotchi : bouton "nourrir" manuel depuis le dashboard ---
@@ -637,6 +648,25 @@ function sanitizeFollowListConfig(input, fallback) {
   };
 }
 
+const URL_LIKE = /^$|^[^\s<>"]{1,200}$/;
+
+function sanitizeSocialLinks(input, fallback) {
+  const out = {};
+  for (const key of Object.keys(fallback)) {
+    const v = input?.[key];
+    out[key] = typeof v === 'string' && URL_LIKE.test(v) ? v : fallback[key];
+  }
+  return out;
+}
+
+function sanitizeSocialPlatforms(input, fallback) {
+  const out = {};
+  for (const key of Object.keys(fallback)) {
+    out[key] = typeof input?.[key] === 'boolean' ? input[key] : fallback[key];
+  }
+  return out;
+}
+
 function sanitizeRaidCardConfig(input, fallback) {
   const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
   return {
@@ -676,7 +706,7 @@ function sanitizeTamagotchiConfig(input, fallback) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi, raidCard,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi, raidCard, socialLinks, socialPlatforms,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -725,6 +755,8 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     followList: sanitizeFollowListConfig(followList, d.followList),
     tamagotchi: sanitizeTamagotchiConfig(tamagotchi, d.tamagotchi),
     raidCard: sanitizeRaidCardConfig(raidCard, d.raidCard),
+    socialLinks: sanitizeSocialLinks(socialLinks, d.socialLinks),
+    socialPlatforms: sanitizeSocialPlatforms(socialPlatforms, d.socialPlatforms),
   };
 
   store.setSettings(settings);

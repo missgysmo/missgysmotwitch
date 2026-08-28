@@ -129,6 +129,15 @@ document.getElementById('tamagotchi-feed-btn')?.addEventListener('click', async 
   await fetch('/api/admin/tamagotchi/feed', { method: 'POST' });
 });
 
+const SOCIAL_PLATFORM_KEYS = ['twitter', 'discord', 'instagram', 'tiktok', 'youtube'];
+const socialLinkFields = {};
+for (const key of SOCIAL_PLATFORM_KEYS) {
+  socialLinkFields[key] = {
+    enabled: document.getElementById(`social-enable-${key}`),
+    link: document.getElementById(`social-link-${key}`),
+  };
+}
+
 const raidCardFields = {
   enabled: document.getElementById('raidcard-enabled'),
   duration: document.getElementById('raidcard-duration'),
@@ -184,26 +193,31 @@ function escapeHtmlPanel(str) {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+const SOCIAL_PLATFORM_LABELS = { twitter: 'Twitter / X', discord: 'Discord', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
+
 document.getElementById('social-generate-btn')?.addEventListener('click', async () => {
   const game = document.getElementById('social-game').value;
   const message = document.getElementById('social-message').value;
   const mood = document.getElementById('social-mood').value;
   const moment = document.getElementById('social-moment').value;
-  const link = document.getElementById('social-link').value;
   const btn = document.getElementById('social-generate-btn');
   btn.disabled = true;
   try {
     const res = await fetch('/api/admin/social-posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game, message, mood, moment, link }),
+      body: JSON.stringify({ game, message, mood, moment }),
     });
     if (!res.ok) throw new Error(await res.text());
-    const { twitter, discord, instagram } = await res.json();
-    document.getElementById('social-twitter').textContent = twitter;
-    document.getElementById('social-discord').textContent = discord;
-    document.getElementById('social-instagram').textContent = instagram;
-    document.getElementById('social-results').hidden = false;
+    const posts = await res.json();
+    const resultsEl = document.getElementById('social-results');
+    const platforms = Object.keys(posts);
+    document.getElementById('social-none-hint').hidden = platforms.length > 0;
+    resultsEl.hidden = platforms.length === 0;
+    resultsEl.innerHTML = platforms.map((platform) => `
+      <h3>${SOCIAL_PLATFORM_LABELS[platform] || platform}</h3>
+      <div class="social-post-block"><pre>${escapeHtmlPanel(posts[platform])}</pre><button type="button" class="social-copy-btn">Copier</button></div>
+    `).join('');
   } catch (err) {
     console.error(err);
   } finally {
@@ -211,13 +225,111 @@ document.getElementById('social-generate-btn')?.addEventListener('click', async 
   }
 });
 
-document.querySelectorAll('.social-post-block .titles-copy-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const text = document.getElementById(btn.dataset.target)?.textContent || '';
-    navigator.clipboard?.writeText(text);
-    btn.textContent = 'Copié !';
-    setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
-  });
+document.getElementById('social-results')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.social-copy-btn');
+  if (!btn) return;
+  const text = btn.previousElementSibling?.textContent || '';
+  navigator.clipboard?.writeText(text);
+  btn.textContent = 'Copié !';
+  setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
+});
+
+const THANKYOU_STYLES = {
+  follow: { colors: ['#ff5ecb', '#7b2ff7'], title: 'Merci pour le follow !', emoji: '💜' },
+  subscribe: { colors: ['#ffd633', '#ff9147'], title: 'Merci pour le sub !', emoji: '⭐' },
+  cheer: { colors: ['#18dcff', '#0a6ebd'], title: 'Merci pour les bits !', emoji: '💎' },
+  raid: { colors: ['#ff9f43', '#ff4757'], title: 'Merci pour le raid !', emoji: '🚀' },
+  custom: { colors: ['#2ed573', '#18dcff'], title: 'Merci !', emoji: '💫' },
+};
+
+function drawThankYouCard(canvas, { displayName, avatar, type, message }) {
+  const ctx = canvas.getContext('2d');
+  const style = THANKYOU_STYLES[type] || THANKYOU_STYLES.custom;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, style.colors[0]);
+  gradient.addColorStop(1, style.colors[1]);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+
+  const finishText = () => {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px system-ui, sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,.35)';
+    ctx.shadowBlur = 8;
+    ctx.fillText(`${style.emoji} ${style.title}`, w / 2, 300);
+    ctx.font = '600 30px system-ui, sans-serif';
+    ctx.fillText(displayName, w / 2, 345);
+    if (message) {
+      ctx.font = '20px system-ui, sans-serif';
+      ctx.fillText(message, w / 2, 385);
+    }
+    ctx.shadowBlur = 0;
+  };
+
+  if (avatar) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const r = 90;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(w / 2, 150, r, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+      ctx.clip();
+      ctx.drawImage(img, w / 2 - r, 150 - r, r * 2, r * 2);
+      ctx.restore();
+      finishText();
+    };
+    img.onerror = finishText;
+    img.src = avatar;
+  } else {
+    finishText();
+  }
+}
+
+document.getElementById('thankyou-generate-btn')?.addEventListener('click', async () => {
+  const login = document.getElementById('thankyou-login').value.trim();
+  const type = document.getElementById('thankyou-type').value;
+  const message = document.getElementById('thankyou-message').value.trim();
+  const errorEl = document.getElementById('thankyou-error');
+  const wrapEl = document.getElementById('thankyou-preview-wrap');
+  errorEl.hidden = true;
+  wrapEl.hidden = true;
+  if (!login) return;
+  const btn = document.getElementById('thankyou-generate-btn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/admin/thank-you-card/${encodeURIComponent(login)}`);
+    if (!res.ok) throw new Error((await res.json()).error || 'Erreur');
+    const profile = await res.json();
+    const canvas = document.getElementById('thankyou-canvas');
+    drawThankYouCard(canvas, { displayName: profile.displayName, avatar: profile.avatar, type, message });
+    wrapEl.hidden = false;
+  } catch (err) {
+    errorEl.textContent = err.message || 'Impossible de générer la carte.';
+    errorEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('thankyou-download-btn')?.addEventListener('click', () => {
+  const canvas = document.getElementById('thankyou-canvas');
+  try {
+    const link = document.createElement('a');
+    link.download = 'merci.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch {
+    alert("Impossible d'exporter l'image (restriction du navigateur sur l'avatar). Fais une capture d'écran à la place.");
+  }
 });
 
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
@@ -480,6 +592,10 @@ async function loadSettings() {
   raidCardFields.bgOpacity.value = s.raidCard.bgOpacity;
   raidCardFields.posX.value = s.raidCard.position.x;
   raidCardFields.posY.value = s.raidCard.position.y;
+  for (const key of SOCIAL_PLATFORM_KEYS) {
+    socialLinkFields[key].enabled.checked = s.socialPlatforms[key];
+    socialLinkFields[key].link.value = s.socialLinks[key];
+  }
   updateOutputs();
 }
 
@@ -606,6 +722,8 @@ async function saveSettings() {
       bgOpacity: Number(raidCardFields.bgOpacity.value),
       position: { x: Number(raidCardFields.posX.value), y: Number(raidCardFields.posY.value) },
     },
+    socialLinks: Object.fromEntries(SOCIAL_PLATFORM_KEYS.map((key) => [key, socialLinkFields[key].link.value])),
+    socialPlatforms: Object.fromEntries(SOCIAL_PLATFORM_KEYS.map((key) => [key, socialLinkFields[key].enabled.checked])),
   };
   try {
     const res = await fetch('/api/settings', {

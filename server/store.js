@@ -89,6 +89,20 @@ const DEFAULT_SETTINGS = {
     speedSeconds: 30,
     position: { x: 2, y: 2, width: 20, height: 50 },
   },
+  socialLinks: {
+    twitter: '',
+    discord: '',
+    instagram: '',
+    tiktok: '',
+    youtube: '',
+  },
+  socialPlatforms: {
+    twitter: true,
+    discord: true,
+    instagram: true,
+    tiktok: false,
+    youtube: false,
+  },
   raidCard: {
     enabled: true,
     durationSeconds: 12,
@@ -240,6 +254,14 @@ function getSettings() {
       ...DEFAULT_SETTINGS.followList,
       ...(saved.followList || {}),
       position: { ...DEFAULT_SETTINGS.followList.position, ...(saved.followList?.position || {}) },
+    },
+    socialLinks: {
+      ...DEFAULT_SETTINGS.socialLinks,
+      ...(saved.socialLinks || {}),
+    },
+    socialPlatforms: {
+      ...DEFAULT_SETTINGS.socialPlatforms,
+      ...(saved.socialPlatforms || {}),
     },
     raidCard: {
       ...DEFAULT_SETTINGS.raidCard,

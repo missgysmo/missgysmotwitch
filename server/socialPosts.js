@@ -54,6 +54,44 @@ const INSTAGRAM_TEMPLATES = {
   ],
 };
 
+const TIKTOK_TEMPLATES = {
+  live: [
+    "🔴 En live sur {game} juste maintenant, viens sur Twitch ! {message} {link}",
+    '🔴 {game} en direct ! {message} {link}',
+  ],
+  announcement: [
+    '📅 Prochain live {game} bientôt ! {message} {link}',
+    '📅 On se retrouve pour du {game} ! {message} {link}',
+  ],
+  ending: [
+    "✅ Merci pour ce live {game} ! {message} {link}",
+    '💜 Fin du stream {game}, merci à tous ! {message} {link}',
+  ],
+};
+
+const YOUTUBE_TEMPLATES = {
+  live: [
+    '🔴 En direct sur {game} en ce moment sur Twitch ! {message} {link}',
+    '🔴 Live {game} maintenant : {link} {message}',
+  ],
+  announcement: [
+    '📅 Prochain live {game} à venir sur Twitch. {message} {link}',
+    '📅 Save the date pour du {game} ! {message} {link}',
+  ],
+  ending: [
+    "✅ Merci d'avoir suivi ce live {game} ! {message} {link}",
+    '💜 Stream {game} terminé, merci à tous ! {message} {link}',
+  ],
+};
+
+const PLATFORM_TEMPLATES = {
+  twitter: () => TWITTER_TEMPLATES,
+  discord: () => DISCORD_TEMPLATES,
+  instagram: () => INSTAGRAM_TEMPLATES,
+  tiktok: () => TIKTOK_TEMPLATES,
+  youtube: () => YOUTUBE_TEMPLATES,
+};
+
 const MOOD_HASHTAGS = {
   chill: ['ChillStream', 'CozyGaming'],
   hype: ['Hype', 'GoodVibes'],
@@ -94,15 +132,24 @@ function fillTemplate(tpl, { game, message, link, hashtags }) {
     .trim() + (hashtags ? `\n\n${hashtags}` : '');
 }
 
-function generateSocialPosts({ game, message, mood, moment, link }) {
+// links: { twitter, discord, instagram, tiktok, youtube }, platforms: { twitter: bool, ... }
+// Seuls les réseaux activés (platforms[x] === true) génèrent un post, avec leur propre lien configuré.
+function generateSocialPosts({ game, message, mood, moment, links = {}, platforms = {} }) {
   const safeMoment = MOMENT_LABELS[moment] ? moment : 'live';
   const hashtags = buildHashtags(game, mood);
 
-  return {
-    twitter: fillTemplate(pickRandom(TWITTER_TEMPLATES[safeMoment]), { game, message, link, hashtags }),
-    discord: fillTemplate(pickRandom(DISCORD_TEMPLATES[safeMoment]), { game, message, link, hashtags }),
-    instagram: fillTemplate(pickRandom(INSTAGRAM_TEMPLATES[safeMoment]), { game, message, link, hashtags }),
-  };
+  const posts = {};
+  for (const platform of Object.keys(PLATFORM_TEMPLATES)) {
+    if (!platforms[platform]) continue;
+    const templates = PLATFORM_TEMPLATES[platform]();
+    posts[platform] = fillTemplate(pickRandom(templates[safeMoment]), {
+      game,
+      message,
+      link: links[platform],
+      hashtags,
+    });
+  }
+  return posts;
 }
 
 module.exports = { generateSocialPosts };

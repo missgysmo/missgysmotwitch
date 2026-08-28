@@ -85,6 +85,18 @@ form {
 
 .titles-results { margin-top: 1rem; }
 
+#thankyou-preview-wrap { margin-top: 1rem; }
+
+#thankyou-canvas {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid #2a2a35;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
 .titles-list {
   list-style: none;
   margin: 0 0 1rem;
@@ -117,6 +129,22 @@ form {
 }
 
 .titles-list button:hover { color: #f1f1f5; border-color: #45455a; }
+
+.social-link-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.social-link-row label {
+  flex: 0 0 140px;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.social-link-row input[type="text"] { flex: 1; }
 
 .social-post-block {
   display: flex;
