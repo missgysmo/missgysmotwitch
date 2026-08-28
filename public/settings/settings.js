@@ -401,7 +401,6 @@ async function loadHealth() {
 document.getElementById('health-refresh-btn')?.addEventListener('click', loadHealth);
 
 const OBS_MODULES = [
-  { id: null, label: '🖥️ Overlay complet (tout)' },
   { id: 'avatars', label: '🐾 Avatars des viewers' },
   { id: 'chat', label: '💬 Chat sur l\'overlay' },
   { id: 'canvas', label: '🎨 Graffiti collectif' },
@@ -412,30 +411,44 @@ const OBS_MODULES = [
   { id: 'raidcard', label: '🎴 Fiche raid' },
 ];
 
-function renderObsLinks() {
-  const base = `${location.origin}/overlay/`;
-  const rows = OBS_MODULES.map(({ id, label }) => {
-    const url = id ? `${base}?modules=${id}` : base;
-    return { label, url, featured: id === null };
-  });
-  const listEl = document.getElementById('obslinks-list');
-  if (!listEl) return;
-  listEl.innerHTML = rows.map((r, i) => `
-    <div class="obslinks-row${r.featured ? ' obslinks-featured' : ''}">
-      <span class="obslinks-name">${r.label}</span>
-      <span class="obslinks-url">${r.url}</span>
-      <button type="button" class="obslinks-copy-btn" data-index="${i}">Copier</button>
-    </div>
+function initObsLinkGenerator() {
+  const checksEl = document.getElementById('obslinks-checks');
+  const urlEl = document.getElementById('obslinks-generated-url');
+  if (!checksEl || !urlEl) return;
+
+  checksEl.innerHTML = OBS_MODULES.map(({ id, label }) => `
+    <label class="obslinks-check-item">
+      <input type="checkbox" class="obslinks-module-check" value="${id}" />
+      ${label}
+    </label>
   `).join('');
-  listEl.querySelectorAll('.obslinks-copy-btn').forEach((btn, i) => {
-    btn.addEventListener('click', () => {
-      navigator.clipboard?.writeText(rows[i].url);
-      btn.textContent = 'Copié !';
-      setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
-    });
+
+  function updateUrl() {
+    const checked = [...checksEl.querySelectorAll('.obslinks-module-check:checked')].map((c) => c.value);
+    const base = `${location.origin}/overlay/`;
+    urlEl.textContent = checked.length ? `${base}?modules=${checked.join(',')}` : base;
+  }
+
+  checksEl.addEventListener('change', updateUrl);
+
+  document.getElementById('obslinks-select-all')?.addEventListener('click', () => {
+    checksEl.querySelectorAll('.obslinks-module-check').forEach((c) => { c.checked = true; });
+    updateUrl();
   });
+  document.getElementById('obslinks-select-none')?.addEventListener('click', () => {
+    checksEl.querySelectorAll('.obslinks-module-check').forEach((c) => { c.checked = false; });
+    updateUrl();
+  });
+  document.getElementById('obslinks-copy-btn')?.addEventListener('click', (e) => {
+    navigator.clipboard?.writeText(urlEl.textContent);
+    const btn = e.currentTarget;
+    btn.textContent = 'Copié !';
+    setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
+  });
+
+  updateUrl();
 }
-renderObsLinks();
+initObsLinkGenerator();
 
 let viewerNotesCache = {};
 let viewerNoteEditingLogin = null;

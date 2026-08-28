@@ -403,9 +403,17 @@
       </fieldset>
 
       <fieldset data-nav-panel="obslinks" hidden>
-        <legend>Liens à ajouter dans OBS</legend>
-        <p class="hint">Une source navigateur par lien. Sépare les modules sur plusieurs scènes/sources si besoin (ex: le tchat sur une scène, les avatars sur une autre), ou utilise le lien complet pour tout avoir sur une seule source.</p>
-        <div id="obslinks-list" class="obslinks-list"></div>
+        <legend>Générateur de lien OBS</legend>
+        <p class="hint">Coche les modules à combiner pour une scène (ex: juste le tchat sur une scène, avatars + mascotte sur une autre), puis copie le lien généré dans une source navigateur OBS. Aucune coche = tout afficher.</p>
+        <div class="obslinks-checks" id="obslinks-checks"></div>
+        <div class="obslinks-actions">
+          <button type="button" id="obslinks-select-all">Tout cocher</button>
+          <button type="button" id="obslinks-select-none">Tout décocher</button>
+        </div>
+        <div class="obslinks-result">
+          <span class="obslinks-url" id="obslinks-generated-url"></span>
+          <button type="button" id="obslinks-copy-btn">Copier</button>
+        </div>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>
