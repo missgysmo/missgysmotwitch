@@ -289,7 +289,7 @@ function makeItRain(entry, color) {
   rainDrop(entry, color, RAIN_REPEATS);
 }
 
-const BOUNCE_FRAME_MS = 30;
+const BOUNCE_FRAME_MS = 20;
 const BOUNCE_DURATION_MS = 5000;
 
 function bounceFrame(entry, state) {
@@ -322,7 +322,7 @@ function makeItBounce(entry, color) {
   entry.el.style.setProperty('--event-glow', color);
   entry.el.classList.add('event-bounce');
   entry.el.style.transition = 'none';
-  const speed = 4 + Math.random() * 3; // px par frame
+  const speed = 10 + Math.random() * 8; // px par frame
   const angle = Math.random() * Math.PI * 2;
   const state = {
     x: parseFloat(entry.el.style.left) || 0,

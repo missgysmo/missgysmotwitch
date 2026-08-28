@@ -205,8 +205,8 @@ app.get('/api/settings', requireAdmin, (req, res) => {
 // Liste complète des avatars connus (tous les viewers ayant déjà personnalisé, + le streamer)
 // utilisée pour les réactions "tout le monde apparaît" (ex: rebond de raid).
 function buildCast() {
-  const all = store.getAllAvatars();
-  const cast = Object.entries(all).map(([login, skin]) => ({ login, skin }));
+  // Un avatar par personnage disponible (pas seulement ceux déjà choisis par des viewers).
+  const cast = species.getSelectable().map((s) => ({ login: `cast-${s.id}`, skin: { species: s.id, hue: 0 } }));
   cast.push({ login: CHANNEL, skin: getSkin(CHANNEL) });
   return cast;
 }
