@@ -105,7 +105,7 @@ app.set('trust proxy', 1);
 app.use(express.json());
 
 app.get('/api/debug-ip', (req, res) => {
-  res.json({ ip: req.ip, ips: req.ips, xff: req.headers['x-forwarded-for'] });
+  res.json({ ip: req.ip, ips: req.ips, secure: req.secure, proto: req.headers['x-forwarded-proto'], xff: req.headers['x-forwarded-for'] });
 });
 
 app.get(['/settings', '/settings/'], (req, res) => {
