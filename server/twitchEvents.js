@@ -146,23 +146,31 @@ async function subscribe({ clientId, clientSecret, type, version, condition, ses
 async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent, onStatusChange }) {
   if (!store.getTokens()) throw new Error('Pas de token Twitch — passe par /auth pour autoriser l\'app.');
 
-  function connectSocket() {
-    const ws = new WebSocket(EVENTSUB_WS_URL);
+  // Le socket actif : sert à ignorer les events "close" d'un socket déjà remplacé
+  // (cas de session_reconnect), pour ne jamais programmer deux reconnexions en parallèle.
+  let activeWs = null;
 
+  function attachHandlers(ws, { isReconnect }) {
     ws.on('message', async (raw) => {
       const msg = JSON.parse(raw.toString());
       const type = msg.metadata?.message_type;
 
       if (type === 'session_welcome') {
         const sessionId = msg.payload.session.id;
-        console.log('[twitchEvents] EventSub connecté, abonnement aux events...');
-        const condition = { broadcaster_user_id: broadcasterId };
-        const moderatorCondition = { broadcaster_user_id: broadcasterId, moderator_user_id: broadcasterId };
+        if (!isReconnect) {
+          // Sur une reconnexion (session_reconnect), Twitch transfère automatiquement les
+          // abonnements existants vers la nouvelle session : pas besoin de se réabonner.
+          console.log('[twitchEvents] EventSub connecté, abonnement aux events...');
+          const condition = { broadcaster_user_id: broadcasterId };
+          const moderatorCondition = { broadcaster_user_id: broadcasterId, moderator_user_id: broadcasterId };
 
-        await subscribe({ clientId, clientSecret, type: 'channel.follow', version: '2', condition: moderatorCondition, sessionId });
-        await subscribe({ clientId, clientSecret, type: 'channel.subscribe', version: '1', condition, sessionId });
-        await subscribe({ clientId, clientSecret, type: 'channel.cheer', version: '1', condition, sessionId });
-        await subscribe({ clientId, clientSecret, type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: broadcasterId }, sessionId });
+          await subscribe({ clientId, clientSecret, type: 'channel.follow', version: '2', condition: moderatorCondition, sessionId });
+          await subscribe({ clientId, clientSecret, type: 'channel.subscribe', version: '1', condition, sessionId });
+          await subscribe({ clientId, clientSecret, type: 'channel.cheer', version: '1', condition, sessionId });
+          await subscribe({ clientId, clientSecret, type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: broadcasterId }, sessionId });
+        } else {
+          console.log('[twitchEvents] reconnecté à EventSub (abonnements conservés)');
+        }
         if (onStatusChange) onStatusChange(true);
       }
 
@@ -173,13 +181,18 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
 
       if (type === 'session_reconnect') {
         const reconnectUrl = msg.payload.session.reconnect_url;
-        ws.close();
         const newWs = new WebSocket(reconnectUrl);
-        newWs.on('open', () => console.log('[twitchEvents] reconnecté à EventSub'));
+        attachHandlers(newWs, { isReconnect: true });
+        const staleWs = ws;
+        activeWs = newWs;
+        // Le socket qu'on remplace ne doit plus déclencher sa propre reconnexion en se fermant.
+        staleWs.removeAllListeners('close');
+        staleWs.close();
       }
     });
 
     ws.on('close', () => {
+      if (ws !== activeWs) return; // socket déjà remplacé, rien à faire
       console.log('[twitchEvents] connexion EventSub fermée, nouvelle tentative dans 5s...');
       if (onStatusChange) onStatusChange(false);
       setTimeout(connectSocket, 5000);
@@ -188,6 +201,12 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
     ws.on('error', (err) => {
       console.error('[twitchEvents] erreur websocket EventSub:', err.message);
     });
+  }
+
+  function connectSocket() {
+    const ws = new WebSocket(EVENTSUB_WS_URL);
+    activeWs = ws;
+    attachHandlers(ws, { isReconnect: false });
   }
 
   connectSocket();

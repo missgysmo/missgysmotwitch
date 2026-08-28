@@ -39,6 +39,9 @@ if (!SETTINGS_PASSWORD) {
   console.error('SETTINGS_PASSWORD manquant dans .env — nécessaire pour protéger /settings');
   process.exit(1);
 }
+if (!CLIENT_ID || !CLIENT_SECRET) {
+  console.error('TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET manquant(s) dans .env — la vérification des followers et les alertes Twitch ne fonctionneront pas.');
+}
 
 const ADMIN_TOKEN = crypto.randomBytes(24).toString('hex');
 const ADMIN_COOKIE = 'admin_token';
@@ -59,7 +62,46 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Comparaison en temps constant : évite qu'une différence de timing serve à deviner le mot de passe caractère par caractère.
+function safePasswordEquals(candidate) {
+  const a = Buffer.from(String(candidate ?? ''));
+  const b = Buffer.from(SETTINGS_PASSWORD);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+// Petit limiteur de débit en mémoire (par IP), sans dépendance externe.
+// Nettoie lui-même ses entrées périodiques pour ne pas fuir de mémoire.
+function createRateLimiter({ windowMs, max, message }) {
+  const hits = new Map(); // ip -> [timestamps]
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, arr] of hits) {
+      const kept = arr.filter((t) => now - t < windowMs);
+      if (kept.length) hits.set(ip, kept);
+      else hits.delete(ip);
+    }
+  }, windowMs).unref();
+
+  return (req, res, next) => {
+    const now = Date.now();
+    const arr = (hits.get(req.ip) || []).filter((t) => now - t < windowMs);
+    if (arr.length >= max) {
+      return res.status(429).json({ error: message || 'Trop de tentatives, réessaie plus tard.' });
+    }
+    arr.push(now);
+    hits.set(req.ip, arr);
+    next();
+  };
+}
+
+const loginRateLimit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8, message: 'Trop de tentatives de connexion, réessaie dans quelques minutes.' });
+const publicApiRateLimit = createRateLimiter({ windowMs: 60 * 1000, max: 30, message: 'Trop de requêtes, ralentis un peu.' });
+
 const app = express();
+// Nécessaire derrière le proxy Railway pour que req.ip / req.secure reflètent le vrai client
+// (sinon le rate-limit ci-dessus verrait tout le monde derrière une seule IP).
+app.set('trust proxy', 1);
 app.use(express.json());
 
 app.get(['/settings', '/settings/'], (req, res) => {
@@ -67,9 +109,9 @@ app.get(['/settings', '/settings/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'settings', file));
 });
 
-app.post('/api/admin/login', (req, res) => {
-  if (req.body.password !== SETTINGS_PASSWORD) return res.status(401).json({ error: 'mot de passe incorrect' });
-  res.cookie(ADMIN_COOKIE, ADMIN_TOKEN, { httpOnly: true, sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000 });
+app.post('/api/admin/login', loginRateLimit, (req, res) => {
+  if (!safePasswordEquals(req.body?.password)) return res.status(401).json({ error: 'mot de passe incorrect' });
+  res.cookie(ADMIN_COOKIE, ADMIN_TOKEN, { httpOnly: true, sameSite: 'lax', secure: req.secure, maxAge: 30 * 24 * 60 * 60 * 1000 });
   res.json({ ok: true });
 });
 
@@ -91,6 +133,10 @@ app.use('/sounds', express.static(SOUNDS_DIR, { maxAge: '1y' }));
 const soundUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('audio/')) return cb(new Error('Le fichier doit être un son (audio).'));
+    cb(null, true);
+  },
 });
 
 app.post('/api/admin/sound/:type', requireAdmin, (req, res) => {
@@ -109,7 +155,11 @@ function handleSoundUpload(req, res) {
   if (!settings.events[type]) return res.status(400).json({ error: 'type invalide' });
   if (!req.file) return res.status(400).json({ error: 'fichier audio manquant ou format invalide' });
 
-  const ext = path.extname(req.file.originalname) || '.mp3';
+  // Extension prise sur le nom d'origine mais restreinte à une liste connue, pour ne jamais
+  // écrire un nom de fichier inattendu à partir d'une valeur envoyée par le navigateur.
+  const SAFE_SOUND_EXT = new Set(['.mp3', '.wav', '.ogg', '.m4a', '.webm', '.aac', '.flac']);
+  const rawExt = path.extname(req.file.originalname).toLowerCase();
+  const ext = SAFE_SOUND_EXT.has(rawExt) ? rawExt : '.mp3';
   const filename = `${type}-${Date.now()}${ext}`;
   fs.writeFileSync(path.join(SOUNDS_DIR, filename), req.file.buffer);
 
@@ -198,6 +248,7 @@ function isChannelOwner(login) {
 // Seuls les followers de la chaîne ont un avatar sur l'overlay.
 let broadcasterId = null;
 const followerCache = new Map(); // login (lowercase) -> { follows, checkedAt }
+const followerChecksInFlight = new Map(); // login (lowercase) -> Promise en cours, évite les doublons d'appels Twitch
 const FOLLOWER_TTL_MS = 5 * 60 * 1000;
 
 async function ensureBroadcasterId() {
@@ -225,19 +276,38 @@ async function checkAndCacheFollower(login) {
 }
 
 // Lecture synchrone pour buildState() : renvoie la dernière valeur connue (false si jamais vérifié)
-// et relance une vérification en arrière-plan si absente ou périmée.
+// et relance une vérification en arrière-plan si absente ou périmée (une seule à la fois par pseudo,
+// même si buildState() est appelé plusieurs fois avant que la première vérification ne réponde).
 function isFollowerCached(login) {
   if (isChannelOwner(login)) return true;
   const key = login.toLowerCase();
   const cached = followerCache.get(key);
-  if (!cached || Date.now() - cached.checkedAt > FOLLOWER_TTL_MS) {
-    checkAndCacheFollower(login).then((follows) => {
-      const prev = cached?.follows;
-      if (follows !== prev) broadcast(buildState());
-    });
+  if ((!cached || Date.now() - cached.checkedAt > FOLLOWER_TTL_MS) && !followerChecksInFlight.has(key)) {
+    const promise = checkAndCacheFollower(login)
+      .then((follows) => {
+        const prev = cached?.follows;
+        if (follows !== prev) broadcast(buildState());
+      })
+      .finally(() => followerChecksInFlight.delete(key));
+    followerChecksInFlight.set(key, promise);
   }
   return cached ? cached.follows : false;
 }
+
+// Purge périodique des caches en mémoire indexés par pseudo, pour ne pas grossir indéfiniment
+// sur une chaîne avec beaucoup de viewers différents au fil du temps.
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of followerCache) {
+    if (now - entry.checkedAt > FOLLOWER_TTL_MS * 6) followerCache.delete(key);
+  }
+  for (const [key, ts] of graffitiCooldowns) {
+    if (now - ts > 60 * 60 * 1000) graffitiCooldowns.delete(key);
+  }
+  for (const [key, ts] of tamagotchiActionCooldowns) {
+    if (now - ts > 60 * 60 * 1000) tamagotchiActionCooldowns.delete(key);
+  }
+}, 30 * 60 * 1000).unref();
 
 function getSkin(login) {
   if (isChannelOwner(login)) return { species: 'mon-avatar', hue: 0 };
@@ -378,14 +448,14 @@ app.get('/api/species', (req, res) => {
   res.json(species.getSelectable().map((s) => ({ id: s.id, label: s.label, file: s.file })));
 });
 
-app.get('/api/avatar/:login', async (req, res) => {
+app.get('/api/avatar/:login', publicApiRateLimit, async (req, res) => {
   const login = req.params.login;
   const skin = getSkin(login);
   const follows = isChannelOwner(login) ? true : await checkAndCacheFollower(login);
   res.json({ ...skin, follows });
 });
 
-app.post('/api/avatar/:login', async (req, res) => {
+app.post('/api/avatar/:login', publicApiRateLimit, async (req, res) => {
   const login = req.params.login;
   if (isChannelOwner(login)) {
     return res.status(403).json({ error: 'Cet avatar est réservé, il ne peut pas être personnalisé.' });
@@ -413,13 +483,13 @@ app.get('/api/canvas', (req, res) => {
   res.json({ ...canvas, cooldownSeconds: settings.graffiti.cooldownSeconds, enabled: settings.graffiti.enabled });
 });
 
-app.get('/api/follow-status/:login', async (req, res) => {
+app.get('/api/follow-status/:login', publicApiRateLimit, async (req, res) => {
   const login = req.params.login;
   const follows = isChannelOwner(login) ? true : await checkAndCacheFollower(login);
   res.json({ follows });
 });
 
-app.post('/api/canvas/place', async (req, res) => {
+app.post('/api/canvas/place', publicApiRateLimit, async (req, res) => {
   const settings = store.getSettings();
   if (!settings.graffiti.enabled) return res.status(403).json({ error: 'Le graffiti est désactivé pour le moment.' });
 
@@ -789,12 +859,26 @@ function sanitizeTamagotchiConfig(input, fallback) {
       cheer: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.cheer) ? input.eventReactions.cheer : fallback.eventReactions.cheer,
       raid: TAMAGOTCHI_REACTIONS.includes(input?.eventReactions?.raid) ? input.eventReactions.raid : fallback.eventReactions.raid,
     },
-    chatActions: {
+    chatActions: dedupeTamagotchiCommands({
       pet: sanitizeTamagotchiChatAction(input?.chatActions?.pet, fallback.chatActions.pet),
       feed: sanitizeTamagotchiChatAction(input?.chatActions?.feed, fallback.chatActions.feed),
       play: sanitizeTamagotchiChatAction(input?.chatActions?.play, fallback.chatActions.play),
-    },
+    }),
   };
+}
+
+// Si deux actions activées partagent la même commande de chat, seule la première (dans cet ordre)
+// resterait déclenchable — on désactive silencieusement les suivantes plutôt que de laisser
+// une action configurée mais qui ne se déclenchera jamais sans que personne ne le sache.
+function dedupeTamagotchiCommands(actions) {
+  const seen = new Set();
+  for (const id of ['pet', 'feed', 'play']) {
+    const action = actions[id];
+    if (!action.enabled) continue;
+    if (seen.has(action.command)) action.enabled = false;
+    else seen.add(action.command);
+  }
+  return actions;
 }
 
 app.post('/api/settings', requireAdmin, (req, res) => {

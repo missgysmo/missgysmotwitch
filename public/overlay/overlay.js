@@ -465,7 +465,7 @@ function showRaidCard(data) {
   const r = settings.raidCard;
   if (!r.enabled) return;
   raidCardEl.innerHTML = `
-    <img class="raid-card-avatar" src="${data.avatar || ''}" alt="" />
+    <img class="raid-card-avatar" src="${escapeHtml(data.avatar || '')}" alt="" />
     <div class="raid-card-info">
       <div class="raid-card-name">🚀 ${escapeHtml(data.displayName || data.login)}</div>
       ${data.game ? `<div class="raid-card-game">${escapeHtml(data.game)}</div>` : ''}

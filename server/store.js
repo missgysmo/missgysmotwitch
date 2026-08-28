@@ -145,14 +145,23 @@ const DEFAULT_SETTINGS = {
 function readJson(filePath, fallback) {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch {
+  } catch (err) {
+    // ENOENT = fichier pas encore créé, normal au premier lancement — pas la peine de logger.
+    // Toute autre erreur (JSON corrompu par ex.) doit rester visible au lieu de se taire.
+    if (err.code !== 'ENOENT') {
+      console.error(`[store] échec de lecture de ${filePath}, retour aux valeurs par défaut:`, err.message);
+    }
     return fallback;
   }
 }
 
 function writeJson(filePath, data) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  // Écriture atomique : fichier temporaire puis renommage, pour ne jamais laisser
+  // le fichier final à moitié écrit si le process s'arrête pile à ce moment-là.
+  const tmpPath = `${filePath}.${process.pid}.tmp`;
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));
+  fs.renameSync(tmpPath, filePath);
 }
 
 function getAllAvatars() {
@@ -251,9 +260,14 @@ function mergeEventConfig(defaults, saved) {
   return { ...defaults, ...(saved || {}), position: { ...defaults.position, ...(saved?.position || {}) } };
 }
 
+// Réglages en cache mémoire : évite de relire/re-parser le fichier disque à chaque appel
+// (ex: getSettings() était sinon appelé à chaque message de chat). Invalidé sur setSettings().
+let settingsCache = null;
+
 function getSettings() {
+  if (settingsCache) return settingsCache;
   const saved = readJson(SETTINGS_PATH, {});
-  return {
+  settingsCache = {
     ...DEFAULT_SETTINGS,
     ...saved,
     zone: { ...DEFAULT_SETTINGS.zone, ...(saved.zone || {}) },
@@ -314,10 +328,12 @@ function getSettings() {
       raid: mergeEventConfig(DEFAULT_SETTINGS.events.raid, saved.events?.raid),
     },
   };
+  return settingsCache;
 }
 
 function setSettings(settings) {
   writeJson(SETTINGS_PATH, settings);
+  settingsCache = null; // invalidé, sera recalculé au prochain getSettings()
   return settings;
 }
 
