@@ -2,8 +2,10 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const crypto = require('crypto');
+const fs = require('fs');
 const { WebSocketServer } = require('ws');
 const path = require('path');
+const multer = require('multer');
 
 const store = require('./store');
 const species = require('./species');
@@ -68,6 +70,50 @@ app.post('/api/admin/logout', (req, res) => {
 app.use(express.static(path.join(__dirname, '..', 'public'), {
   setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
 }));
+
+// --- Sons des alertes (upload par l'admin, stockés sur le volume persistant) ---
+const SOUNDS_DIR = path.join(store.DATA_DIR, 'sounds');
+fs.mkdirSync(SOUNDS_DIR, { recursive: true });
+app.use('/sounds', express.static(SOUNDS_DIR, { maxAge: '1y' }));
+
+const soundUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 3 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, /^audio\//.test(file.mimetype)),
+});
+
+app.post('/api/admin/sound/:type', requireAdmin, soundUpload.single('sound'), (req, res) => {
+  const type = req.params.type;
+  const settings = store.getSettings();
+  if (!settings.events[type]) return res.status(400).json({ error: 'type invalide' });
+  if (!req.file) return res.status(400).json({ error: 'fichier audio manquant ou format invalide' });
+
+  const ext = path.extname(req.file.originalname) || '.mp3';
+  const filename = `${type}-${Date.now()}${ext}`;
+  fs.writeFileSync(path.join(SOUNDS_DIR, filename), req.file.buffer);
+
+  const oldFile = settings.events[type].sound;
+  settings.events[type].sound = filename;
+  store.setSettings(settings);
+  if (oldFile) fs.rm(path.join(SOUNDS_DIR, oldFile), { force: true }, () => {});
+
+  broadcast({ type: 'settings', settings });
+  res.json({ ok: true, sound: filename });
+});
+
+app.delete('/api/admin/sound/:type', requireAdmin, (req, res) => {
+  const type = req.params.type;
+  const settings = store.getSettings();
+  if (!settings.events[type]) return res.status(400).json({ error: 'type invalide' });
+
+  const oldFile = settings.events[type].sound;
+  settings.events[type].sound = null;
+  store.setSettings(settings);
+  if (oldFile) fs.rm(path.join(SOUNDS_DIR, oldFile), { force: true }, () => {});
+
+  broadcast({ type: 'settings', settings });
+  res.json({ ok: true });
+});
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
@@ -265,6 +311,9 @@ function sanitizeEventConfig(input, fallback) {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),
     },
+    // pas envoyé par le formulaire de réglages classique — géré à part par l'upload de son,
+    // donc on garde la valeur existante tant qu'on ne reçoit pas explicitement une string ou null
+    sound: (typeof input?.sound === 'string' || input?.sound === null) ? input.sound : fallback.sound,
   };
 }
 

@@ -35,6 +35,9 @@ for (const type of EVENT_TYPES) {
     posXOut: document.getElementById(`evt-${type}-posx-out`),
     posY: document.getElementById(`evt-${type}-posy`),
     posYOut: document.getElementById(`evt-${type}-posy-out`),
+    soundFile: document.getElementById(`evt-${type}-sound-file`),
+    soundStatus: document.getElementById(`evt-${type}-sound-status`),
+    soundRemove: document.getElementById(`evt-${type}-sound-remove`),
   };
 }
 
@@ -114,6 +117,7 @@ async function loadSettings() {
     eventFields[type].reaction.value = s.events[type].reaction;
     eventFields[type].posX.value = s.events[type].position.x;
     eventFields[type].posY.value = s.events[type].position.y;
+    updateSoundStatus(type, s.events[type].sound);
   }
   for (const id in spriteFlipFields) {
     spriteFlipFields[id].checked = !!s.spriteFlip[id];
@@ -227,6 +231,37 @@ async function loadTestAvatars() {
 document.getElementById('clear-test-avatars').addEventListener('click', () => {
   fetch('/api/admin/test-avatar', { method: 'DELETE' });
 });
+
+function updateSoundStatus(type, sound) {
+  eventFields[type].soundStatus.textContent = sound ? `Son actuel : ${sound.replace(/^[a-z-]+-\d+/, 'fichier')}` : 'Aucun son';
+  eventFields[type].soundRemove.hidden = !sound;
+}
+
+for (const type of EVENT_TYPES) {
+  eventFields[type].soundFile.addEventListener('change', async () => {
+    const file = eventFields[type].soundFile.files[0];
+    if (!file) return;
+    eventFields[type].soundStatus.textContent = 'Envoi...';
+    const formData = new FormData();
+    formData.append('sound', file);
+    try {
+      const res = await fetch(`/api/admin/sound/${type}`, { method: 'POST', body: formData });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'échec');
+      updateSoundStatus(type, body.sound);
+    } catch (err) {
+      eventFields[type].soundStatus.textContent = "Échec de l'envoi";
+      console.error(err);
+    } finally {
+      eventFields[type].soundFile.value = '';
+    }
+  });
+
+  eventFields[type].soundRemove.addEventListener('click', async () => {
+    await fetch(`/api/admin/sound/${type}`, { method: 'DELETE' });
+    updateSoundStatus(type, null);
+  });
+}
 
 document.querySelectorAll('.test-event-btn').forEach((btn) => {
   btn.addEventListener('click', async () => {

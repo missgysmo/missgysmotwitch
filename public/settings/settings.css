@@ -173,6 +173,36 @@ output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums
   gap: 0.5rem;
 }
 .event-block h3 { margin: 0; font-size: 0.85rem; color: #c9b3ff; }
+.sound-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+.sound-status { color: #a9a9b8; flex: 1; }
+.sound-upload-btn {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #3a3a45;
+  border-radius: 6px;
+  background: transparent;
+  color: #c9b3ff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sound-upload-btn:hover { background: rgba(145, 71, 255, 0.15); }
+.sound-remove-btn {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #3a3a45;
+  border-radius: 6px;
+  background: transparent;
+  color: #a9a9b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sound-remove-btn:hover { color: #f1f1f5; }
+
 .test-event-btn {
   align-self: flex-start;
   padding: 0.3rem 0.7rem;

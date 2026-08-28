@@ -352,6 +352,11 @@ function showEvent(eventType, event, cast) {
   const cfg = settings.events?.[key];
   if (!cfg || !cfg.enabled) return;
 
+  if (cfg.sound) {
+    const audio = new Audio(`/sounds/${cfg.sound}`);
+    audio.play().catch((err) => console.error('[son] lecture impossible:', err.message));
+  }
+
   if (cfg.reaction === 'rain') {
     for (const entry of avatars.values()) makeItRain(entry, cfg.color);
   } else if (cfg.reaction === 'bounce') {

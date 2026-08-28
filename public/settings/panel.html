@@ -167,6 +167,11 @@
           <label>Taille <input type="range" id="evt-follow-size" min="8" max="40" step="1" /><output id="evt-follow-size-out"></output></label>
           <label>Position horizontale <input type="range" id="evt-follow-posx" min="0" max="100" step="1" /><output id="evt-follow-posx-out"></output></label>
           <label>Position verticale <input type="range" id="evt-follow-posy" min="0" max="100" step="1" /><output id="evt-follow-posy-out"></output></label>
+          <div class="sound-row" data-sound-row="follow">
+            <span class="sound-status" id="evt-follow-sound-status">Aucun son</span>
+            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-follow-sound-file" hidden /></label>
+            <button type="button" class="sound-remove-btn" data-type="follow" id="evt-follow-sound-remove" hidden>Retirer</button>
+          </div>
           <button type="button" class="test-event-btn" data-type="follow">Tester cette alerte</button>
         </div>
       </fieldset>
@@ -195,6 +200,11 @@
           <label>Taille <input type="range" id="evt-subscribe-size" min="8" max="40" step="1" /><output id="evt-subscribe-size-out"></output></label>
           <label>Position horizontale <input type="range" id="evt-subscribe-posx" min="0" max="100" step="1" /><output id="evt-subscribe-posx-out"></output></label>
           <label>Position verticale <input type="range" id="evt-subscribe-posy" min="0" max="100" step="1" /><output id="evt-subscribe-posy-out"></output></label>
+          <div class="sound-row" data-sound-row="subscribe">
+            <span class="sound-status" id="evt-subscribe-sound-status">Aucun son</span>
+            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-subscribe-sound-file" hidden /></label>
+            <button type="button" class="sound-remove-btn" data-type="subscribe" id="evt-subscribe-sound-remove" hidden>Retirer</button>
+          </div>
           <button type="button" class="test-event-btn" data-type="subscribe">Tester cette alerte</button>
         </div>
       </fieldset>
@@ -223,6 +233,11 @@
           <label>Taille <input type="range" id="evt-cheer-size" min="8" max="40" step="1" /><output id="evt-cheer-size-out"></output></label>
           <label>Position horizontale <input type="range" id="evt-cheer-posx" min="0" max="100" step="1" /><output id="evt-cheer-posx-out"></output></label>
           <label>Position verticale <input type="range" id="evt-cheer-posy" min="0" max="100" step="1" /><output id="evt-cheer-posy-out"></output></label>
+          <div class="sound-row" data-sound-row="cheer">
+            <span class="sound-status" id="evt-cheer-sound-status">Aucun son</span>
+            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-cheer-sound-file" hidden /></label>
+            <button type="button" class="sound-remove-btn" data-type="cheer" id="evt-cheer-sound-remove" hidden>Retirer</button>
+          </div>
           <button type="button" class="test-event-btn" data-type="cheer">Tester cette alerte</button>
         </div>
       </fieldset>
@@ -251,6 +266,11 @@
           <label>Taille <input type="range" id="evt-raid-size" min="8" max="40" step="1" /><output id="evt-raid-size-out"></output></label>
           <label>Position horizontale <input type="range" id="evt-raid-posx" min="0" max="100" step="1" /><output id="evt-raid-posx-out"></output></label>
           <label>Position verticale <input type="range" id="evt-raid-posy" min="0" max="100" step="1" /><output id="evt-raid-posy-out"></output></label>
+          <div class="sound-row" data-sound-row="raid">
+            <span class="sound-status" id="evt-raid-sound-status">Aucun son</span>
+            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-raid-sound-file" hidden /></label>
+            <button type="button" class="sound-remove-btn" data-type="raid" id="evt-raid-sound-remove" hidden>Retirer</button>
+          </div>
           <button type="button" class="test-event-btn" data-type="raid">Tester cette alerte</button>
         </div>
         <p class="hint">Le test affiche le popup sur <code>/overlay/</code> (ouvre-le dans un autre onglet ou regarde OBS). Un avatar au hasard parmi ceux affichés fera la réaction choisie — s'il n'y a aucun avatar actif, seul le popup de texte s'affiche.</p>
