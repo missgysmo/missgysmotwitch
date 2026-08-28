@@ -24,6 +24,7 @@
           <button type="button" class="nav-cat-btn active" data-cat="avatars">Avatars</button>
           <button type="button" class="nav-cat-btn" data-cat="alerts">Alertes</button>
           <button type="button" class="nav-cat-btn" data-cat="tools">Outils</button>
+          <button type="button" class="nav-cat-btn" data-cat="content">Contenu</button>
         </div>
         <div class="nav-subtabs" data-cat-group="avatars">
           <button type="button" class="nav-tab-btn active" data-tab="movement"><span class="nav-icon">🧭</span>Mouvement</button>
@@ -45,6 +46,9 @@
           <button type="button" class="nav-tab-btn" data-tab="activity"><span class="nav-icon">📣</span>Activité récente</button>
           <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
           <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
+        </div>
+        <div class="nav-subtabs" data-cat-group="content" hidden>
+          <button type="button" class="nav-tab-btn" data-tab="titles"><span class="nav-icon">💡</span>Titres &amp; idées</button>
         </div>
       </nav>
 
@@ -467,6 +471,31 @@
         <p class="hint">Fait apparaître un personnage sur <code>/overlay/</code> pour vérifier son sens de déplacement, sans attendre un vrai viewer. Ouvre l'overlay dans un autre onglet ou regarde OBS.</p>
         <div id="test-avatar-list" class="test-avatar-list"></div>
         <button type="button" id="clear-test-avatars">Retirer tous les avatars de test</button>
+      </fieldset>
+
+      <fieldset data-nav-panel="titles" hidden>
+        <legend>Générateur de titres &amp; idées de stream</legend>
+        <p class="hint">Renseigne le jeu/la catégorie et quelques mots-clés sur ce que tu vas faire, ça génère des propositions de titre et de tags Twitch. Purement local, rien n'est envoyé ailleurs.</p>
+        <label>Jeu / catégorie <input type="text" id="titles-game" maxlength="80" placeholder="ex : Stardew Valley" /></label>
+        <label>Mots-clés (séparés par des virgules) <input type="text" id="titles-keywords" maxlength="200" placeholder="ex : premier run, chill, communauté" /></label>
+        <label>
+          Ambiance
+          <select id="titles-mood">
+            <option value="chill">Chill / détente</option>
+            <option value="hype">Hype / énergique</option>
+            <option value="decouverte">Découverte / premier run</option>
+            <option value="retro">Rétro / nostalgie</option>
+            <option value="communaute">Communauté / interactif</option>
+            <option value="challenge">Challenge / difficile</option>
+          </select>
+        </label>
+        <button type="button" id="titles-generate-btn">✨ Générer des idées</button>
+        <div id="titles-results" class="titles-results" hidden>
+          <h3>Titres suggérés</h3>
+          <ul id="titles-list" class="titles-list"></ul>
+          <h3>Tags suggérés</h3>
+          <div id="titles-tags" class="titles-tags"></div>
+        </div>
       </fieldset>
 
       <div class="save-bar">

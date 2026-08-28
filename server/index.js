@@ -11,6 +11,7 @@ const store = require('./store');
 const species = require('./species');
 const { createChatTracker } = require('./twitchChat');
 const twitchEvents = require('./twitchEvents');
+const { generateTitleIdeas } = require('./titleIdeas');
 
 const PORT = process.env.PORT || 3000;
 const CHANNEL = process.env.TWITCH_CHANNEL;
@@ -475,6 +476,14 @@ app.delete('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
   testAvatars.delete(`test-${req.params.speciesId}`);
   broadcastToPreview(buildState(true));
   res.json({ ok: true });
+});
+
+app.post('/api/admin/title-ideas', requireAdmin, (req, res) => {
+  const { game, keywords, mood } = req.body || {};
+  if (typeof game !== 'string' || typeof keywords !== 'string' || game.length > 80 || keywords.length > 200) {
+    return res.status(400).json({ error: 'entrée invalide' });
+  }
+  res.json(generateTitleIdeas({ game, keywords, mood }));
 });
 
 // --- Mascotte Tamagotchi : bouton "nourrir" manuel depuis le dashboard ---

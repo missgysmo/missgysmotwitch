@@ -3,6 +3,7 @@ const statusEl = document.getElementById('status');
 const zoneBox = document.getElementById('zone-box');
 const corridorLine = document.getElementById('corridor-line');
 const zonePreviewEl = document.querySelector('.zone-preview');
+const settingsLayoutEl = document.getElementById('settings-layout');
 const previewMarkersEl = document.getElementById('preview-markers');
 
 const fields = {
@@ -127,6 +128,42 @@ async function loadTamagotchiSpeciesOptions() {
 document.getElementById('tamagotchi-feed-btn')?.addEventListener('click', async () => {
   await fetch('/api/admin/tamagotchi/feed', { method: 'POST' });
 });
+
+document.getElementById('titles-generate-btn')?.addEventListener('click', async () => {
+  const game = document.getElementById('titles-game').value;
+  const keywords = document.getElementById('titles-keywords').value;
+  const mood = document.getElementById('titles-mood').value;
+  const btn = document.getElementById('titles-generate-btn');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/title-ideas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game, keywords, mood }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const { titles, tags } = await res.json();
+    const listEl = document.getElementById('titles-list');
+    listEl.innerHTML = titles.map((t) => `<li><span>${escapeHtmlPanel(t)}</span><button type="button" class="titles-copy-btn" data-text="${escapeHtmlPanel(t)}">Copier</button></li>`).join('');
+    document.getElementById('titles-tags').innerHTML = tags.map((t) => `<span>#${escapeHtmlPanel(t)}</span>`).join('');
+    document.getElementById('titles-results').hidden = false;
+    listEl.querySelectorAll('.titles-copy-btn').forEach((copyBtn) => {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard?.writeText(copyBtn.dataset.text);
+        copyBtn.textContent = 'Copié !';
+        setTimeout(() => { copyBtn.textContent = 'Copier'; }, 1500);
+      });
+    });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function escapeHtmlPanel(str) {
+  return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
@@ -642,6 +679,8 @@ document.querySelectorAll('.nav-cat-btn').forEach((btn) => {
     if (firstTab) selectTab(firstTab);
     // la taille des avatars ne concerne que la catégorie Avatars
     avatarSizeFieldset.hidden = btn.dataset.cat !== 'avatars';
+    // la catégorie Contenu (générateur de titres) n'a pas de position à visualiser sur l'écran de stream
+    settingsLayoutEl.classList.toggle('no-sidebar', btn.dataset.cat === 'content');
     updatePreviewMarker();
   });
 });
