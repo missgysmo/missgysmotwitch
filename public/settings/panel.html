@@ -44,6 +44,7 @@
           <button type="button" class="nav-tab-btn" data-tab="chatoverlay"><span class="nav-icon">💬</span>Chat</button>
           <button type="button" class="nav-tab-btn" data-tab="activity"><span class="nav-icon">📣</span>Activité récente</button>
           <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
+          <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
         </div>
       </nav>
 
@@ -296,6 +297,36 @@
         <label>Position verticale <input type="range" id="followlist-posy" min="0" max="100" step="1" /><output id="followlist-posy-out"></output></label>
         <label>Largeur <input type="range" id="followlist-width" min="5" max="100" step="1" /><output id="followlist-width-out"></output></label>
         <label>Hauteur <input type="range" id="followlist-height" min="5" max="100" step="1" /><output id="followlist-height-out"></output></label>
+      </fieldset>
+
+      <fieldset data-nav-panel="tamagotchi" hidden>
+        <legend>Mascotte de la chaîne</legend>
+        <p class="hint">
+          Un petit personnage sur l'overlay dont l'humeur évolue avec la vie du stream : elle monte avec les messages du chat et les
+          follow/sub/cheer/raid, et redescend doucement avec le temps qui passe.
+        </p>
+        <label>
+          <input type="checkbox" id="tamagotchi-enabled" />
+          Activer la mascotte
+        </label>
+        <label>
+          Personnage
+          <select id="tamagotchi-species"></select>
+        </label>
+        <label>Taille <input type="range" id="tamagotchi-size" min="24" max="300" step="1" /><output id="tamagotchi-size-out"></output></label>
+        <label>
+          <input type="checkbox" id="tamagotchi-showbar" />
+          Afficher la barre d'humeur
+        </label>
+        <label>Perte d'humeur (points/minute) <input type="number" id="tamagotchi-decay" min="0" max="20" step="0.5" /></label>
+        <label>Gain par message de chat <input type="number" id="tamagotchi-boostchat" min="0" max="20" step="0.5" /></label>
+        <label>Gain par follow <input type="number" id="tamagotchi-boostfollow" min="0" max="100" step="1" /></label>
+        <label>Gain par sub <input type="number" id="tamagotchi-boostsub" min="0" max="100" step="1" /></label>
+        <label>Gain par cheer <input type="number" id="tamagotchi-boostcheer" min="0" max="100" step="1" /></label>
+        <label>Gain par raid <input type="number" id="tamagotchi-boostraid" min="0" max="100" step="1" /></label>
+        <label>Position horizontale <input type="range" id="tamagotchi-posx" min="0" max="100" step="1" /><output id="tamagotchi-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="tamagotchi-posy" min="0" max="100" step="1" /><output id="tamagotchi-posy-out"></output></label>
+        <button type="button" id="tamagotchi-feed-btn">🍬 Nourrir la mascotte</button>
       </fieldset>
 
       <fieldset data-nav-panel="follow" hidden>

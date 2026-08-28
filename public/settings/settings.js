@@ -100,6 +100,34 @@ const followListFields = {
   heightOut: document.getElementById('followlist-height-out'),
 };
 
+const tamagotchiFields = {
+  enabled: document.getElementById('tamagotchi-enabled'),
+  species: document.getElementById('tamagotchi-species'),
+  size: document.getElementById('tamagotchi-size'),
+  sizeOut: document.getElementById('tamagotchi-size-out'),
+  showBar: document.getElementById('tamagotchi-showbar'),
+  decay: document.getElementById('tamagotchi-decay'),
+  boostChat: document.getElementById('tamagotchi-boostchat'),
+  boostFollow: document.getElementById('tamagotchi-boostfollow'),
+  boostSub: document.getElementById('tamagotchi-boostsub'),
+  boostCheer: document.getElementById('tamagotchi-boostcheer'),
+  boostRaid: document.getElementById('tamagotchi-boostraid'),
+  posX: document.getElementById('tamagotchi-posx'),
+  posXOut: document.getElementById('tamagotchi-posx-out'),
+  posY: document.getElementById('tamagotchi-posy'),
+  posYOut: document.getElementById('tamagotchi-posy-out'),
+};
+
+async function loadTamagotchiSpeciesOptions() {
+  const res = await fetch('/api/species');
+  const list = await res.json();
+  tamagotchiFields.species.innerHTML = list.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+}
+
+document.getElementById('tamagotchi-feed-btn')?.addEventListener('click', async () => {
+  await fetch('/api/admin/tamagotchi/feed', { method: 'POST' });
+});
+
 const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
 const eventFields = {};
 for (const type of EVENT_TYPES) {
@@ -180,6 +208,9 @@ function updateOutputs() {
   followListFields.posYOut.textContent = `${followListFields.posY.value}%`;
   followListFields.widthOut.textContent = `${followListFields.width.value}%`;
   followListFields.heightOut.textContent = `${followListFields.height.value}%`;
+  tamagotchiFields.sizeOut.textContent = `${tamagotchiFields.size.value}px`;
+  tamagotchiFields.posXOut.textContent = `${tamagotchiFields.posX.value}%`;
+  tamagotchiFields.posYOut.textContent = `${tamagotchiFields.posY.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -239,6 +270,9 @@ followListFields.posX.addEventListener('input', updateOutputs);
 followListFields.posY.addEventListener('input', updateOutputs);
 followListFields.width.addEventListener('input', updateOutputs);
 followListFields.height.addEventListener('input', updateOutputs);
+tamagotchiFields.size.addEventListener('input', updateOutputs);
+tamagotchiFields.posX.addEventListener('input', updateOutputs);
+tamagotchiFields.posY.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -326,6 +360,18 @@ async function loadSettings() {
   followListFields.posY.value = s.followList.position.y;
   followListFields.width.value = s.followList.position.width;
   followListFields.height.value = s.followList.position.height;
+  tamagotchiFields.enabled.checked = s.tamagotchi.enabled;
+  tamagotchiFields.species.value = s.tamagotchi.species;
+  tamagotchiFields.size.value = s.tamagotchi.size;
+  tamagotchiFields.showBar.checked = s.tamagotchi.showBar;
+  tamagotchiFields.decay.value = s.tamagotchi.decayPerMinute;
+  tamagotchiFields.boostChat.value = s.tamagotchi.boostChat;
+  tamagotchiFields.boostFollow.value = s.tamagotchi.boostFollow;
+  tamagotchiFields.boostSub.value = s.tamagotchi.boostSub;
+  tamagotchiFields.boostCheer.value = s.tamagotchi.boostCheer;
+  tamagotchiFields.boostRaid.value = s.tamagotchi.boostRaid;
+  tamagotchiFields.posX.value = s.tamagotchi.position.x;
+  tamagotchiFields.posY.value = s.tamagotchi.position.y;
   updateOutputs();
 }
 
@@ -430,6 +476,19 @@ async function saveSettings() {
         height: Number(followListFields.height.value),
       },
     },
+    tamagotchi: {
+      enabled: tamagotchiFields.enabled.checked,
+      species: tamagotchiFields.species.value,
+      size: Number(tamagotchiFields.size.value),
+      showBar: tamagotchiFields.showBar.checked,
+      decayPerMinute: Number(tamagotchiFields.decay.value),
+      boostChat: Number(tamagotchiFields.boostChat.value),
+      boostFollow: Number(tamagotchiFields.boostFollow.value),
+      boostSub: Number(tamagotchiFields.boostSub.value),
+      boostCheer: Number(tamagotchiFields.boostCheer.value),
+      boostRaid: Number(tamagotchiFields.boostRaid.value),
+      position: { x: Number(tamagotchiFields.posX.value), y: Number(tamagotchiFields.posY.value) },
+    },
   };
   try {
     const res = await fetch('/api/settings', {
@@ -450,7 +509,7 @@ form.addEventListener('submit', (e) => {
   saveSettings();
 });
 
-loadTestAvatars().then(loadSettings);
+Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions()]).then(loadSettings);
 
 document.getElementById('logout')?.addEventListener('click', async () => {
   await fetch('/api/admin/logout', { method: 'POST' });
@@ -547,6 +606,13 @@ function updatePreviewMarker() {
         Number(followListFields.height.value),
         'Followers/Subs',
         '#2ed573',
+      );
+    } else if (tool === 'tamagotchi') {
+      addPreviewMarker(
+        Number(tamagotchiFields.posX.value),
+        Number(tamagotchiFields.posY.value),
+        'Mascotte',
+        '#ffd633',
       );
     }
   }

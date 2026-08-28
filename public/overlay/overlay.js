@@ -10,6 +10,9 @@ const activityFeedEl = document.getElementById('activity-feed');
 const activityFeedTrackEl = document.getElementById('activity-feed-track');
 const followListEl = document.getElementById('follow-list');
 const followListTrackEl = document.getElementById('follow-list-track');
+const tamagotchiEl = document.getElementById('tamagotchi');
+const tamagotchiImgEl = document.getElementById('tamagotchi-img');
+const tamagotchiBarEl = document.getElementById('tamagotchi-bar-fill');
 
 // Permet d'ajouter chaque module comme source OBS indépendante :
 // /overlay/?modules=avatars,chat,canvas,timers (par défaut, sans le paramètre : tous activés)
@@ -24,6 +27,7 @@ if (!moduleEnabled('canvas')) document.body.classList.add('module-canvas-off');
 if (!moduleEnabled('timers')) document.body.classList.add('module-timers-off');
 if (!moduleEnabled('activity')) document.body.classList.add('module-activity-off');
 if (!moduleEnabled('people')) document.body.classList.add('module-people-off');
+if (!moduleEnabled('tamagotchi')) document.body.classList.add('module-tamagotchi-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -103,6 +107,7 @@ function applySettings(newSettings) {
   applyChatOverlayLayout();
   applyActivityFeedLayout();
   applyFollowListLayout();
+  applyTamagotchiLayout();
 }
 
 applySettings(settings);
@@ -376,6 +381,23 @@ function renderPeople(people) {
   }
   const items = list.map((p) => `<span class="follow-list-item">${p.tag || ''} ${escapeHtml(p.displayName)}</span>`);
   followListTrackEl.innerHTML = items.join('') + items.join('');
+}
+
+function applyTamagotchiLayout() {
+  const t = settings.tamagotchi;
+  tamagotchiEl.style.display = t.enabled ? 'flex' : 'none';
+  tamagotchiEl.style.left = `${t.position.x}%`;
+  tamagotchiEl.style.top = `${t.position.y}%`;
+  tamagotchiEl.style.width = `${t.size}px`;
+  tamagotchiImgEl.src = `/overlay/sprites/${SPECIES_FILES[t.species] || SPECIES_FILES.cat}`;
+  tamagotchiEl.classList.toggle('hide-bar', !t.showBar);
+}
+
+function renderTamagotchiMood(mood) {
+  tamagotchiBarEl.style.width = `${mood}%`;
+  tamagotchiEl.classList.toggle('mood-happy', mood >= 70);
+  tamagotchiEl.classList.toggle('mood-neutral', mood >= 35 && mood < 70);
+  tamagotchiEl.classList.toggle('mood-sad', mood < 35);
 }
 
 function hexToRgb(hex) {
@@ -706,6 +728,7 @@ function connect() {
       renderActivity(data.recent);
       renderPeople(data.people);
     }
+    if (data.type === 'tamagotchi') renderTamagotchiMood(data.mood);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

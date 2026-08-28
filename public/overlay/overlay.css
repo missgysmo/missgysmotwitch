@@ -31,6 +31,7 @@ body.module-canvas-off #graffiti-canvas { display: none !important; }
 body.module-timers-off #timer-layer { display: none !important; }
 body.module-activity-off #activity-feed { display: none !important; }
 body.module-people-off #follow-list { display: none !important; }
+body.module-tamagotchi-off #tamagotchi { display: none !important; }
 
 #graffiti-canvas {
   position: fixed;
@@ -117,6 +118,49 @@ body.module-people-off #follow-list { display: none !important; }
 @keyframes scrollUp {
   from { transform: translateY(0); }
   to { transform: translateY(-50%); }
+}
+
+/* Mascotte "Tamagotchi" de la chaîne : humeur qui évolue avec l'activité du chat et des events */
+#tamagotchi {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+#tamagotchi-img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.5));
+  transition: filter .6s ease;
+}
+
+#tamagotchi.mood-sad #tamagotchi-img { filter: grayscale(0.6) drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+#tamagotchi.mood-happy #tamagotchi-img { animation: tamagotchiBounce 1.4s ease-in-out infinite; }
+
+#tamagotchi-bar {
+  width: 80%;
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(0,0,0,.5);
+  overflow: hidden;
+}
+
+#tamagotchi-bar-fill {
+  height: 100%;
+  width: 70%;
+  background: #2ed573;
+  transition: width .8s ease, background .8s ease;
+}
+
+#tamagotchi.mood-neutral #tamagotchi-bar-fill { background: #ffd633; }
+#tamagotchi.mood-sad #tamagotchi-bar-fill { background: #ff4757; }
+#tamagotchi.hide-bar #tamagotchi-bar { display: none; }
+
+@keyframes tamagotchiBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 .chat-overlay-name { font-weight: 700; }

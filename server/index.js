@@ -160,6 +160,17 @@ const testAvatars = new Map(); // login -> { species, hue }
 const recentActivity = []; // { kind: 'follow'|'subscribe'|'cheer'|'raid', displayName, extra, ts } — remis à zéro à chaque redémarrage du serveur
 const RECENT_ACTIVITY_MAX = 40;
 
+// Mascotte "Tamagotchi" : humeur 0-100, gagnée par l'activité du chat/des events, perdue avec le temps qui passe.
+let tamagotchiMood = store.getTamagotchiState().mood;
+function boostTamagotchi(amount) {
+  tamagotchiMood = Math.max(0, Math.min(100, tamagotchiMood + amount));
+  store.setTamagotchiState({ mood: tamagotchiMood, updatedAt: Date.now() });
+  broadcast({ type: 'tamagotchi', mood: tamagotchiMood });
+}
+setInterval(() => {
+  boostTamagotchi(-store.getSettings().tamagotchi.decayPerMinute);
+}, 60 * 1000);
+
 // includeTest: les avatars de test (onglet "Test avatars") ne doivent jamais apparaître
 // sur le stream réel — seulement dans l'aperçu sandbox (/overlay/?preview=1).
 function buildState(includeTest = false) {
@@ -272,6 +283,7 @@ const chatTracker = createChatTracker(CHANNEL, {
         text: message.slice(0, 300),
         id: meta.id,
       });
+      boostTamagotchi(store.getSettings().tamagotchi.boostChat);
     } catch (err) {
       logError('chatTracker.onMessage', err);
     }
@@ -299,6 +311,7 @@ wss.on('connection', (ws, req) => {
   }
   ws.send(JSON.stringify({ type: 'canvas-init', ...store.getCanvas() }));
   ws.send(JSON.stringify({ type: 'activity', recent: recentActivity, people: store.getPeople() }));
+  ws.send(JSON.stringify({ type: 'tamagotchi', mood: tamagotchiMood }));
   ws.on('close', () => overlayClients.delete(ws));
 });
 
@@ -464,6 +477,12 @@ app.delete('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Mascotte Tamagotchi : bouton "nourrir" manuel depuis le dashboard ---
+app.post('/api/admin/tamagotchi/feed', requireAdmin, (req, res) => {
+  boostTamagotchi(15);
+  res.json({ ok: true, mood: tamagotchiMood });
+});
+
 app.delete('/api/admin/test-avatar', requireAdmin, (req, res) => {
   testAvatars.clear();
   broadcastToPreview(buildState(true));
@@ -583,10 +602,30 @@ function sanitizeFollowListConfig(input, fallback) {
   };
 }
 
+function sanitizeTamagotchiConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    species: species.getById(input?.species) ? input.species : fallback.species,
+    size: clamp(input?.size, 24, 300, fallback.size),
+    showBar: typeof input?.showBar === 'boolean' ? input.showBar : fallback.showBar,
+    decayPerMinute: clamp(input?.decayPerMinute, 0, 20, fallback.decayPerMinute),
+    boostChat: clamp(input?.boostChat, 0, 20, fallback.boostChat),
+    boostFollow: clamp(input?.boostFollow, 0, 100, fallback.boostFollow),
+    boostSub: clamp(input?.boostSub, 0, 100, fallback.boostSub),
+    boostCheer: clamp(input?.boostCheer, 0, 100, fallback.boostCheer),
+    boostRaid: clamp(input?.boostRaid, 0, 100, fallback.boostRaid),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+    },
+  };
+}
+
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -633,6 +672,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     chatOverlay: sanitizeChatOverlayConfig(chatOverlay, d.chatOverlay),
     activityFeed: sanitizeActivityFeedConfig(activityFeed, d.activityFeed),
     followList: sanitizeFollowListConfig(followList, d.followList),
+    tamagotchi: sanitizeTamagotchiConfig(tamagotchi, d.tamagotchi),
   };
 
   store.setSettings(settings);
@@ -699,6 +739,10 @@ function recordActivity(type, event) {
   recentActivity.unshift({ kind, displayName, login, extra, ts: Date.now() });
   if (recentActivity.length > RECENT_ACTIVITY_MAX) recentActivity.length = RECENT_ACTIVITY_MAX;
   broadcast({ type: 'activity', recent: recentActivity, people: store.getPeople() });
+
+  const t = store.getSettings().tamagotchi;
+  const boostByKind = { follow: t.boostFollow, subscribe: t.boostSub, cheer: t.boostCheer, raid: t.boostRaid };
+  boostTamagotchi(boostByKind[kind] || 0);
 }
 
 async function startEventSub() {

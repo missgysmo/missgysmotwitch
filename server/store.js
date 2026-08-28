@@ -7,6 +7,7 @@ const TOKENS_PATH = path.join(DATA_DIR, 'tokens.json');
 const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
 const CANVAS_PATH = path.join(DATA_DIR, 'canvas.json');
 const PEOPLE_PATH = path.join(DATA_DIR, 'people.json');
+const TAMAGOTCHI_PATH = path.join(DATA_DIR, 'tamagotchi.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -88,6 +89,19 @@ const DEFAULT_SETTINGS = {
     speedSeconds: 30,
     position: { x: 2, y: 2, width: 20, height: 50 },
   },
+  tamagotchi: {
+    enabled: false,
+    species: 'cat',
+    size: 96,
+    showBar: true,
+    decayPerMinute: 1,
+    boostChat: 1,
+    boostFollow: 8,
+    boostSub: 15,
+    boostCheer: 10,
+    boostRaid: 20,
+    position: { x: 90, y: 85 },
+  },
   events: {
     follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null },
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null },
@@ -152,6 +166,16 @@ function addPerson(kind, login, displayName) {
   return people;
 }
 
+// Humeur du mascotte (0-100), persiste entre les redémarrages du serveur
+function getTamagotchiState() {
+  return readJson(TAMAGOTCHI_PATH, { mood: 70, updatedAt: Date.now() });
+}
+
+function setTamagotchiState(state) {
+  writeJson(TAMAGOTCHI_PATH, state);
+  return state;
+}
+
 function getAvatar(login) {
   const avatars = getAllAvatars();
   return avatars[login.toLowerCase()] || null;
@@ -208,6 +232,11 @@ function getSettings() {
       ...(saved.followList || {}),
       position: { ...DEFAULT_SETTINGS.followList.position, ...(saved.followList?.position || {}) },
     },
+    tamagotchi: {
+      ...DEFAULT_SETTINGS.tamagotchi,
+      ...(saved.tamagotchi || {}),
+      position: { ...DEFAULT_SETTINGS.tamagotchi.position, ...(saved.tamagotchi?.position || {}) },
+    },
     events: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.events.follow, saved.events?.follow),
       subscribe: mergeEventConfig(DEFAULT_SETTINGS.events.subscribe, saved.events?.subscribe),
@@ -235,6 +264,8 @@ module.exports = {
   resetCanvas,
   getPeople,
   addPerson,
+  getTamagotchiState,
+  setTamagotchiState,
   DEFAULT_SETTINGS,
   DATA_DIR,
 };
