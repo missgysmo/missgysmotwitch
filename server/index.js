@@ -246,7 +246,14 @@ const chatTracker = createChatTracker(CHANNEL, {
       displayName: meta.displayName,
       color: meta.color,
       text: message.slice(0, 300),
+      id: meta.id,
     });
+  },
+  onMessageDeleted: (id) => {
+    broadcast({ type: 'chatlog-delete', id });
+  },
+  onClearChat: (login) => {
+    broadcast({ type: 'chatlog-clear', login: login || null });
   },
 });
 
@@ -495,10 +502,12 @@ function sanitizeChatOverlayConfig(input, fallback) {
     maxMessages: clamp(input?.maxMessages, 1, 30, fallback.maxMessages),
     fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
     textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
-    useUserColor: typeof input?.useUserColor === 'boolean' ? input.useUserColor : fallback.useUserColor,
+    colorMode: ['twitch', 'palette', 'off'].includes(input?.colorMode) ? input.colorMode : fallback.colorMode,
+    style: ['list', 'bubbles'].includes(input?.style) ? input.style : fallback.style,
+    rotation: clamp(input?.rotation, -45, 45, fallback.rotation),
     bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
     bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
-    fadeSeconds: clamp(input?.fadeSeconds, 0, 120, fallback.fadeSeconds),
+    fadeSeconds: clamp(input?.fadeSeconds, 0, 86400, fallback.fadeSeconds),
     position: {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),

@@ -221,15 +221,27 @@
           Activer l'affichage du chat
         </label>
         <label>Nombre de messages affichés <input type="number" id="chat-maxmessages" min="1" max="30" step="1" /></label>
+        <label>
+          Style d'affichage
+          <select id="chat-style">
+            <option value="list">Liste simple</option>
+            <option value="bubbles">Bulles colorées</option>
+          </select>
+        </label>
+        <label>
+          Couleur des pseudos
+          <select id="chat-colormode">
+            <option value="twitch">Couleur Twitch de chaque viewer</option>
+            <option value="palette">Palette automatique (une couleur par personne, toujours coloré)</option>
+            <option value="off">Couleur du texte pour tout le monde</option>
+          </select>
+        </label>
         <label>Taille du texte <input type="range" id="chat-fontsize" min="8" max="40" step="1" /><output id="chat-fontsize-out"></output></label>
         <label>Couleur du texte <input type="color" id="chat-textcolor" /></label>
-        <label>
-          <input type="checkbox" id="chat-usercolor" />
-          Utiliser la couleur Twitch de chaque viewer pour son pseudo
-        </label>
         <label>Couleur de fond <input type="color" id="chat-bgcolor" /></label>
         <label>Opacité du fond (%) <input type="range" id="chat-bgopacity" min="0" max="100" step="1" /><output id="chat-bgopacity-out"></output></label>
-        <label>Disparition après (secondes, 0 = jamais) <input type="number" id="chat-fadeseconds" min="0" max="120" step="1" /></label>
+        <label>Rotation (degrés) <input type="range" id="chat-rotation" min="-45" max="45" step="1" /><output id="chat-rotation-out"></output></label>
+        <label>Disparition après (secondes, 0 = jamais) <input type="number" id="chat-fadeseconds" min="0" max="86400" step="1" /></label>
         <label>Position horizontale <input type="range" id="chat-posx" min="0" max="100" step="1" /><output id="chat-posx-out"></output></label>
         <label>Position verticale <input type="range" id="chat-posy" min="0" max="100" step="1" /><output id="chat-posy-out"></output></label>
         <label>Largeur <input type="range" id="chat-width" min="5" max="100" step="1" /><output id="chat-width-out"></output></label>

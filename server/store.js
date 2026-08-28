@@ -60,7 +60,9 @@ const DEFAULT_SETTINGS = {
     maxMessages: 8,
     fontSize: 14,
     textColor: '#ffffff',
-    useUserColor: true,
+    colorMode: 'twitch', // 'twitch' | 'palette' | 'off'
+    style: 'list', // 'list' | 'bubbles'
+    rotation: 0,
     bgColor: '#000000',
     bgOpacity: 55,
     fadeSeconds: 12,

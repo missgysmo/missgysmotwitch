@@ -45,6 +45,7 @@ body.module-timers-off #timer-layer { display: none !important; }
   padding: 8px;
   border-radius: 8px;
   font-family: system-ui, sans-serif;
+  transform-origin: center center;
 }
 
 #chat-overlay-list {
@@ -64,6 +65,14 @@ body.module-timers-off #timer-layer { display: none !important; }
 .chat-overlay-msg.fading { opacity: 0; }
 
 .chat-overlay-name { font-weight: 700; }
+
+.style-bubbles .chat-overlay-msg {
+  background: color-mix(in srgb, var(--msg-color, #9147ff) 22%, rgba(0,0,0,.55));
+  border: 1px solid color-mix(in srgb, var(--msg-color, #9147ff) 55%, transparent);
+  border-radius: 12px;
+  padding: 5px 10px;
+}
+.style-bubbles .chat-overlay-name { display: block; }
 
 .avatar-wrap {
   position: absolute;

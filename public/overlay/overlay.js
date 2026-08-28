@@ -60,7 +60,7 @@ let settings = {
   ownerSize: 64,
   graffiti: { enabled: true, cols: 60, rows: 34, cooldownSeconds: 8, position: { x: 2, y: 58, width: 32, height: 38 } },
   chatOverlay: {
-    enabled: false, maxMessages: 8, fontSize: 14, textColor: '#ffffff', useUserColor: true,
+    enabled: false, maxMessages: 8, fontSize: 14, textColor: '#ffffff', colorMode: 'twitch', style: 'list', rotation: 0,
     bgColor: '#000000', bgOpacity: 55, fadeSeconds: 12, position: { x: 78, y: 55, width: 20, height: 40 },
   },
   spriteFlip: {
@@ -304,6 +304,9 @@ function applyChatOverlayLayout() {
   chatOverlayEl.style.height = `${c.position.height}%`;
   chatOverlayEl.style.fontSize = `${c.fontSize}px`;
   chatOverlayEl.style.color = c.textColor;
+  chatOverlayEl.style.transform = `rotate(${c.rotation}deg)`;
+  chatOverlayEl.classList.toggle('style-bubbles', c.style === 'bubbles');
+  chatOverlayEl.classList.toggle('style-list', c.style !== 'bubbles');
   const rgb = hexToRgb(c.bgColor);
   chatOverlayEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${c.bgOpacity / 100})`;
 }
@@ -313,16 +316,34 @@ function hexToRgb(hex) {
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
+// Couleur stable par pseudo (mode "palette"), utile quand Twitch ne fournit pas de couleur perso.
+const CHAT_PALETTE = ['#ff6ec7', '#18dcff', '#ffd633', '#2ed573', '#9147ff', '#ff9f43', '#ff4757', '#3742fa', '#7bed9f', '#eccc68'];
+function paletteColorFor(login) {
+  let hash = 0;
+  for (const c of login) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+  return CHAT_PALETTE[hash % CHAT_PALETTE.length];
+}
+
+function nameColorFor(c, data) {
+  if (c.colorMode === 'twitch') return data.color || paletteColorFor(data.login);
+  if (c.colorMode === 'palette') return paletteColorFor(data.login);
+  return c.textColor;
+}
+
 function addChatLogMessage(data) {
   const c = settings.chatOverlay;
   if (!c.enabled) return;
 
+  const nameColor = nameColorFor(c, data);
   const row = document.createElement('div');
   row.className = 'chat-overlay-msg';
+  if (data.id) row.dataset.msgId = data.id;
+  row.dataset.login = data.login;
+  if (c.style === 'bubbles') row.style.setProperty('--msg-color', nameColor);
   const nameEl = document.createElement('span');
   nameEl.className = 'chat-overlay-name';
   nameEl.textContent = `${data.displayName}: `;
-  if (c.useUserColor && data.color) nameEl.style.color = data.color;
+  nameEl.style.color = nameColor;
   row.appendChild(nameEl);
   row.appendChild(document.createTextNode(data.text));
   chatOverlayListEl.appendChild(row);
@@ -337,6 +358,19 @@ function addChatLogMessage(data) {
       setTimeout(() => row.remove(), 1300);
     }, c.fadeSeconds * 1000);
   }
+}
+
+function removeChatLogMessage(id) {
+  if (!id) return;
+  const row = chatOverlayListEl.querySelector(`[data-msg-id="${id}"]`);
+  if (row) row.remove();
+}
+
+function clearChatLogMessages(login) {
+  const rows = login
+    ? chatOverlayListEl.querySelectorAll(`[data-login="${login}"]`)
+    : chatOverlayListEl.querySelectorAll('.chat-overlay-msg');
+  rows.forEach((row) => row.remove());
 }
 
 const timerEls = {}; // id -> { el, interval }
@@ -596,6 +630,8 @@ function connect() {
     if (data.type === 'canvas-init') initGraffitiCanvas(data);
     if (data.type === 'canvas-update') drawGraffitiCell(data.x, data.y, data.cell);
     if (data.type === 'chatlog') addChatLogMessage(data);
+    if (data.type === 'chatlog-delete') removeChatLogMessage(data.id);
+    if (data.type === 'chatlog-clear') clearChatLogMessages(data.login);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

@@ -43,7 +43,10 @@ const chatOverlayFields = {
   fontSize: document.getElementById('chat-fontsize'),
   fontSizeOut: document.getElementById('chat-fontsize-out'),
   textColor: document.getElementById('chat-textcolor'),
-  useUserColor: document.getElementById('chat-usercolor'),
+  colorMode: document.getElementById('chat-colormode'),
+  style: document.getElementById('chat-style'),
+  rotation: document.getElementById('chat-rotation'),
+  rotationOut: document.getElementById('chat-rotation-out'),
   bgColor: document.getElementById('chat-bgcolor'),
   bgOpacity: document.getElementById('chat-bgopacity'),
   bgOpacityOut: document.getElementById('chat-bgopacity-out'),
@@ -121,6 +124,7 @@ function updateOutputs() {
   graffitiFields.heightOut.textContent = `${graffitiFields.height.value}%`;
   chatOverlayFields.fontSizeOut.textContent = `${chatOverlayFields.fontSize.value}px`;
   chatOverlayFields.bgOpacityOut.textContent = `${chatOverlayFields.bgOpacity.value}%`;
+  chatOverlayFields.rotationOut.textContent = `${chatOverlayFields.rotation.value}°`;
   chatOverlayFields.posXOut.textContent = `${chatOverlayFields.posX.value}%`;
   chatOverlayFields.posYOut.textContent = `${chatOverlayFields.posY.value}%`;
   chatOverlayFields.widthOut.textContent = `${chatOverlayFields.width.value}%`;
@@ -167,6 +171,7 @@ graffitiFields.width.addEventListener('input', updateOutputs);
 graffitiFields.height.addEventListener('input', updateOutputs);
 chatOverlayFields.fontSize.addEventListener('input', updateOutputs);
 chatOverlayFields.bgOpacity.addEventListener('input', updateOutputs);
+chatOverlayFields.rotation.addEventListener('input', updateOutputs);
 chatOverlayFields.posX.addEventListener('input', updateOutputs);
 chatOverlayFields.posY.addEventListener('input', updateOutputs);
 chatOverlayFields.width.addEventListener('input', updateOutputs);
@@ -227,7 +232,9 @@ async function loadSettings() {
   chatOverlayFields.maxMessages.value = s.chatOverlay.maxMessages;
   chatOverlayFields.fontSize.value = s.chatOverlay.fontSize;
   chatOverlayFields.textColor.value = s.chatOverlay.textColor;
-  chatOverlayFields.useUserColor.checked = s.chatOverlay.useUserColor;
+  chatOverlayFields.colorMode.value = s.chatOverlay.colorMode;
+  chatOverlayFields.style.value = s.chatOverlay.style;
+  chatOverlayFields.rotation.value = s.chatOverlay.rotation;
   chatOverlayFields.bgColor.value = s.chatOverlay.bgColor;
   chatOverlayFields.bgOpacity.value = s.chatOverlay.bgOpacity;
   chatOverlayFields.fadeSeconds.value = s.chatOverlay.fadeSeconds;
@@ -297,7 +304,9 @@ async function saveSettings() {
       maxMessages: Number(chatOverlayFields.maxMessages.value),
       fontSize: Number(chatOverlayFields.fontSize.value),
       textColor: chatOverlayFields.textColor.value,
-      useUserColor: chatOverlayFields.useUserColor.checked,
+      colorMode: chatOverlayFields.colorMode.value,
+      style: chatOverlayFields.style.value,
+      rotation: Number(chatOverlayFields.rotation.value),
       bgColor: chatOverlayFields.bgColor.value,
       bgOpacity: Number(chatOverlayFields.bgOpacity.value),
       fadeSeconds: Number(chatOverlayFields.fadeSeconds.value),
