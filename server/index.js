@@ -27,10 +27,14 @@ const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || `http://localho
 
 // Au lieu de crasher le process sur une erreur inattendue, on la consigne avec l'heure exacte et on continue.
 const DEBUG_LOG_PATH = path.join(store.DATA_DIR, 'debug.log');
+// Séparateur entre deux entrées de log : une stack trace contient elle-même plusieurs lignes,
+// donc découper le fichier par simple "\n" casserait une seule erreur en plusieurs fragments
+// (c'est ce qui rendait le panel "Santé du bot" illisible — jamais le message, juste la fin de la trace).
+const DEBUG_LOG_SEPARATOR = '\n---\n';
 function logError(label, err) {
-  const line = `[${new Date().toISOString()}] ${label}: ${err?.stack || err}\n`;
+  const line = `[${new Date().toISOString()}] ${label}: ${err?.stack || err}`;
   console.error(line);
-  fs.appendFile(DEBUG_LOG_PATH, line, () => {});
+  fs.appendFile(DEBUG_LOG_PATH, line + DEBUG_LOG_SEPARATOR, () => {});
 }
 process.on('uncaughtException', (err) => logError('uncaughtException', err));
 process.on('unhandledRejection', (err) => logError('unhandledRejection', err));
@@ -633,7 +637,7 @@ app.get('/api/admin/health', requireAdmin, (req, res) => {
   let recentErrors = [];
   try {
     const raw = fs.readFileSync(DEBUG_LOG_PATH, 'utf8');
-    recentErrors = raw.trim().split('\n').filter(Boolean).slice(-10).reverse();
+    recentErrors = raw.split(DEBUG_LOG_SEPARATOR).map((e) => e.trim()).filter(Boolean).slice(-10).reverse();
   } catch {
     // pas encore d'erreurs consignées
   }
