@@ -651,6 +651,11 @@ app.get('/api/admin/health', requireAdmin, (req, res) => {
   });
 });
 
+app.delete('/api/admin/debug-log', requireAdmin, (req, res) => {
+  fs.rm(DEBUG_LOG_PATH, { force: true }, () => {});
+  res.json({ ok: true });
+});
+
 // --- Carnet de bord des réguliers : notes privées admin, jamais exposées côté overlay/viewer ---
 // Reconstitue la liste followers/subs à partir de l'API Twitch (elle ne se remplit sinon
 // qu'au fil des nouveaux follows/subs à venir, en partant d'une liste vide).

@@ -279,6 +279,27 @@ form {
 .health-dot.ok { background: #2ed573; }
 .health-dot.bad { background: #ff4757; }
 
+.health-errors-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.health-errors-head h3 { margin: 0; }
+
+.health-errors-head button {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #33333e;
+  border-radius: 6px;
+  background: #1c1c24;
+  color: #cfcfe0;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.health-errors-head button:hover { color: #f1f1f5; border-color: #45455a; }
+
 .health-errors {
   display: flex;
   flex-direction: column;

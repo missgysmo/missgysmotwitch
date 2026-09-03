@@ -426,7 +426,10 @@
         <p class="hint">État des connexions Twitch (chat + events) et des dernières erreurs consignées automatiquement.</p>
         <button type="button" id="health-refresh-btn">🔄 Actualiser</button>
         <div id="health-status" class="health-status"></div>
-        <h3>Dernières erreurs</h3>
+        <div class="health-errors-head">
+          <h3>Dernières erreurs</h3>
+          <button type="button" id="health-clear-btn">🗑️ Vider le journal</button>
+        </div>
         <div id="health-errors" class="health-errors"></div>
       </fieldset>
 

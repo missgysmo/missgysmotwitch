@@ -458,6 +458,11 @@ async function loadHealth() {
 
 document.getElementById('health-refresh-btn')?.addEventListener('click', loadHealth);
 
+document.getElementById('health-clear-btn')?.addEventListener('click', async () => {
+  await fetch('/api/admin/debug-log', { method: 'DELETE' });
+  loadHealth();
+});
+
 const OBS_MODULES = [
   { id: 'avatars', label: '🐾 Avatars des viewers' },
   { id: 'chat', label: '💬 Chat sur l\'overlay' },
