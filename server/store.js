@@ -72,6 +72,12 @@ const DEFAULT_SETTINGS = {
     fadeSeconds: 12,
     position: { x: 78, y: 55, width: 20, height: 40 },
   },
+  // Ping sonore joué (côté overlay/OBS) à chaque nouveau message du chat, pour prévenir le streamer.
+  chatSound: {
+    enabled: false,
+    sound: null,
+    cooldownSeconds: 4,
+  },
   activityFeed: {
     enabled: false,
     fontSize: 15,
@@ -306,6 +312,10 @@ function getSettings() {
       ...DEFAULT_SETTINGS.chatOverlay,
       ...(saved.chatOverlay || {}),
       position: { ...DEFAULT_SETTINGS.chatOverlay.position, ...(saved.chatOverlay?.position || {}) },
+    },
+    chatSound: {
+      ...DEFAULT_SETTINGS.chatSound,
+      ...(saved.chatSound || {}),
     },
     activityFeed: {
       ...DEFAULT_SETTINGS.activityFeed,

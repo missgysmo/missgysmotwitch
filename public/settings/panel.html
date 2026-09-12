@@ -43,6 +43,7 @@
           <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
           <button type="button" class="nav-tab-btn" data-tab="graffiti"><span class="nav-icon">🎨</span>Graffiti</button>
           <button type="button" class="nav-tab-btn" data-tab="chatoverlay"><span class="nav-icon">💬</span>Chat</button>
+          <button type="button" class="nav-tab-btn" data-tab="chatsound"><span class="nav-icon">🔔</span>Son du tchat</button>
           <button type="button" class="nav-tab-btn" data-tab="activity"><span class="nav-icon">📣</span>Activité récente</button>
           <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
           <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
@@ -265,6 +266,22 @@
         <label>Position verticale <input type="range" id="chat-posy" min="0" max="100" step="1" /><output id="chat-posy-out"></output></label>
         <label>Largeur <input type="range" id="chat-width" min="5" max="100" step="1" /><output id="chat-width-out"></output></label>
         <label>Hauteur <input type="range" id="chat-height" min="5" max="100" step="1" /><output id="chat-height-out"></output></label>
+      </fieldset>
+
+      <fieldset data-nav-panel="chatsound" hidden>
+        <legend>Alerte sonore du tchat</legend>
+        <p class="hint">Joue un son (côté overlay/OBS) pour te prévenir qu'un message vient d'arriver dans le tchat — pratique si tu ne le regardes pas en permanence.</p>
+        <label>
+          <input type="checkbox" id="chatsound-enabled" />
+          Activer l'alerte sonore
+        </label>
+        <label>Délai minimum entre deux sons (secondes) <input type="number" id="chatsound-cooldown" min="0" max="60" step="1" /></label>
+        <p class="hint">Évite que le son se déclenche en rafale si plusieurs messages arrivent d'un coup.</p>
+        <div class="sound-row" data-sound-row="chatsound">
+          <span class="sound-status" id="chatsound-sound-status">Aucun son</span>
+          <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="chatsound-sound-file" hidden /></label>
+          <button type="button" class="sound-remove-btn" id="chatsound-sound-remove" hidden>Retirer</button>
+        </div>
       </fieldset>
 
       <fieldset data-nav-panel="activity" hidden>

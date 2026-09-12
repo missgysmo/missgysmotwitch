@@ -167,10 +167,18 @@ app.post('/api/admin/sound/:type', requireAdmin, (req, res) => {
   });
 });
 
+// Les sons ne sont pas tous rangés au même endroit dans les réglages (alertes vs. son du tchat) :
+// ce helper renvoie l'objet qui porte le champ "sound" pour un "type" donné.
+function getSoundSlot(settings, type) {
+  if (type === 'chatSound') return settings.chatSound;
+  return settings.events[type];
+}
+
 function handleSoundUpload(req, res) {
   const type = req.params.type;
   const settings = store.getSettings();
-  if (!settings.events[type]) return res.status(400).json({ error: 'type invalide' });
+  const slot = getSoundSlot(settings, type);
+  if (!slot) return res.status(400).json({ error: 'type invalide' });
   if (!req.file) return res.status(400).json({ error: 'fichier audio manquant ou format invalide' });
 
   // Extension prise sur le nom d'origine mais restreinte à une liste connue, pour ne jamais
@@ -181,8 +189,8 @@ function handleSoundUpload(req, res) {
   const filename = `${type}-${Date.now()}${ext}`;
   fs.writeFileSync(path.join(SOUNDS_DIR, filename), req.file.buffer);
 
-  const oldFile = settings.events[type].sound;
-  settings.events[type].sound = filename;
+  const oldFile = slot.sound;
+  slot.sound = filename;
   store.setSettings(settings);
   if (oldFile) fs.rm(path.join(SOUNDS_DIR, oldFile), { force: true }, () => {});
 
@@ -193,10 +201,11 @@ function handleSoundUpload(req, res) {
 app.delete('/api/admin/sound/:type', requireAdmin, (req, res) => {
   const type = req.params.type;
   const settings = store.getSettings();
-  if (!settings.events[type]) return res.status(400).json({ error: 'type invalide' });
+  const slot = getSoundSlot(settings, type);
+  if (!slot) return res.status(400).json({ error: 'type invalide' });
 
-  const oldFile = settings.events[type].sound;
-  settings.events[type].sound = null;
+  const oldFile = slot.sound;
+  slot.sound = null;
   store.setSettings(settings);
   if (oldFile) fs.rm(path.join(SOUNDS_DIR, oldFile), { force: true }, () => {});
 
@@ -367,6 +376,7 @@ const botHealth = {
   eventSubConnected: false,
 };
 
+let lastChatSoundAt = 0;
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(buildState()),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
@@ -389,8 +399,18 @@ const chatTracker = createChatTracker(CHANNEL, {
         text: message.slice(0, 300),
         id: meta.id,
       });
-      const t = store.getSettings().tamagotchi;
+      const settingsNow = store.getSettings();
+      const t = settingsNow.tamagotchi;
       boostTamagotchi(t.boostChat);
+      // Ping sonore pour prévenir le streamer d'un nouveau message (joué côté overlay/OBS)
+      const cs = settingsNow.chatSound;
+      if (cs.enabled && cs.sound) {
+        const now = Date.now();
+        if (now - lastChatSoundAt >= cs.cooldownSeconds * 1000) {
+          lastChatSoundAt = now;
+          broadcast({ type: 'chat-sound', sound: cs.sound });
+        }
+      }
       // Actions mascotte déclenchables par les followers via une commande de chat (!caresse, !nourrir, !jouer...)
       const isFollower = isChannelOwner(login) || cached?.follows;
       if (isFollower) {
@@ -809,6 +829,16 @@ function sanitizeChatOverlayConfig(input, fallback) {
   };
 }
 
+function sanitizeChatSoundConfig(input, fallback) {
+  const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    cooldownSeconds: clamp(input?.cooldownSeconds, 0, 60, fallback.cooldownSeconds),
+    // pas envoyé par le formulaire classique — géré à part par l'upload de son (cf. sanitizeEventConfig)
+    sound: (typeof input?.sound === 'string' || input?.sound === null) ? input.sound : fallback.sound,
+  };
+}
+
 function sanitizeActivityFeedConfig(input, fallback) {
   const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
   return {
@@ -960,7 +990,7 @@ function dedupeTamagotchiCommands(actions) {
 app.post('/api/settings', requireAdmin, (req, res) => {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
-    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms,
+    movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect, nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound, activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms,
   } = req.body;
   const clamp = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   // Le fallback doit être les réglages actuellement enregistrés (pas les valeurs par défaut d'usine),
@@ -1005,6 +1035,7 @@ app.post('/api/settings', requireAdmin, (req, res) => {
     },
     graffiti: sanitizeGraffitiConfig(graffiti, d.graffiti),
     chatOverlay: sanitizeChatOverlayConfig(chatOverlay, d.chatOverlay),
+    chatSound: sanitizeChatSoundConfig(chatSound, d.chatSound),
     activityFeed: sanitizeActivityFeedConfig(activityFeed, d.activityFeed),
     followList: sanitizeFollowListConfig(followList, d.followList),
     tamagotchi: sanitizeTamagotchiConfig(tamagotchi, d.tamagotchi),

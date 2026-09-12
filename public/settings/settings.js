@@ -187,6 +187,43 @@ for (const key of SOCIAL_PLATFORM_KEYS) {
   };
 }
 
+const chatSoundFields = {
+  enabled: document.getElementById('chatsound-enabled'),
+  cooldown: document.getElementById('chatsound-cooldown'),
+  soundFile: document.getElementById('chatsound-sound-file'),
+  soundStatus: document.getElementById('chatsound-sound-status'),
+  soundRemove: document.getElementById('chatsound-sound-remove'),
+};
+
+function updateChatSoundStatus(sound) {
+  chatSoundFields.soundStatus.textContent = sound ? `Son actuel : ${sound.replace(/^[a-zA-Z]+-\d+/, 'fichier')}` : 'Aucun son';
+  chatSoundFields.soundRemove.hidden = !sound;
+}
+
+chatSoundFields.soundFile.addEventListener('change', async () => {
+  const file = chatSoundFields.soundFile.files[0];
+  if (!file) return;
+  chatSoundFields.soundStatus.textContent = 'Envoi...';
+  const formData = new FormData();
+  formData.append('sound', file);
+  try {
+    const res = await fetch('/api/admin/sound/chatSound', { method: 'POST', body: formData });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    updateChatSoundStatus(body.sound);
+  } catch (err) {
+    chatSoundFields.soundStatus.textContent = `Échec de l'envoi : ${err.message}`;
+    console.error(err);
+  } finally {
+    chatSoundFields.soundFile.value = '';
+  }
+});
+
+chatSoundFields.soundRemove.addEventListener('click', async () => {
+  await fetch('/api/admin/sound/chatSound', { method: 'DELETE' });
+  updateChatSoundStatus(null);
+});
+
 const raidCardFields = {
   enabled: document.getElementById('raidcard-enabled'),
   duration: document.getElementById('raidcard-duration'),
@@ -842,6 +879,9 @@ async function loadSettings() {
   chatOverlayFields.posY.value = s.chatOverlay.position.y;
   chatOverlayFields.width.value = s.chatOverlay.position.width;
   chatOverlayFields.height.value = s.chatOverlay.position.height;
+  chatSoundFields.enabled.checked = s.chatSound.enabled;
+  chatSoundFields.cooldown.value = s.chatSound.cooldownSeconds;
+  updateChatSoundStatus(s.chatSound.sound);
   activityFeedFields.enabled.checked = s.activityFeed.enabled;
   activityFeedFields.speed.value = s.activityFeed.speedSeconds;
   activityFeedFields.fontSize.value = s.activityFeed.fontSize;
@@ -983,6 +1023,10 @@ async function saveSettings() {
         width: Number(chatOverlayFields.width.value),
         height: Number(chatOverlayFields.height.value),
       },
+    },
+    chatSound: {
+      enabled: chatSoundFields.enabled.checked,
+      cooldownSeconds: Number(chatSoundFields.cooldown.value),
     },
     activityFeed: {
       enabled: activityFeedFields.enabled.checked,
@@ -1281,7 +1325,7 @@ document.getElementById('graffiti-reset-btn').addEventListener('click', () => {
 });
 
 function updateSoundStatus(type, sound) {
-  eventFields[type].soundStatus.textContent = sound ? `Son actuel : ${sound.replace(/^[a-z-]+-\d+/, 'fichier')}` : 'Aucun son';
+  eventFields[type].soundStatus.textContent = sound ? `Son actuel : ${sound.replace(/^[a-zA-Z]+-\d+/, 'fichier')}` : 'Aucun son';
   eventFields[type].soundRemove.hidden = !sound;
 }
 
