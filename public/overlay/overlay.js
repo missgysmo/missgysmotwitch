@@ -572,6 +572,9 @@ function applyNowPlayingLayout() {
   const rgb = hexToRgb(n.bgColor);
   nowPlayingEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${n.bgOpacity / 100})`;
   nowPlayingEl.classList.toggle('hide-art', !n.showArt);
+  // Si le module est désactivé pendant qu'un titre est affiché, le serveur ne renvoie plus jamais
+  // de message "now-playing" pour le masquer (son sondage s'arrête net) : il faut le cacher ici.
+  if (!n.enabled) nowPlayingEl.classList.remove('visible');
 }
 
 function renderNowPlaying(track) {
