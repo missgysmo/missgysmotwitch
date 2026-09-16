@@ -503,6 +503,7 @@ document.getElementById('health-clear-btn')?.addEventListener('click', async () 
 const OBS_MODULES = [
   { id: 'avatars', label: '🐾 Avatars des viewers' },
   { id: 'chat', label: '💬 Chat sur l\'overlay' },
+  { id: 'chatsound', label: '🔔 Alerte sonore du tchat' },
   { id: 'canvas', label: '🎨 Graffiti collectif' },
   { id: 'timers', label: '⏱️ Chronomètres' },
   { id: 'activity', label: '📣 Activité récente' },

@@ -909,7 +909,7 @@ function connect() {
     if (data.type === 'canvas-init') initGraffitiCanvas(data);
     if (data.type === 'canvas-update') drawGraffitiCell(data.x, data.y, data.cell);
     if (data.type === 'chatlog') addChatLogMessage(data);
-    if (data.type === 'chat-sound' && data.sound) {
+    if (data.type === 'chat-sound' && data.sound && moduleEnabled('chatsound')) {
       new Audio(`/sounds/${data.sound}`).play().catch((err) => console.error('[son tchat] lecture impossible:', err.message));
     }
     if (data.type === 'chatlog-delete') removeChatLogMessage(data.id);
