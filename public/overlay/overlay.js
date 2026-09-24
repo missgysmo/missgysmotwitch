@@ -18,6 +18,8 @@ const nowPlayingEl = document.getElementById('now-playing');
 const nowPlayingArtEl = document.getElementById('now-playing-art');
 const nowPlayingTitleEl = document.getElementById('now-playing-title');
 const nowPlayingArtistEl = document.getElementById('now-playing-artist');
+const customCommandPlayerEl = document.getElementById('custom-command-player');
+const customCommandVideoEl = document.getElementById('custom-command-video');
 
 // Déplacement + gestes de repos de la mascotte : un seul sprite, donc tout est simulé par
 // transformation CSS sur l'image (pas de vraies poses dessinées) plutôt qu'un changement d'image.
@@ -48,6 +50,7 @@ if (!moduleEnabled('people')) document.body.classList.add('module-people-off');
 if (!moduleEnabled('tamagotchi')) document.body.classList.add('module-tamagotchi-off');
 if (!moduleEnabled('raidcard')) document.body.classList.add('module-raidcard-off');
 if (!moduleEnabled('nowplaying')) document.body.classList.add('module-nowplaying-off');
+if (!moduleEnabled('customcommands')) document.body.classList.add('module-customcommands-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -126,6 +129,9 @@ let settings = {
     enabled: false, showArt: true, fontSize: 15, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 60,
     position: { x: 2, y: 88, width: 26, height: 10 },
   },
+  customCommandsPlayer: {
+    position: { x: 20, y: 15, width: 60, height: 60 },
+  },
 };
 
 function applySettings(newSettings) {
@@ -150,6 +156,7 @@ function applySettings(newSettings) {
   applyTamagotchiLayout();
   applyRaidCardLayout();
   applyNowPlayingLayout();
+  applyCustomCommandsPlayerLayout();
 }
 
 applySettings(settings);
@@ -587,6 +594,30 @@ function renderNowPlaying(track) {
   nowPlayingArtistEl.textContent = track.artist;
 }
 
+// Commandes de chat personnalisées (soundboard) : un son (privé, pas d'affichage) ou une vidéo
+// (visible de tout le monde, dans un cadre positionnable). Le serveur ne diffuse ce message que
+// si la commande est activée, la permission (follower/streamer) respectée et le cooldown passé.
+function applyCustomCommandsPlayerLayout() {
+  const c = settings.customCommandsPlayer;
+  customCommandPlayerEl.style.left = `${c.position.x}%`;
+  customCommandPlayerEl.style.top = `${c.position.y}%`;
+  customCommandPlayerEl.style.width = `${c.position.width}%`;
+  customCommandPlayerEl.style.height = `${c.position.height}%`;
+}
+
+function playCustomCommand(data) {
+  if (!moduleEnabled('customcommands') || !data.media) return;
+  if (data.mediaType === 'sound') {
+    new Audio(`/media/${data.media}`).play().catch((err) => console.error('[commande] lecture impossible:', err.message));
+  } else if (data.mediaType === 'video') {
+    customCommandVideoEl.src = `/media/${data.media}`;
+    customCommandPlayerEl.classList.add('visible');
+    customCommandVideoEl.currentTime = 0;
+    customCommandVideoEl.play().catch((err) => console.error('[commande] lecture vidéo impossible:', err.message));
+    customCommandVideoEl.onended = () => customCommandPlayerEl.classList.remove('visible');
+  }
+}
+
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
@@ -922,6 +953,7 @@ function connect() {
     if (data.type === 'tamagotchi-reaction') playTamagotchiReaction(data.reaction);
     if (data.type === 'raid-card') showRaidCard(data);
     if (data.type === 'now-playing') renderNowPlaying(data.track);
+    if (data.type === 'custom-command') playCustomCommand(data);
   };
 
   ws.onclose = () => setTimeout(connect, 3000);

@@ -171,6 +171,17 @@ function sanitizeNowPlayingConfig(input, fallback) {
   };
 }
 
+function sanitizeCustomCommandsPlayerConfig(input, fallback) {
+  return {
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
+      height: clamp(input?.position?.height, 5, 100, fallback.position.height),
+    },
+  };
+}
+
 function sanitizeTamagotchiChatAction(input, fallback) {
   return {
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
@@ -233,7 +244,7 @@ function sanitizeSettings(body, current) {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect,
     nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
-    activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms,
+    activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer,
   } = body;
   const d = current;
 
@@ -283,6 +294,10 @@ function sanitizeSettings(body, current) {
     nowPlaying: sanitizeNowPlayingConfig(nowPlaying, d.nowPlaying),
     socialLinks: sanitizeSocialLinks(socialLinks, d.socialLinks),
     socialPlatforms: sanitizeSocialPlatforms(socialPlatforms, d.socialPlatforms),
+    customCommandsPlayer: sanitizeCustomCommandsPlayerConfig(customCommandsPlayer, d.customCommandsPlayer),
+    // Jamais touché ici : customCommands ne se modifie que via ses propres routes (créer/éditer/
+    // supprimer/uploader un média), pour ne jamais risquer de l'écraser via le formulaire général.
+    customCommands: d.customCommands,
   };
 
   return settings;

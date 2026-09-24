@@ -14,6 +14,7 @@ const auth = require('./lib/auth');
 const { overlayClients, broadcast, broadcastToPreview } = require('./lib/broadcast');
 const { createFollowerService } = require('./followerService');
 const { createTamagotchiService } = require('./tamagotchiService');
+const { createCustomCommandsService } = require('./customCommandsService');
 
 const { createAdminAuthRouter } = require('./routes/adminAuth');
 const { createSettingsRouter } = require('./routes/settingsRoute');
@@ -28,6 +29,7 @@ const { createTestSandboxRouter } = require('./routes/testSandbox');
 const { createSpotifyRouter } = require('./routes/spotify');
 const { createTwitchAuthRouter } = require('./routes/twitchAuth');
 const { createFollowListSyncRouter } = require('./routes/followListSync');
+const { createCustomCommandsRouter } = require('./routes/customCommands');
 
 const twitchEvents = require('./twitchEvents');
 
@@ -95,6 +97,7 @@ const chatTracker = createChatTracker(CHANNEL, {
       }
 
       tamagotchi.handleChatMessage(login, message, isFollower);
+      customCommands.handleChatMessage(login, message, isFollower);
     } catch (err) {
       logger.logError('chatTracker.onMessage', err);
     }
@@ -116,6 +119,7 @@ const follower = createFollowerService({
   getTestAvatars: () => testSandbox.getTestAvatars(),
 });
 const tamagotchi = createTamagotchiService({ store, broadcast });
+const customCommands = createCustomCommandsService({ store, broadcast, isChannelOwner: (login) => follower.isChannelOwner(login) });
 
 // --- Express app ---
 const app = express();
@@ -142,6 +146,12 @@ const SOUNDS_DIR = path.join(store.DATA_DIR, 'sounds');
 fs.mkdirSync(SOUNDS_DIR, { recursive: true });
 app.use('/sounds', express.static(SOUNDS_DIR, { maxAge: '1y' }));
 app.use(createSoundsRouter({ store, requireAdmin: auth.requireAdmin, broadcast, soundsDir: SOUNDS_DIR }));
+
+// --- Médias des commandes de chat personnalisées (sons et vidéos, upload par l'admin) ---
+const MEDIA_DIR = path.join(store.DATA_DIR, 'media');
+fs.mkdirSync(MEDIA_DIR, { recursive: true });
+app.use('/media', express.static(MEDIA_DIR, { maxAge: '1y' }));
+app.use(createCustomCommandsRouter({ store, requireAdmin: auth.requireAdmin, broadcast, broadcastToPreview, mediaDir: MEDIA_DIR }));
 
 app.use(createSettingsRouter({ store, requireAdmin: auth.requireAdmin, broadcast }));
 app.use(createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower }));

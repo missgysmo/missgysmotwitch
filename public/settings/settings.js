@@ -258,6 +258,17 @@ const nowPlayingFields = {
   heightOut: document.getElementById('nowplaying-height-out'),
 };
 
+const ccPlayerFields = {
+  posX: document.getElementById('cc-player-posx'),
+  posXOut: document.getElementById('cc-player-posx-out'),
+  posY: document.getElementById('cc-player-posy'),
+  posYOut: document.getElementById('cc-player-posy-out'),
+  width: document.getElementById('cc-player-width'),
+  widthOut: document.getElementById('cc-player-width-out'),
+  height: document.getElementById('cc-player-height'),
+  heightOut: document.getElementById('cc-player-height-out'),
+};
+
 async function loadSpotifyStatus() {
   const statusEl = document.getElementById('nowplaying-status');
   if (!statusEl) return;
@@ -511,6 +522,7 @@ const OBS_MODULES = [
   { id: 'tamagotchi', label: '🐾 Mascotte' },
   { id: 'raidcard', label: '🎴 Fiche raid' },
   { id: 'nowplaying', label: '🎵 Musique en cours' },
+  { id: 'customcommands', label: '🎬 Commandes de tchat (vidéo)' },
 ];
 
 function initObsLinkGenerator() {
@@ -741,6 +753,10 @@ function updateOutputs() {
   nowPlayingFields.posYOut.textContent = `${nowPlayingFields.posY.value}%`;
   nowPlayingFields.widthOut.textContent = `${nowPlayingFields.width.value}%`;
   nowPlayingFields.heightOut.textContent = `${nowPlayingFields.height.value}%`;
+  ccPlayerFields.posXOut.textContent = `${ccPlayerFields.posX.value}%`;
+  ccPlayerFields.posYOut.textContent = `${ccPlayerFields.posY.value}%`;
+  ccPlayerFields.widthOut.textContent = `${ccPlayerFields.width.value}%`;
+  ccPlayerFields.heightOut.textContent = `${ccPlayerFields.height.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -814,6 +830,10 @@ nowPlayingFields.posX.addEventListener('input', updateOutputs);
 nowPlayingFields.posY.addEventListener('input', updateOutputs);
 nowPlayingFields.width.addEventListener('input', updateOutputs);
 nowPlayingFields.height.addEventListener('input', updateOutputs);
+ccPlayerFields.posX.addEventListener('input', updateOutputs);
+ccPlayerFields.posY.addEventListener('input', updateOutputs);
+ccPlayerFields.width.addEventListener('input', updateOutputs);
+ccPlayerFields.height.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -946,6 +966,11 @@ async function loadSettings() {
   nowPlayingFields.posY.value = s.nowPlaying.position.y;
   nowPlayingFields.width.value = s.nowPlaying.position.width;
   nowPlayingFields.height.value = s.nowPlaying.position.height;
+  ccPlayerFields.posX.value = s.customCommandsPlayer.position.x;
+  ccPlayerFields.posY.value = s.customCommandsPlayer.position.y;
+  ccPlayerFields.width.value = s.customCommandsPlayer.position.width;
+  ccPlayerFields.height.value = s.customCommandsPlayer.position.height;
+  renderCustomCommands(s.customCommands);
   for (const key of SOCIAL_PLATFORM_KEYS) {
     socialLinkFields[key].enabled.checked = s.socialPlatforms[key];
     socialLinkFields[key].link.value = s.socialLinks[key];
@@ -1103,6 +1128,14 @@ async function saveSettings() {
         height: Number(nowPlayingFields.height.value),
       },
     },
+    customCommandsPlayer: {
+      position: {
+        x: Number(ccPlayerFields.posX.value),
+        y: Number(ccPlayerFields.posY.value),
+        width: Number(ccPlayerFields.width.value),
+        height: Number(ccPlayerFields.height.value),
+      },
+    },
     socialLinks: Object.fromEntries(SOCIAL_PLATFORM_KEYS.map((key) => [key, socialLinkFields[key].link.value])),
     socialPlatforms: Object.fromEntries(SOCIAL_PLATFORM_KEYS.map((key) => [key, socialLinkFields[key].enabled.checked])),
   };
@@ -1123,6 +1156,130 @@ async function saveSettings() {
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   saveSettings();
+});
+
+// --- Commandes de tchat personnalisées (soundboard) ---
+// Mutées via leurs propres routes dédiées (jamais via le formulaire de réglages classique),
+// donc chaque action ci-dessous recharge juste les réglages plutôt que d'appeler saveSettings().
+function ccMediaLabel(cmd) {
+  if (!cmd.media) return 'Aucun média';
+  return cmd.type === 'video' ? 'Vidéo envoyée ✅' : 'Son envoyé ✅';
+}
+
+function renderCustomCommands(commands) {
+  const listEl = document.getElementById('cc-list');
+  if (!listEl) return;
+  if (!commands.length) {
+    listEl.innerHTML = '<p class="hint">Aucune commande pour le moment — crée-en une ci-dessous.</p>';
+    return;
+  }
+  listEl.innerHTML = commands.map((cmd) => `
+    <div class="cc-card" data-id="${cmd.id}">
+      <div class="cc-card-head">
+        <span class="cc-card-title">${escapeHtmlPanel(cmd.label)}</span>
+        <span class="cc-card-command">${escapeHtmlPanel(cmd.command)}</span>
+        <span class="cc-badge ${cmd.type === 'video' ? 'cc-badge-video' : 'cc-badge-sound'}">${cmd.type === 'video' ? '🎬 Vidéo + son' : '🔔 Son seul'}</span>
+        <span class="cc-badge ${cmd.followersAllowed ? '' : 'cc-badge-owner'}">${cmd.followersAllowed ? '👥 Followers + toi' : '👑 Toi uniquement'}</span>
+        <div class="cc-card-actions">
+          <button type="button" class="cc-test-btn" ${cmd.media ? '' : 'disabled'}>Tester</button>
+          <button type="button" class="cc-delete-btn">Supprimer</button>
+        </div>
+      </div>
+      <div class="cc-card-body">
+        <label><input type="checkbox" class="cc-enabled" ${cmd.enabled ? 'checked' : ''} /> Activée</label>
+        <label><input type="checkbox" class="cc-followers" ${cmd.followersAllowed ? 'checked' : ''} /> Followers autorisés</label>
+        <label>Cooldown (s) <input type="number" class="cc-cooldown" min="0" max="300" value="${cmd.cooldownSeconds}" style="width:70px" /></label>
+      </div>
+      <div class="cc-card-media-row">
+        <span class="cc-status-text">${ccMediaLabel(cmd)}</span>
+        <label class="sound-upload-btn">Choisir un fichier<input type="file" class="cc-media-file" accept="${cmd.type === 'video' ? 'video/*' : 'audio/*'}" hidden /></label>
+        ${cmd.media ? '<button type="button" class="cc-media-remove-btn">Retirer</button>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('cc-create-btn')?.addEventListener('click', async () => {
+  const statusEl = document.getElementById('cc-create-status');
+  const label = document.getElementById('cc-new-label').value;
+  const command = document.getElementById('cc-new-command').value;
+  const type = document.getElementById('cc-new-type').value;
+  const followersAllowed = document.getElementById('cc-new-followers').checked;
+  const cooldownSeconds = Number(document.getElementById('cc-new-cooldown').value);
+  statusEl.hidden = false;
+  statusEl.textContent = 'Création...';
+  try {
+    const res = await fetch('/api/admin/custom-commands', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, command, type, followersAllowed, cooldownSeconds }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = `"${body.label}" créée — ajoute un fichier ci-dessous.`;
+    document.getElementById('cc-new-label').value = '';
+    document.getElementById('cc-new-command').value = '';
+    await loadSettings();
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  }
+});
+
+document.getElementById('cc-list')?.addEventListener('click', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.classList.contains('cc-delete-btn')) {
+    if (!confirm('Supprimer cette commande ?')) return;
+    await fetch(`/api/admin/custom-commands/${id}`, { method: 'DELETE' });
+    await loadSettings();
+  } else if (e.target.classList.contains('cc-test-btn')) {
+    e.target.disabled = true;
+    await fetch(`/api/admin/custom-commands/${id}/test`, { method: 'POST' });
+    setTimeout(() => { e.target.disabled = false; }, 1000);
+  } else if (e.target.classList.contains('cc-media-remove-btn')) {
+    await fetch(`/api/admin/custom-commands/${id}/media`, { method: 'DELETE' });
+    await loadSettings();
+  }
+});
+
+document.getElementById('cc-list')?.addEventListener('change', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.classList.contains('cc-enabled') || e.target.classList.contains('cc-followers')) {
+    await fetch(`/api/admin/custom-commands/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        enabled: card.querySelector('.cc-enabled').checked,
+        followersAllowed: card.querySelector('.cc-followers').checked,
+      }),
+    });
+  } else if (e.target.classList.contains('cc-cooldown')) {
+    await fetch(`/api/admin/custom-commands/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cooldownSeconds: Number(e.target.value) }),
+    });
+  } else if (e.target.classList.contains('cc-media-file')) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('media', file);
+    const statusEl = card.querySelector('.cc-status-text');
+    statusEl.textContent = 'Envoi...';
+    try {
+      const res = await fetch(`/api/admin/custom-commands/${id}/media`, { method: 'POST', body: formData });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'échec');
+      await loadSettings();
+    } catch (err) {
+      statusEl.textContent = `Échec : ${err.message}`;
+    }
+  }
 });
 
 Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions(), loadViewerNotes()]).then(loadSettings);
@@ -1246,6 +1403,15 @@ function updatePreviewMarker() {
         Number(nowPlayingFields.height.value),
         'Musique',
         '#2ed573',
+      );
+    } else if (tool === 'customcommands') {
+      addPreviewBox(
+        Number(ccPlayerFields.posX.value),
+        Number(ccPlayerFields.posY.value),
+        Number(ccPlayerFields.width.value),
+        Number(ccPlayerFields.height.value),
+        'Vidéo commande',
+        '#ff6ec7',
       );
     }
   }

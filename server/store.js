@@ -129,6 +129,14 @@ const DEFAULT_SETTINGS = {
     bgOpacity: 60,
     position: { x: 2, y: 88, width: 26, height: 10 },
   },
+  // Commandes de chat personnalisées (soundboard) : mutées uniquement via leurs propres routes
+  // (server/routes/customCommands.js), jamais via le formulaire de réglages classique — comme ça
+  // pas de risque qu'une sauvegarde de réglages sans rapport n'écrase la liste ou les médias uploadés.
+  customCommands: [],
+  // Position/taille du lecteur vidéo pour les commandes "audio + vidéo" (visibles de tout le monde)
+  customCommandsPlayer: {
+    position: { x: 20, y: 15, width: 60, height: 60 },
+  },
   tamagotchi: {
     enabled: false,
     species: 'mascot',
@@ -344,6 +352,12 @@ function getSettings() {
       ...DEFAULT_SETTINGS.nowPlaying,
       ...(saved.nowPlaying || {}),
       position: { ...DEFAULT_SETTINGS.nowPlaying.position, ...(saved.nowPlaying?.position || {}) },
+    },
+    customCommands: Array.isArray(saved.customCommands) ? saved.customCommands : DEFAULT_SETTINGS.customCommands,
+    customCommandsPlayer: {
+      ...DEFAULT_SETTINGS.customCommandsPlayer,
+      ...(saved.customCommandsPlayer || {}),
+      position: { ...DEFAULT_SETTINGS.customCommandsPlayer.position, ...(saved.customCommandsPlayer?.position || {}) },
     },
     tamagotchi: {
       ...DEFAULT_SETTINGS.tamagotchi,
