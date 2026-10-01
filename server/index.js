@@ -56,6 +56,8 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET manquant(s) dans .env — la vérification des followers et les alertes Twitch ne fonctionneront pas.');
 }
 
+const ADMIN_TOKEN = auth.deriveAdminToken(SETTINGS_PASSWORD);
+const requireAdmin = auth.makeRequireAdmin(ADMIN_TOKEN);
 const safePasswordEquals = auth.makeSafePasswordEquals(SETTINGS_PASSWORD);
 const loginRateLimit = auth.createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8, message: 'Trop de tentatives de connexion, réessaie dans quelques minutes.' });
 const publicApiRateLimit = auth.createRateLimiter({ windowMs: 60 * 1000, max: 30, message: 'Trop de requêtes, ralentis un peu.' });
@@ -129,9 +131,9 @@ app.set('trust proxy', 1);
 app.use(express.json());
 
 app.use(createAdminAuthRouter({
-  isAdmin: auth.isAdmin,
+  isAdmin: (req) => auth.isAdmin(req, ADMIN_TOKEN),
   safePasswordEquals,
-  ADMIN_TOKEN: auth.ADMIN_TOKEN,
+  ADMIN_TOKEN,
   ADMIN_COOKIE: auth.ADMIN_COOKIE,
   loginRateLimit,
 }));
@@ -145,33 +147,33 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 const SOUNDS_DIR = path.join(store.DATA_DIR, 'sounds');
 fs.mkdirSync(SOUNDS_DIR, { recursive: true });
 app.use('/sounds', express.static(SOUNDS_DIR, { maxAge: '1y' }));
-app.use(createSoundsRouter({ store, requireAdmin: auth.requireAdmin, broadcast, soundsDir: SOUNDS_DIR }));
+app.use(createSoundsRouter({ store, requireAdmin, broadcast, soundsDir: SOUNDS_DIR }));
 
 // --- Médias des commandes de chat personnalisées (sons et vidéos, upload par l'admin) ---
 const MEDIA_DIR = path.join(store.DATA_DIR, 'media');
 fs.mkdirSync(MEDIA_DIR, { recursive: true });
 app.use('/media', express.static(MEDIA_DIR, { maxAge: '1y' }));
-app.use(createCustomCommandsRouter({ store, requireAdmin: auth.requireAdmin, broadcast, broadcastToPreview, mediaDir: MEDIA_DIR }));
+app.use(createCustomCommandsRouter({ store, requireAdmin, broadcast, broadcastToPreview, mediaDir: MEDIA_DIR }));
 
-app.use(createSettingsRouter({ store, requireAdmin: auth.requireAdmin, broadcast }));
+app.use(createSettingsRouter({ store, requireAdmin, broadcast }));
 app.use(createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower }));
-app.use(createCanvasRouter({ store, requireAdmin: auth.requireAdmin, publicApiRateLimit, broadcast, follower }));
+app.use(createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower }));
 
-const { router: timersRouter, activeTimers } = createTimersRouter({ store, requireAdmin: auth.requireAdmin, broadcast });
+const { router: timersRouter, activeTimers } = createTimersRouter({ store, requireAdmin, broadcast });
 app.use(timersRouter);
 
-app.use(createSocialRouter({ store, requireAdmin: auth.requireAdmin }));
-app.use(createViewerNotesRouter({ store, requireAdmin: auth.requireAdmin, twitchEvents, CLIENT_ID, CLIENT_SECRET, logError: logger.logError }));
-app.use(createHealthRouter({ requireAdmin: auth.requireAdmin, chatTracker, botHealth, overlayClients, logger }));
+app.use(createSocialRouter({ store, requireAdmin }));
+app.use(createViewerNotesRouter({ store, requireAdmin, twitchEvents, CLIENT_ID, CLIENT_SECRET, logError: logger.logError }));
+app.use(createHealthRouter({ requireAdmin, chatTracker, botHealth, overlayClients, logger }));
 
 const { router: testSandboxRouter, getTestAvatars } = createTestSandboxRouter({
-  requireAdmin: auth.requireAdmin, broadcastToPreview, follower, tamagotchi,
+  requireAdmin, broadcastToPreview, follower, tamagotchi,
 });
 const testSandbox = { getTestAvatars };
 app.use(testSandboxRouter);
 
 const { router: spotifyRouter, startPolling: startSpotifyPolling, getLastTrack: getLastNowPlayingTrack } = createSpotifyRouter({
-  store, requireAdmin: auth.requireAdmin, broadcast, logError: logger.logError,
+  store, requireAdmin, broadcast, logError: logger.logError,
   clientId: SPOTIFY_CLIENT_ID, clientSecret: SPOTIFY_CLIENT_SECRET, redirectUri: SPOTIFY_REDIRECT_URI,
 });
 app.use(spotifyRouter);
@@ -183,7 +185,7 @@ const { router: twitchAuthRouter, startEventSub, getRecentActivity } = createTwi
 app.use(twitchAuthRouter);
 
 app.use(createFollowListSyncRouter({
-  store, requireAdmin: auth.requireAdmin, broadcast, follower, getRecentActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,
+  store, requireAdmin, broadcast, follower, getRecentActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,
 }));
 
 // --- WebSocket ---

@@ -1,8 +1,11 @@
 const crypto = require('crypto');
 
-// Un seul token partagé pour toute la durée de vie du process : suffisant pour un admin unique
-// (le streamer). Redémarrer le serveur déconnecte toutes les sessions admin ouvertes.
-const ADMIN_TOKEN = crypto.randomBytes(24).toString('hex');
+// Dérivé du mot de passe (plutôt que des octets aléatoires) pour que le token reste stable
+// entre deux redémarrages du process : un déploiement ne déconnecte plus les sessions admin
+// déjà ouvertes dans le navigateur.
+function deriveAdminToken(settingsPassword) {
+  return crypto.createHash('sha256').update(settingsPassword).digest('hex');
+}
 const ADMIN_COOKIE = 'admin_token';
 
 function getCookie(req, name) {
@@ -12,13 +15,15 @@ function getCookie(req, name) {
   return found ? decodeURIComponent(found.split('=')[1]) : null;
 }
 
-function isAdmin(req) {
-  return getCookie(req, ADMIN_COOKIE) === ADMIN_TOKEN;
+function isAdmin(req, adminToken) {
+  return getCookie(req, ADMIN_COOKIE) === adminToken;
 }
 
-function requireAdmin(req, res, next) {
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Non autorisé, connecte-toi sur /settings' });
-  next();
+function makeRequireAdmin(adminToken) {
+  return (req, res, next) => {
+    if (!isAdmin(req, adminToken)) return res.status(401).json({ error: 'Non autorisé, connecte-toi sur /settings' });
+    next();
+  };
 }
 
 // Comparaison en temps constant : évite qu'une différence de timing serve à deviner le mot de passe caractère par caractère.
@@ -67,10 +72,10 @@ function createRateLimiter({ windowMs, max, message }) {
 }
 
 module.exports = {
-  ADMIN_TOKEN,
+  deriveAdminToken,
   ADMIN_COOKIE,
   isAdmin,
-  requireAdmin,
+  makeRequireAdmin,
   makeSafePasswordEquals,
   getClientIp,
   createRateLimiter,
