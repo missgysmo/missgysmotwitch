@@ -65,6 +65,7 @@ if (!moduleEnabled('raidcard')) document.body.classList.add('module-raidcard-off
 if (!moduleEnabled('nowplaying')) document.body.classList.add('module-nowplaying-off');
 if (!moduleEnabled('customcommands')) document.body.classList.add('module-customcommands-off');
 if (!moduleEnabled('lastevents')) document.body.classList.add('module-lastevents-off');
+if (!moduleEnabled('alerts')) document.body.classList.add('module-alerts-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -962,6 +963,7 @@ function ensureCastAvatars(cast) {
 }
 
 function showEvent(eventType, event, cast) {
+  if (!moduleEnabled('alerts')) return;
   const key = EVENT_KEYS[eventType];
   const cfg = settings.events?.[key];
   if (!cfg || !cfg.enabled) return;
