@@ -706,9 +706,11 @@ for (const type of EVENT_TYPES) {
   });
   lastEventFields[type].posX.addEventListener('input', () => {
     lastEventFields[type].posXOut.textContent = `${lastEventFields[type].posX.value}%`;
+    updatePreviewMarker();
   });
   lastEventFields[type].posY.addEventListener('input', () => {
     lastEventFields[type].posYOut.textContent = `${lastEventFields[type].posY.value}%`;
+    updatePreviewMarker();
   });
 }
 
@@ -1393,6 +1395,15 @@ function updatePreviewMarker() {
         EVENT_MARKER_LABELS[type],
         EVENT_MARKER_COLORS[type],
       );
+    } else if (type === 'lastevents') {
+      for (const evtType of EVENT_TYPES) {
+        addPreviewMarker(
+          Number(lastEventFields[evtType].posX.value),
+          Number(lastEventFields[evtType].posY.value),
+          EVENT_MARKER_LABELS[evtType],
+          EVENT_MARKER_COLORS[evtType],
+        );
+      }
     }
   } else if (category === 'tools') {
     const activeTab = document.querySelector('.nav-subtabs[data-cat-group="tools"] .nav-tab-btn.active');
