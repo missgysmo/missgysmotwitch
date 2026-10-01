@@ -67,7 +67,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
 
     // Persisté sur disque (contrairement à recentActivity ci-dessus) pour que l'affichage
     // permanent "Dernier follow/sub/bits/raid" survive aux redémarrages du serveur.
-    store.setLastEvent(kind, { eventType: type, event });
+    store.setLastEvent(kind, { eventType: type, event, ts: Date.now() });
 
     tamagotchi.handleTwitchEvent(kind);
 

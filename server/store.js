@@ -249,8 +249,11 @@ function getLastEvents() {
   return readJson(LAST_EVENTS_PATH, { follow: null, subscribe: null, cheer: null, raid: null });
 }
 
-function setLastEvent(kind, data) {
+// skipIfOlder : utilisé par le rétro-remplissage depuis l'API Twitch (resync), pour ne jamais
+// écraser un événement réel plus récent par une donnée historique plus ancienne.
+function setLastEvent(kind, data, skipIfOlder = false) {
   const lastEvents = getLastEvents();
+  if (skipIfOlder && lastEvents[kind] && lastEvents[kind].ts > data.ts) return lastEvents;
   lastEvents[kind] = data;
   writeJson(LAST_EVENTS_PATH, lastEvents);
   return lastEvents;

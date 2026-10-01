@@ -2,10 +2,12 @@ const express = require('express');
 const species = require('../species');
 const { TAMAGOTCHI_REACTIONS } = require('../lib/sanitizeSettings');
 
-// Tout ce qui sert aux boutons "Tester" du dashboard : ne diffuse jamais que vers l'aperçu sandbox
-// (/overlay/?preview=1), jamais vers le vrai stream. testAvatars est créé ici et exposé (via
+// Tout ce qui sert aux boutons "Tester" du dashboard. testAvatars est créé ici et exposé (via
 // getTestAvatars) car buildState() du followerService en a besoin pour lister les avatars de test.
-function createTestSandboxRouter({ requireAdmin, broadcastToPreview, follower, tamagotchi }) {
+// Exception : test-event (follow/sub/cheer/raid + "Derniers événements") diffuse sur le vrai stream
+// (broadcast), pas seulement vers l'aperçu sandbox — demandé explicitement pour pouvoir vérifier le
+// rendu directement dans OBS. Donc visible des viewers pendant le test, contrairement aux autres.
+function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi }) {
   const router = express.Router();
   const testAvatars = new Map(); // login -> { species, hue }
 
@@ -19,7 +21,12 @@ function createTestSandboxRouter({ requireAdmin, broadcastToPreview, follower, t
   router.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
     const test = TEST_EVENTS[req.params.type];
     if (!test) return res.status(400).json({ error: 'type invalide' });
-    broadcastToPreview({ type: 'event', eventType: test.type, event: test.event, cast: follower.buildCast() });
+    // La diffusion normale de l'événement (ci-dessous) met déjà à jour "Derniers événements" à
+    // l'écran chez tout le monde (overlay.js appelle updateLastEvent sur tout message 'event').
+    // Volontairement PAS persisté sur disque (store.setLastEvent) : "TestFollower" ne doit jamais
+    // écraser le vrai dernier follower en base — seul l'affichage en mémoire change le temps du test,
+    // et redeviendra correct tout seul à la prochaine reconnexion/au prochain vrai événement.
+    broadcast({ type: 'event', eventType: test.type, event: test.event, cast: follower.buildCast() });
     res.json({ ok: true });
   });
 

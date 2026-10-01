@@ -18,8 +18,17 @@ function createFollowListSyncRouter({ store, requireAdmin, broadcast, follower, 
       for (const f of followers) store.addPerson('followers', f.login, f.displayName, f.since);
       for (const s of subs) store.addPerson('subs', s.login, s.displayName, s.since);
 
+      // Rétro-remplit "Dernier follow" avec le vrai plus récent trouvé — possible seulement pour les
+      // follows (Twitch fournit followed_at). Impossible pour les subs : l'API Helix ne renvoie
+      // aucune date d'abonnement, donc "dernier sub" ne peut démarrer qu'au prochain sub réel.
+      if (followers.length) {
+        const latest = followers.reduce((a, b) => (b.since > a.since ? b : a));
+        store.setLastEvent('follow', { eventType: 'channel.follow', event: { user_name: latest.displayName, user_login: latest.login }, ts: latest.since }, true);
+      }
+
       const people = store.getPeople();
       broadcast({ type: 'activity', recent: getRecentActivity(), people });
+      broadcast({ type: 'last-events', data: store.getLastEvents() });
       res.json({ ok: true, followers: followers.length, subs: subs.length });
     } catch (err) {
       logError('people-resync', err);

@@ -167,7 +167,7 @@ app.use(createViewerNotesRouter({ store, requireAdmin, twitchEvents, CLIENT_ID, 
 app.use(createHealthRouter({ requireAdmin, chatTracker, botHealth, overlayClients, logger }));
 
 const { router: testSandboxRouter, getTestAvatars } = createTestSandboxRouter({
-  requireAdmin, broadcastToPreview, follower, tamagotchi,
+  requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi,
 });
 const testSandbox = { getTestAvatars };
 app.use(testSandboxRouter);
