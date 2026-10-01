@@ -242,13 +242,16 @@ function initialPos(entry) {
   const pattern = settings.movementPattern;
   const corridor = settings.corridorPosition / 100;
 
+  // Point de départ réparti au hasard le long du couloir (plutôt que toujours le même bord) :
+  // sinon plusieurs avatars créés d'affilée (ex: tester plusieurs personnages) se retrouvent
+  // tous empilés exactement au même endroit jusqu'à leur premier déplacement.
   if (pattern === 'horizontal') {
     entry.dirX = -1;
-    return { x: bounds.minX, y: bounds.minY + corridor * (bounds.maxY - bounds.minY) };
+    return { x: bounds.minX + Math.random() * (bounds.maxX - bounds.minX), y: bounds.minY + corridor * (bounds.maxY - bounds.minY) };
   }
   if (pattern === 'vertical') {
     entry.dirY = -1;
-    return { x: bounds.minX + corridor * (bounds.maxX - bounds.minX), y: bounds.minY };
+    return { x: bounds.minX + corridor * (bounds.maxX - bounds.minX), y: bounds.minY + Math.random() * (bounds.maxY - bounds.minY) };
   }
   return randomPos();
 }
@@ -317,7 +320,10 @@ function wander(login) {
   if (!entry) return;
   const pos = nextPos(entry);
   if (settings.mirrorOnDirection) {
-    const prevX = parseFloat(entry.el.style.left) || pos.x;
+    // parseFloat('0px') vaut 0, qui est "falsy" : un `||` ici écraserait par erreur une vraie
+    // position de départ à 0 (ex: bord gauche de la zone) et masquerait le tout premier mouvement.
+    const parsedLeft = parseFloat(entry.el.style.left);
+    const prevX = Number.isNaN(parsedLeft) ? pos.x : parsedLeft;
     if (Math.abs(pos.x - prevX) > 1) {
       const movingLeft = pos.x < prevX;
       const mirror = settings.spriteFlip[entry.el.dataset.species] ? !movingLeft : movingLeft;
