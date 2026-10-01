@@ -1012,7 +1012,10 @@ function connect() {
     const data = JSON.parse(msg.data);
     if (data.type === 'settings') applySettings(data.settings);
     if (data.type === 'state') syncState(data.viewers);
-    if (data.type === 'event') { showEvent(data.eventType, data.event, data.cast); updateLastEvent(data.eventType, data.event); }
+    // Volontairement découplé de "Derniers événements" : ce message sert aussi aux tests d'alerte
+    // (qui ne doivent pas toucher l'affichage permanent). Les vrais events mettent à jour ce dernier
+    // via leur propre message dédié ('last-event-preview', envoyé en plus de celui-ci côté serveur).
+    if (data.type === 'event') showEvent(data.eventType, data.event, data.cast);
     if (data.type === 'last-events') {
       // état initial restauré depuis le disque (survit aux redémarrages) : met juste à jour le
       // texte, sans rejouer l'alerte transitoire/son/réaction d'avatar comme le ferait showEvent.
