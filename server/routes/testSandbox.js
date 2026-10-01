@@ -30,6 +30,22 @@ function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, 
     res.json({ ok: true });
   });
 
+  // Dédié à l'onglet "Derniers événements" : met juste à jour le texte permanent avec des données
+  // factices, sans déclencher le popup/son/réaction d'avatar de l'alerte (contrairement à
+  // test-event ci-dessus). Même principe de non-persistance : jamais écrit sur disque.
+  router.post('/api/admin/test-last-event/:type', requireAdmin, (req, res) => {
+    const test = TEST_EVENTS[req.params.type];
+    if (!test) return res.status(400).json({ error: 'type invalide' });
+    broadcast({ type: 'last-event-preview', eventType: test.type, event: test.event });
+    res.json({ ok: true });
+  });
+
+  router.post('/api/admin/test-last-event/:type/clear', requireAdmin, (req, res) => {
+    if (!TEST_EVENTS[req.params.type]) return res.status(400).json({ error: 'type invalide' });
+    broadcast({ type: 'last-event-clear', kind: req.params.type });
+    res.json({ ok: true });
+  });
+
   router.post('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
     const match = species.getById(req.params.speciesId);
     if (!match) return res.status(400).json({ error: 'species invalide' });

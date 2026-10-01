@@ -1021,6 +1021,8 @@ function connect() {
         if (stored) updateLastEvent(stored.eventType, stored.event);
       }
     }
+    if (data.type === 'last-event-preview') updateLastEvent(data.eventType, data.event);
+    if (data.type === 'last-event-clear') { const el = lastEventEls[data.kind]; if (el) el.textContent = ''; }
     if (data.type === 'chat') showChatBubble(data.login, data.text);
     if (data.type === 'timer') handleTimerMessage(data);
     if (data.type === 'canvas-init') initGraffitiCanvas(data);

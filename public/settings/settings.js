@@ -1625,3 +1625,28 @@ document.querySelectorAll('.test-event-btn').forEach((btn) => {
     }
   });
 });
+
+document.querySelectorAll('.test-lastevent-btn').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Envoi...';
+    try {
+      await fetch(`/api/admin/test-last-event/${btn.dataset.type}`, { method: 'POST' });
+    } finally {
+      btn.textContent = original;
+      btn.disabled = false;
+    }
+  });
+});
+
+document.querySelectorAll('.clear-lastevent-btn').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      await fetch(`/api/admin/test-last-event/${btn.dataset.type}/clear`, { method: 'POST' });
+    } finally {
+      btn.disabled = false;
+    }
+  });
+});
