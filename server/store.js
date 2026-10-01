@@ -10,6 +10,7 @@ const PEOPLE_PATH = path.join(DATA_DIR, 'people.json');
 const TAMAGOTCHI_PATH = path.join(DATA_DIR, 'tamagotchi.json');
 const VIEWER_NOTES_PATH = path.join(DATA_DIR, 'viewerNotes.json');
 const SPOTIFY_TOKENS_PATH = path.join(DATA_DIR, 'spotifyTokens.json');
+const LAST_EVENTS_PATH = path.join(DATA_DIR, 'lastEvents.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -242,6 +243,19 @@ function addPerson(kind, login, displayName, since) {
   return people;
 }
 
+// Dernier follow/sub/cheer/raid connu (pour l'affichage permanent "Dernier follow : {user}") :
+// contrairement au fil "activité récente" (recentActivity, en mémoire), ça survit aux redémarrages.
+function getLastEvents() {
+  return readJson(LAST_EVENTS_PATH, { follow: null, subscribe: null, cheer: null, raid: null });
+}
+
+function setLastEvent(kind, data) {
+  const lastEvents = getLastEvents();
+  lastEvents[kind] = data;
+  writeJson(LAST_EVENTS_PATH, lastEvents);
+  return lastEvents;
+}
+
 // Humeur du mascotte (0-100), persiste entre les redémarrages du serveur
 function getTamagotchiState() {
   return readJson(TAMAGOTCHI_PATH, { mood: 70, updatedAt: Date.now() });
@@ -416,6 +430,8 @@ module.exports = {
   resetCanvas,
   getPeople,
   addPerson,
+  getLastEvents,
+  setLastEvent,
   getTamagotchiState,
   setTamagotchiState,
   getViewerNotes,

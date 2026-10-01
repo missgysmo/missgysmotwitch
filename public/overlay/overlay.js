@@ -1012,6 +1012,14 @@ function connect() {
     if (data.type === 'settings') applySettings(data.settings);
     if (data.type === 'state') syncState(data.viewers);
     if (data.type === 'event') { showEvent(data.eventType, data.event, data.cast); updateLastEvent(data.eventType, data.event); }
+    if (data.type === 'last-events') {
+      // état initial restauré depuis le disque (survit aux redémarrages) : met juste à jour le
+      // texte, sans rejouer l'alerte transitoire/son/réaction d'avatar comme le ferait showEvent.
+      for (const kind of Object.keys(data.data)) {
+        const stored = data.data[kind];
+        if (stored) updateLastEvent(stored.eventType, stored.event);
+      }
+    }
     if (data.type === 'chat') showChatBubble(data.login, data.text);
     if (data.type === 'timer') handleTimerMessage(data);
     if (data.type === 'canvas-init') initGraffitiCanvas(data);

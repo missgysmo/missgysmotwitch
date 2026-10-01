@@ -204,6 +204,7 @@ wss.on('connection', (ws, req) => {
   }
   ws.send(JSON.stringify({ type: 'canvas-init', ...store.getCanvas() }));
   ws.send(JSON.stringify({ type: 'activity', recent: getRecentActivity(), people: store.getPeople() }));
+  ws.send(JSON.stringify({ type: 'last-events', data: store.getLastEvents() }));
   ws.send(JSON.stringify({ type: 'tamagotchi', mood: tamagotchi.getMood() }));
   ws.send(JSON.stringify({ type: 'now-playing', track: getLastNowPlayingTrack() }));
   ws.on('close', () => overlayClients.delete(ws));
