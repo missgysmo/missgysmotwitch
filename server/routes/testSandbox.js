@@ -7,7 +7,14 @@ const { TAMAGOTCHI_REACTIONS } = require('../lib/sanitizeSettings');
 // Exception : test-event (follow/sub/cheer/raid + "Derniers événements") diffuse sur le vrai stream
 // (broadcast), pas seulement vers l'aperçu sandbox — demandé explicitement pour pouvoir vérifier le
 // rendu directement dans OBS. Donc visible des viewers pendant le test, contrairement aux autres.
-function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi }) {
+const EVENT_TYPE_MAP = {
+  follow: 'channel.follow',
+  subscribe: 'channel.subscribe',
+  cheer: 'channel.cheer',
+  raid: 'channel.raid',
+};
+
+function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi, store }) {
   const router = express.Router();
   const testAvatars = new Map(); // login -> { species, hue }
 
@@ -43,6 +50,27 @@ function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, 
   router.post('/api/admin/test-last-event/:type/clear', requireAdmin, (req, res) => {
     if (!TEST_EVENTS[req.params.type]) return res.status(400).json({ error: 'type invalide' });
     broadcast({ type: 'last-event-clear', kind: req.params.type });
+    res.json({ ok: true });
+  });
+
+  // Saisie manuelle d'un "Dernier follow/sub/bits/raid" (persisté, contrairement aux boutons Tester
+  // ci-dessus) : pour les cas que l'API Twitch ne peut pas fournir rétroactivement (raids, bits,
+  // subs — aucune de ces données n'a de date interrogeable via Helix), ou juste pour corriger à la main.
+  router.post('/api/admin/last-event/:type', requireAdmin, (req, res) => {
+    const kind = req.params.type;
+    const eventType = EVENT_TYPE_MAP[kind];
+    if (!eventType) return res.status(400).json({ error: 'type invalide' });
+    const user = typeof req.body?.user === 'string' ? req.body.user.trim().slice(0, 60) : '';
+    if (!user) return res.status(400).json({ error: 'pseudo manquant' });
+
+    const event = kind === 'raid'
+      ? { from_broadcaster_user_name: user, viewers: Number(req.body?.viewers) || 0 }
+      : kind === 'cheer'
+        ? { user_name: user, bits: Number(req.body?.bits) || 0 }
+        : { user_name: user };
+
+    store.setLastEvent(kind, { eventType, event, ts: Date.now() });
+    broadcast({ type: 'last-event-preview', eventType, event });
     res.json({ ok: true });
   });
 

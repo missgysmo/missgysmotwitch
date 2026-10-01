@@ -1651,3 +1651,41 @@ document.querySelectorAll('.clear-lastevent-btn').forEach((btn) => {
     }
   });
 });
+
+// Saisie manuelle (persistée) : pour les données que Twitch ne fournit pas rétroactivement
+// (raids, bits, subs — aucune date interrogeable), ou pour corriger à la main.
+document.querySelectorAll('.manual-lastevent-btn').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const type = btn.dataset.type;
+    const userEl = document.querySelector(`.manual-lastevent-user[data-type="${type}"]`);
+    const extraEl = document.querySelector(`.manual-lastevent-extra[data-type="${type}"]`);
+    const user = userEl.value.trim();
+    if (!user) { userEl.focus(); return; }
+    const body = { user };
+    if (extraEl && type === 'cheer') body.bits = Number(extraEl.value) || 0;
+    if (extraEl && type === 'raid') body.viewers = Number(extraEl.value) || 0;
+
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Envoi...';
+    try {
+      const res = await fetch(`/api/admin/last-event/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Échec : ${data.error || 'erreur inconnue'}`);
+      } else {
+        userEl.value = '';
+        if (extraEl) extraEl.value = '';
+      }
+    } catch (err) {
+      alert(`Échec : ${err.message}`);
+    } finally {
+      btn.textContent = original;
+      btn.disabled = false;
+    }
+  });
+});
