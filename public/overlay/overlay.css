@@ -513,6 +513,8 @@ body.hide-names .avatar-name {
   text-shadow: 0 1px 3px rgba(0,0,0,.6), 0 0 8px rgba(0,0,0,.4);
 }
 
+body.module-lastevents-off .last-event { display: none !important; }
+
 .timer-box {
   position: fixed;
   transform: translate(-50%, -50%);

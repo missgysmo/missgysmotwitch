@@ -64,6 +64,7 @@ if (!moduleEnabled('tamagotchi')) document.body.classList.add('module-tamagotchi
 if (!moduleEnabled('raidcard')) document.body.classList.add('module-raidcard-off');
 if (!moduleEnabled('nowplaying')) document.body.classList.add('module-nowplaying-off');
 if (!moduleEnabled('customcommands')) document.body.classList.add('module-customcommands-off');
+if (!moduleEnabled('lastevents')) document.body.classList.add('module-lastevents-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',

@@ -523,6 +523,7 @@ const OBS_MODULES = [
   { id: 'raidcard', label: '🎴 Fiche raid' },
   { id: 'nowplaying', label: '🎵 Musique en cours' },
   { id: 'customcommands', label: '🎬 Commandes de tchat (vidéo)' },
+  { id: 'lastevents', label: '📌 Derniers événements' },
 ];
 
 function initObsLinkGenerator() {
