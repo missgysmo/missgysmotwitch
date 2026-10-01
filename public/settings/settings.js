@@ -1236,8 +1236,17 @@ document.getElementById('cc-list')?.addEventListener('click', async (e) => {
     await loadSettings();
   } else if (e.target.classList.contains('cc-test-btn')) {
     e.target.disabled = true;
-    await fetch(`/api/admin/custom-commands/${id}/test`, { method: 'POST' });
-    setTimeout(() => { e.target.disabled = false; }, 1000);
+    try {
+      const res = await fetch(`/api/admin/custom-commands/${id}/test`, { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(`Échec du test : ${body.error || 'erreur inconnue'}`);
+      }
+    } catch (err) {
+      alert(`Échec du test : ${err.message}`);
+    } finally {
+      setTimeout(() => { e.target.disabled = false; }, 1000);
+    }
   } else if (e.target.classList.contains('cc-media-remove-btn')) {
     await fetch(`/api/admin/custom-commands/${id}/media`, { method: 'DELETE' });
     await loadSettings();
