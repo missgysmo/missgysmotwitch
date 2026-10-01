@@ -134,17 +134,37 @@ let settings = {
   },
 };
 
+// Résolution de référence sur laquelle les tailles d'avatar (en px) ont été pensées.
+// Sans ça, une source OBS plus petite/plus grande que les autres garde les mêmes px fixes,
+// ce qui déforme la zone de déplacement (marges en %, avatar en px fixe) au point de parfois
+// bloquer tout mouvement horizontal/vertical (donc plus de flip, et un arrêt avant le bord).
+const REF_WIDTH = 1920;
+const REF_HEIGHT = 1080;
+
+function resolutionScale() {
+  const scale = Math.min(window.innerWidth / REF_WIDTH, window.innerHeight / REF_HEIGHT);
+  return Math.min(2, Math.max(0.3, scale || 1));
+}
+
+function scaledAvatarSize() {
+  return settings.avatarSize * resolutionScale();
+}
+
+function scaledOwnerSize() {
+  return settings.ownerSize * resolutionScale();
+}
+
 function applySettings(newSettings) {
   settings = newSettings;
   const root = document.documentElement.style;
-  root.setProperty('--avatar-size', `${settings.avatarSize}px`);
+  root.setProperty('--avatar-size', `${scaledAvatarSize()}px`);
   root.setProperty('--avatar-transition', `${settings.transitionSeconds}s`);
   root.setProperty('--name-font-size', `${settings.nameTag.fontSize}px`);
   root.setProperty('--name-color', settings.nameTag.color);
   document.body.classList.toggle('hide-names', !settings.nameTag.show);
   const ownerEntry = [...avatars.values()].find((e) => e.el.dataset.species === 'mon-avatar');
   if (ownerEntry) {
-    const size = `${settings.ownerSize}px`;
+    const size = `${scaledOwnerSize()}px`;
     ownerEntry.el.querySelector('.avatar').style.width = size;
     ownerEntry.el.querySelector('.avatar').style.height = size;
     ownerEntry.el.querySelector('.avatar-name').style.color = settings.ownerNameColor;
@@ -160,13 +180,14 @@ function applySettings(newSettings) {
 }
 
 applySettings(settings);
+window.addEventListener('resize', () => applySettings(settings));
 
 function zoneBounds() {
   const { top, right, bottom, left } = settings.zone;
   const minX = (left / 100) * window.innerWidth;
-  const maxX = window.innerWidth - (right / 100) * window.innerWidth - settings.avatarSize;
+  const maxX = window.innerWidth - (right / 100) * window.innerWidth - scaledAvatarSize();
   const minY = (top / 100) * window.innerHeight;
-  const maxY = window.innerHeight - (bottom / 100) * window.innerHeight - settings.avatarSize;
+  const maxY = window.innerHeight - (bottom / 100) * window.innerHeight - scaledAvatarSize();
   return { minX, maxX: Math.max(minX, maxX), minY, maxY: Math.max(minY, maxY) };
 }
 
@@ -267,7 +288,7 @@ function applySkin(el, skin) {
   el.dataset.species = skin.species;
 
   if (skin.species === 'mon-avatar') {
-    const size = `${settings.ownerSize}px`;
+    const size = `${scaledOwnerSize()}px`;
     img.style.width = size;
     img.style.height = size;
     img.style.filter = 'none';
@@ -807,7 +828,7 @@ function rainDrop(entry, color, remaining) {
   // téléporte au-dessus de l'écran, sans transition, puis relance la chute vers le bas
   entry.el.style.transition = 'none';
   entry.el.style.left = `${x}px`;
-  entry.el.style.top = `${-settings.avatarSize}px`;
+  entry.el.style.top = `${-scaledAvatarSize()}px`;
   entry.el.offsetHeight; // force le navigateur à appliquer la position avant de ré-activer la transition
   entry.el.style.transition = '';
   entry.el.style.top = `${landingY}px`;
@@ -842,8 +863,8 @@ function bounceFrame(entry, state) {
     }
     return;
   }
-  const maxX = Math.max(0, window.innerWidth - settings.avatarSize);
-  const maxY = Math.max(0, window.innerHeight - settings.avatarSize);
+  const maxX = Math.max(0, window.innerWidth - scaledAvatarSize());
+  const maxY = Math.max(0, window.innerHeight - scaledAvatarSize());
   state.x += state.vx;
   state.y += state.vy;
   if (state.x <= 0) { state.x = 0; state.vx = Math.abs(state.vx); }
