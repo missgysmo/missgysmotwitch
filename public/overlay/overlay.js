@@ -104,10 +104,10 @@ let settings = {
     ninja: false, panda: false, pizza: false, 'skate-boy': false, witch: false,
   },
   events: {
-    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },
-    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 } },
-    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 } },
-    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 } },
+    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 } },
+    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 } },
+    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 } },
+    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 } },
   },
   activityFeed: {
     enabled: false, fontSize: 15, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 55, speedSeconds: 18,
@@ -951,6 +951,7 @@ function showEvent(eventType, event, cast) {
     popup.style.left = `${cfg.position.x}%`;
     popup.style.top = `${cfg.position.y}%`;
     popup.style.color = cfg.color;
+    popup.style.fontFamily = cfg.fontFamily && cfg.fontFamily !== 'system-ui' ? `'${cfg.fontFamily}', system-ui` : '';
     popup.style.fontSize = `${cfg.fontSize}px`;
     popup.textContent = buildEventText(eventType, event, cfg);
     eventLayer.appendChild(popup);

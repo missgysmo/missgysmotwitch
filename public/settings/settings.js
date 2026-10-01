@@ -667,6 +667,7 @@ for (const type of EVENT_TYPES) {
     showText: document.getElementById(`evt-${type}-showtext`),
     text: document.getElementById(`evt-${type}-text`),
     color: document.getElementById(`evt-${type}-color`),
+    fontFamily: document.getElementById(`evt-${type}-fontfamily`),
     size: document.getElementById(`evt-${type}-size`),
     sizeOut: document.getElementById(`evt-${type}-size-out`),
     reaction: document.getElementById(`evt-${type}-reaction`),
@@ -861,6 +862,7 @@ async function loadSettings() {
     eventFields[type].showText.checked = s.events[type].showText;
     eventFields[type].text.value = s.events[type].text;
     eventFields[type].color.value = s.events[type].color;
+    eventFields[type].fontFamily.value = s.events[type].fontFamily;
     eventFields[type].size.value = s.events[type].fontSize;
     eventFields[type].reaction.value = s.events[type].reaction;
     eventFields[type].posX.value = s.events[type].position.x;
@@ -1008,6 +1010,7 @@ async function saveSettings() {
       showText: eventFields[type].showText.checked,
       text: eventFields[type].text.value,
       color: eventFields[type].color.value,
+      fontFamily: eventFields[type].fontFamily.value,
       fontSize: Number(eventFields[type].size.value),
       reaction: eventFields[type].reaction.value,
       position: { x: Number(eventFields[type].posX.value), y: Number(eventFields[type].posY.value) },
