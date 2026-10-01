@@ -165,8 +165,11 @@ function applySettings(newSettings) {
   const ownerEntry = [...avatars.values()].find((e) => e.el.dataset.species === 'mon-avatar');
   if (ownerEntry) {
     const size = `${scaledOwnerSize()}px`;
-    ownerEntry.el.querySelector('.avatar').style.width = size;
-    ownerEntry.el.querySelector('.avatar').style.height = size;
+    const ownerImg = ownerEntry.el.querySelector('.avatar');
+    ownerImg.style.maxWidth = size;
+    ownerImg.style.maxHeight = size;
+    ownerImg.style.width = 'auto';
+    ownerImg.style.height = 'auto';
     ownerEntry.el.querySelector('.avatar-name').style.color = settings.ownerNameColor;
   }
   applyGraffitiLayout();
@@ -289,11 +292,15 @@ function applySkin(el, skin) {
 
   if (skin.species === 'mon-avatar') {
     const size = `${scaledOwnerSize()}px`;
-    img.style.width = size;
-    img.style.height = size;
+    img.style.maxWidth = size;
+    img.style.maxHeight = size;
+    img.style.width = 'auto';
+    img.style.height = 'auto';
     img.style.filter = 'none';
     name.style.color = settings.ownerNameColor;
   } else {
+    img.style.maxWidth = '';
+    img.style.maxHeight = '';
     img.style.width = '';
     img.style.height = '';
     img.style.filter = skin.hue ? `hue-rotate(${skin.hue}deg)` : 'none';
