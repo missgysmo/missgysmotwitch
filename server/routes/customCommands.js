@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 
-const MAX_COMMANDS = 20;
+const MAX_COMMANDS = 100;
 const COMMAND_RE = /^!\S{1,20}$/;
 const SOUND_MAX_BYTES = 8 * 1024 * 1024;
 const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
