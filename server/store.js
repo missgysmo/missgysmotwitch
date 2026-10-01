@@ -166,6 +166,15 @@ const DEFAULT_SETTINGS = {
     cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 }, sound: null },
     raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 }, sound: null },
   },
+  // Affichage permanent (contrairement aux alertes "events" ci-dessus qui disparaissent après
+  // quelques secondes) : reste à l'écran et se met à jour au prochain événement du même type.
+  // Remis à zéro à chaque redémarrage du serveur, comme le reste de l'activité de la session en cours.
+  lastEvents: {
+    follow: { enabled: false, text: 'Dernier follow : {user}', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 2 } },
+    subscribe: { enabled: false, text: 'Dernier sub : {user}', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 7 } },
+    cheer: { enabled: false, text: 'Derniers bits : {user} ({bits})', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 12 } },
+    raid: { enabled: false, text: 'Dernier raid : {user} ({viewers} viewers)', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 17 } },
+  },
 };
 
 function readJson(filePath, fallback) {
@@ -375,6 +384,12 @@ function getSettings() {
       subscribe: mergeEventConfig(DEFAULT_SETTINGS.events.subscribe, saved.events?.subscribe),
       cheer: mergeEventConfig(DEFAULT_SETTINGS.events.cheer, saved.events?.cheer),
       raid: mergeEventConfig(DEFAULT_SETTINGS.events.raid, saved.events?.raid),
+    },
+    lastEvents: {
+      follow: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.follow, saved.lastEvents?.follow),
+      subscribe: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.subscribe, saved.lastEvents?.subscribe),
+      cheer: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.cheer, saved.lastEvents?.cheer),
+      raid: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.raid, saved.lastEvents?.raid),
     },
   };
   return settingsCache;

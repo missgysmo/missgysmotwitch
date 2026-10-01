@@ -505,6 +505,14 @@ body.hide-names .avatar-name {
   100% { opacity: 0; transform: translate(-50%, -50%) translateY(-20px) scale(0.9); }
 }
 
+.last-event {
+  position: fixed;
+  font-family: system-ui, sans-serif;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0,0,0,.6), 0 0 8px rgba(0,0,0,.4);
+}
+
 .timer-box {
   position: fixed;
   transform: translate(-50%, -50%);

@@ -681,6 +681,36 @@ for (const type of EVENT_TYPES) {
   };
 }
 
+// Populé une seule fois depuis le <template> commun (évite de dupliquer 8 options x4 dans le HTML).
+document.querySelectorAll('.lastevent-fontfamily-select').forEach((select) => {
+  select.innerHTML = document.getElementById('lastevent-fontfamily-options').innerHTML;
+});
+
+const lastEventFields = {};
+for (const type of EVENT_TYPES) {
+  lastEventFields[type] = {
+    enabled: document.getElementById(`last-${type}-enabled`),
+    text: document.getElementById(`last-${type}-text`),
+    color: document.getElementById(`last-${type}-color`),
+    fontFamily: document.getElementById(`last-${type}-fontfamily`),
+    size: document.getElementById(`last-${type}-size`),
+    sizeOut: document.getElementById(`last-${type}-size-out`),
+    posX: document.getElementById(`last-${type}-posx`),
+    posXOut: document.getElementById(`last-${type}-posx-out`),
+    posY: document.getElementById(`last-${type}-posy`),
+    posYOut: document.getElementById(`last-${type}-posy-out`),
+  };
+  lastEventFields[type].size.addEventListener('input', () => {
+    lastEventFields[type].sizeOut.textContent = `${lastEventFields[type].size.value}px`;
+  });
+  lastEventFields[type].posX.addEventListener('input', () => {
+    lastEventFields[type].posXOut.textContent = `${lastEventFields[type].posX.value}%`;
+  });
+  lastEventFields[type].posY.addEventListener('input', () => {
+    lastEventFields[type].posYOut.textContent = `${lastEventFields[type].posY.value}%`;
+  });
+}
+
 const TIMER_TYPES = ['intro', 'pause'];
 const timerFields = {};
 for (const type of TIMER_TYPES) {
@@ -868,6 +898,16 @@ async function loadSettings() {
     eventFields[type].posX.value = s.events[type].position.x;
     eventFields[type].posY.value = s.events[type].position.y;
     updateSoundStatus(type, s.events[type].sound);
+    lastEventFields[type].enabled.checked = s.lastEvents[type].enabled;
+    lastEventFields[type].text.value = s.lastEvents[type].text;
+    lastEventFields[type].color.value = s.lastEvents[type].color;
+    lastEventFields[type].fontFamily.value = s.lastEvents[type].fontFamily;
+    lastEventFields[type].size.value = s.lastEvents[type].fontSize;
+    lastEventFields[type].posX.value = s.lastEvents[type].position.x;
+    lastEventFields[type].posY.value = s.lastEvents[type].position.y;
+    lastEventFields[type].sizeOut.textContent = `${s.lastEvents[type].fontSize}px`;
+    lastEventFields[type].posXOut.textContent = `${s.lastEvents[type].position.x}%`;
+    lastEventFields[type].posYOut.textContent = `${s.lastEvents[type].position.y}%`;
   }
   for (const id in spriteFlipFields) {
     spriteFlipFields[id].checked = !!s.spriteFlip[id];
@@ -1014,6 +1054,14 @@ async function saveSettings() {
       fontSize: Number(eventFields[type].size.value),
       reaction: eventFields[type].reaction.value,
       position: { x: Number(eventFields[type].posX.value), y: Number(eventFields[type].posY.value) },
+    }])),
+    lastEvents: Object.fromEntries(EVENT_TYPES.map((type) => [type, {
+      enabled: lastEventFields[type].enabled.checked,
+      text: lastEventFields[type].text.value,
+      color: lastEventFields[type].color.value,
+      fontFamily: lastEventFields[type].fontFamily.value,
+      fontSize: Number(lastEventFields[type].size.value),
+      position: { x: Number(lastEventFields[type].posX.value), y: Number(lastEventFields[type].posY.value) },
     }])),
     spriteFlip: Object.fromEntries(Object.entries(spriteFlipFields).map(([id, cb]) => [id, cb.checked])),
     timers: Object.fromEntries(TIMER_TYPES.map((type) => [type, {

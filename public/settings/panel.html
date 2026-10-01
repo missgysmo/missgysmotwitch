@@ -38,6 +38,7 @@
           <button type="button" class="nav-tab-btn" data-tab="subscribe"><span class="nav-icon">⭐</span>Sub</button>
           <button type="button" class="nav-tab-btn" data-tab="cheer"><span class="nav-icon">💎</span>Cheer</button>
           <button type="button" class="nav-tab-btn" data-tab="raid"><span class="nav-icon">🚀</span>Raid</button>
+          <button type="button" class="nav-tab-btn" data-tab="lastevents"><span class="nav-icon">📌</span>Derniers événements</button>
         </div>
         <div class="nav-subtabs" data-cat-group="tools" hidden>
           <button type="button" class="nav-tab-btn" data-tab="timers"><span class="nav-icon">⏱️</span>Chronomètres</button>
@@ -685,6 +686,70 @@
           <button type="button" class="test-event-btn" data-type="raid">Tester cette alerte</button>
         </div>
         <p class="hint">Le test affiche le popup sur <code>/overlay/</code> (ouvre-le dans un autre onglet ou regarde OBS). Un avatar au hasard parmi ceux affichés fera la réaction choisie — s'il n'y a aucun avatar actif, seul le popup de texte s'affiche.</p>
+      </fieldset>
+
+      <fieldset data-nav-panel="lastevents" hidden>
+        <legend>Derniers événements</legend>
+        <p class="hint">Contrairement aux alertes ci-dessus (qui s'affichent puis disparaissent), ces textes restent affichés en permanence à l'écran et se mettent juste à jour au prochain événement du même type. Chacun a sa propre position, taille et police. Variables : <code>{user}</code>, <code>{bits}</code>, <code>{viewers}</code> selon le type.</p>
+        <template id="lastevent-fontfamily-options">
+              <option value="system-ui">Standard</option>
+              <option value="Bangers">Bangers (BD)</option>
+              <option value="Permanent Marker">Permanent Marker (feutre)</option>
+              <option value="Pacifico">Pacifico (script)</option>
+              <option value="Press Start 2P">Press Start 2P (pixel)</option>
+              <option value="Russo One">Russo One (impact)</option>
+              <option value="Caveat">Caveat (manuscrite)</option>
+              <option value="Creepster">Creepster (horreur)</option>
+        </template>
+
+        <div class="event-block">
+          <h3>Dernier follow</h3>
+          <label><input type="checkbox" id="last-follow-enabled" /> Afficher en permanence</label>
+          <label>Texte <input type="text" id="last-follow-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="last-follow-color" /></label>
+          <label>Calligraphie <select id="last-follow-fontfamily" class="lastevent-fontfamily-select"></select></label>
+          <label>Taille <input type="range" id="last-follow-size" min="8" max="40" step="1" /><output id="last-follow-size-out"></output></label>
+          <label>Position horizontale <input type="range" id="last-follow-posx" min="0" max="100" step="1" /><output id="last-follow-posx-out"></output></label>
+          <label>Position verticale <input type="range" id="last-follow-posy" min="0" max="100" step="1" /><output id="last-follow-posy-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="follow">Tester (fait aussi apparaître cette info)</button>
+        </div>
+
+        <div class="event-block">
+          <h3>Dernier sub</h3>
+          <label><input type="checkbox" id="last-subscribe-enabled" /> Afficher en permanence</label>
+          <label>Texte <input type="text" id="last-subscribe-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="last-subscribe-color" /></label>
+          <label>Calligraphie <select id="last-subscribe-fontfamily" class="lastevent-fontfamily-select"></select></label>
+          <label>Taille <input type="range" id="last-subscribe-size" min="8" max="40" step="1" /><output id="last-subscribe-size-out"></output></label>
+          <label>Position horizontale <input type="range" id="last-subscribe-posx" min="0" max="100" step="1" /><output id="last-subscribe-posx-out"></output></label>
+          <label>Position verticale <input type="range" id="last-subscribe-posy" min="0" max="100" step="1" /><output id="last-subscribe-posy-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="subscribe">Tester (fait aussi apparaître cette info)</button>
+        </div>
+
+        <div class="event-block">
+          <h3>Derniers bits</h3>
+          <label><input type="checkbox" id="last-cheer-enabled" /> Afficher en permanence</label>
+          <label>Texte <input type="text" id="last-cheer-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="last-cheer-color" /></label>
+          <label>Calligraphie <select id="last-cheer-fontfamily" class="lastevent-fontfamily-select"></select></label>
+          <label>Taille <input type="range" id="last-cheer-size" min="8" max="40" step="1" /><output id="last-cheer-size-out"></output></label>
+          <label>Position horizontale <input type="range" id="last-cheer-posx" min="0" max="100" step="1" /><output id="last-cheer-posx-out"></output></label>
+          <label>Position verticale <input type="range" id="last-cheer-posy" min="0" max="100" step="1" /><output id="last-cheer-posy-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="cheer">Tester (fait aussi apparaître cette info)</button>
+        </div>
+
+        <div class="event-block">
+          <h3>Dernier raid</h3>
+          <label><input type="checkbox" id="last-raid-enabled" /> Afficher en permanence</label>
+          <label>Texte <input type="text" id="last-raid-text" maxlength="200" /></label>
+          <label>Couleur <input type="color" id="last-raid-color" /></label>
+          <label>Calligraphie <select id="last-raid-fontfamily" class="lastevent-fontfamily-select"></select></label>
+          <label>Taille <input type="range" id="last-raid-size" min="8" max="40" step="1" /><output id="last-raid-size-out"></output></label>
+          <label>Position horizontale <input type="range" id="last-raid-posx" min="0" max="100" step="1" /><output id="last-raid-posx-out"></output></label>
+          <label>Position verticale <input type="range" id="last-raid-posy" min="0" max="100" step="1" /><output id="last-raid-posy-out"></output></label>
+          <button type="button" class="test-event-btn" data-type="raid">Tester (fait aussi apparaître cette info)</button>
+        </div>
+        <p class="hint">Ces infos sont remises à zéro à chaque redémarrage du serveur (comme le reste de l'activité de la session en cours) : rien ne s'affiche tant qu'aucun événement du type concerné n'est survenu depuis.</p>
       </fieldset>
 
       <fieldset data-nav-panel="test" hidden>

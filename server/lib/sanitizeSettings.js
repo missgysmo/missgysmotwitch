@@ -30,6 +30,20 @@ function sanitizeEventConfig(input, fallback) {
   };
 }
 
+function sanitizeLastEventConfig(input, fallback) {
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    text: typeof input?.text === 'string' && input.text.trim() ? input.text.slice(0, 200) : fallback.text,
+    color: HEX_COLOR.test(input?.color) ? input.color : fallback.color,
+    fontFamily: EVENT_FONTS.includes(input?.fontFamily) ? input.fontFamily : fallback.fontFamily,
+    fontSize: clamp(input?.fontSize, 8, 40, fallback.fontSize),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+    },
+  };
+}
+
 function sanitizeTimerConfig(input, fallback) {
   return {
     label: typeof input?.label === 'string' && input.label.trim() ? input.label.slice(0, 100) : fallback.label,
@@ -245,7 +259,7 @@ function sanitizeSettings(body, current) {
   const {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect,
-    nameTag, events, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
+    nameTag, events, lastEvents, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
     activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer,
   } = body;
   const d = current;
@@ -276,6 +290,12 @@ function sanitizeSettings(body, current) {
       subscribe: sanitizeEventConfig(events?.subscribe, d.events.subscribe),
       cheer: sanitizeEventConfig(events?.cheer, d.events.cheer),
       raid: sanitizeEventConfig(events?.raid, d.events.raid),
+    },
+    lastEvents: {
+      follow: sanitizeLastEventConfig(lastEvents?.follow, d.lastEvents.follow),
+      subscribe: sanitizeLastEventConfig(lastEvents?.subscribe, d.lastEvents.subscribe),
+      cheer: sanitizeLastEventConfig(lastEvents?.cheer, d.lastEvents.cheer),
+      raid: sanitizeLastEventConfig(lastEvents?.raid, d.lastEvents.raid),
     },
     ownerNameColor: HEX_COLOR.test(ownerNameColor) ? ownerNameColor : d.ownerNameColor,
     ownerSize: clamp(ownerSize, 24, 200, d.ownerSize),

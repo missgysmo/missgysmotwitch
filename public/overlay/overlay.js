@@ -18,6 +18,19 @@ const nowPlayingEl = document.getElementById('now-playing');
 const nowPlayingArtEl = document.getElementById('now-playing-art');
 const nowPlayingTitleEl = document.getElementById('now-playing-title');
 const nowPlayingArtistEl = document.getElementById('now-playing-artist');
+
+// Affichage permanent "Dernier follow/sub/bits/raid : {user}", indépendant des alertes
+// temporaires (showEvent) : créé une fois ici (avant le tout premier applySettings() plus bas,
+// sinon applyLastEventsLayout() planterait en référençant un objet pas encore déclaré), reste
+// à l'écran, se met juste à jour au prochain événement du même type.
+const lastEventEls = {};
+for (const key of ['follow', 'subscribe', 'cheer', 'raid']) {
+  const el = document.createElement('div');
+  el.className = 'last-event';
+  el.style.display = 'none';
+  document.body.appendChild(el);
+  lastEventEls[key] = el;
+}
 const customCommandPlayerEl = document.getElementById('custom-command-player');
 const customCommandVideoEl = document.getElementById('custom-command-video');
 
@@ -109,6 +122,12 @@ let settings = {
     cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 } },
     raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 } },
   },
+  lastEvents: {
+    follow: { enabled: false, text: 'Dernier follow : {user}', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 2 } },
+    subscribe: { enabled: false, text: 'Dernier sub : {user}', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 7 } },
+    cheer: { enabled: false, text: 'Derniers bits : {user} ({bits})', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 12 } },
+    raid: { enabled: false, text: 'Dernier raid : {user} ({viewers} viewers)', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 17 } },
+  },
   activityFeed: {
     enabled: false, fontSize: 15, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 55, speedSeconds: 18,
     position: { x: 25, y: 92, width: 50, height: 6 },
@@ -180,6 +199,7 @@ function applySettings(newSettings) {
   applyRaidCardLayout();
   applyNowPlayingLayout();
   applyCustomCommandsPlayerLayout();
+  applyLastEventsLayout();
 }
 
 applySettings(settings);
@@ -817,6 +837,28 @@ const EVENT_KEYS = {
   'channel.raid': 'raid',
 };
 
+function applyLastEventsLayout() {
+  for (const key of Object.keys(lastEventEls)) {
+    const cfg = settings.lastEvents?.[key];
+    const el = lastEventEls[key];
+    if (!cfg) continue;
+    el.style.display = cfg.enabled ? 'block' : 'none';
+    el.style.left = `${cfg.position.x}%`;
+    el.style.top = `${cfg.position.y}%`;
+    el.style.color = cfg.color;
+    el.style.fontFamily = cfg.fontFamily && cfg.fontFamily !== 'system-ui' ? `'${cfg.fontFamily}', system-ui` : '';
+    el.style.fontSize = `${cfg.fontSize}px`;
+  }
+}
+
+function updateLastEvent(eventType, event) {
+  const key = EVENT_KEYS[eventType];
+  const cfg = settings.lastEvents?.[key];
+  const el = lastEventEls[key];
+  if (!cfg || !el) return;
+  el.textContent = buildEventText(eventType, event, cfg);
+}
+
 function buildEventText(eventType, event, cfg) {
   const vars = {
     user: event.user_name || event.from_broadcaster_user_name || 'Quelqu\'un',
@@ -969,7 +1011,7 @@ function connect() {
     const data = JSON.parse(msg.data);
     if (data.type === 'settings') applySettings(data.settings);
     if (data.type === 'state') syncState(data.viewers);
-    if (data.type === 'event') showEvent(data.eventType, data.event, data.cast);
+    if (data.type === 'event') { showEvent(data.eventType, data.event, data.cast); updateLastEvent(data.eventType, data.event); }
     if (data.type === 'chat') showChatBubble(data.login, data.text);
     if (data.type === 'timer') handleTimerMessage(data);
     if (data.type === 'canvas-init') initGraffitiCanvas(data);
