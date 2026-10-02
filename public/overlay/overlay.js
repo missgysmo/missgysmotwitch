@@ -94,7 +94,7 @@ const SPECIES_FILES = {
 // Avatars personnalisés ajoutés par l'admin (en plus de SPECIES_FILES ci-dessus, codé en dur) :
 // chargés une fois au démarrage, et utilisés comme repli par spriteSrcFor() ci-dessous.
 const CUSTOM_SPECIES_SRC = {};
-fetch('/api/species').then((r) => r.json()).then((list) => {
+fetch('/api/species/sprites').then((r) => r.json()).then((list) => {
   for (const s of list) {
     if (s.src && !SPECIES_FILES[s.id]) CUSTOM_SPECIES_SRC[s.id] = s.src;
   }

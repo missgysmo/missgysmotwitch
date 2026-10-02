@@ -20,6 +20,13 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, s
     res.json(list);
   });
 
+  // Dédié au rendu des sprites sur l'overlay (pas à la sélection) : l'overlay doit pouvoir afficher
+  // l'image de N'IMPORTE quel avatar déjà porté par un viewer, verrouillé par points ou non — le
+  // verrouillage ne concerne que le CHOIX d'un avatar, jamais l'affichage d'un déjà choisi.
+  router.get('/api/species/sprites', (req, res) => {
+    res.json(speciesCatalog.getAll().filter((s) => s.enabled).map((s) => ({ id: s.id, src: s.src })));
+  });
+
   router.get('/api/avatar/:login', publicApiRateLimit, async (req, res) => {
     const login = req.params.login;
     const skin = follower.getSkin(login);
