@@ -134,20 +134,12 @@ const DEFAULT_SETTINGS = {
     bgOpacity: 60,
     position: { x: 2, y: 88, width: 26, height: 10 },
   },
-  // Messages personnalisés (bandeau défilant ou panneau) : même principe que customCommands ci-dessous,
-  // "items" mutés uniquement via server/routes/messages.js, jamais via le formulaire classique.
-  // Couleur/police/taille/fond/rotation sont réglables PAR message (dans chaque item), pas ici :
-  // ce bloc ne gère que le comportement du conteneur (style, affichage, position).
-  messages: {
-    enabled: false,
-    style: 'ticker', // 'ticker' (bandeau défilant) | 'panel' (un message à la fois, en fondu)
-    displayMode: 'always', // 'always' (en permanence) | 'interval' (par intermittence)
-    intervalSeconds: 300,
-    showDurationSeconds: 15,
-    speedSeconds: 20,
-    position: { x: 10, y: 90, width: 80, height: 8 },
-    items: [],
-  },
+  // Zones de messages personnalisés (bandeau défilant ou panneau) : plusieurs zones indépendantes
+  // possibles (ex: un bandeau sponsors en haut + un panneau annonces en bas), chacune avec son
+  // propre style/affichage/position et sa propre liste de messages. Entièrement mutées via
+  // server/routes/messages.js, jamais via le formulaire de réglages classique (même principe que
+  // customCommands) — un tableau de taille variable ne s'y prête pas.
+  messageBoards: [],
   // Commandes de chat personnalisées (soundboard) : mutées uniquement via leurs propres routes
   // (server/routes/customCommands.js), jamais via le formulaire de réglages classique — comme ça
   // pas de risque qu'une sauvegarde de réglages sans rapport n'écrase la liste ou les médias uploadés.
@@ -464,12 +456,7 @@ function getSettings() {
       ...(saved.nowPlaying || {}),
       position: { ...DEFAULT_SETTINGS.nowPlaying.position, ...(saved.nowPlaying?.position || {}) },
     },
-    messages: {
-      ...DEFAULT_SETTINGS.messages,
-      ...(saved.messages || {}),
-      position: { ...DEFAULT_SETTINGS.messages.position, ...(saved.messages?.position || {}) },
-      items: Array.isArray(saved.messages?.items) ? saved.messages.items : DEFAULT_SETTINGS.messages.items,
-    },
+    messageBoards: Array.isArray(saved.messageBoards) ? saved.messageBoards : DEFAULT_SETTINGS.messageBoards,
     customCommands: Array.isArray(saved.customCommands) ? saved.customCommands : DEFAULT_SETTINGS.customCommands,
     customCommandsPlayer: {
       ...DEFAULT_SETTINGS.customCommandsPlayer,

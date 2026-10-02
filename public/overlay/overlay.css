@@ -35,8 +35,8 @@ body.module-tamagotchi-off #tamagotchi { display: none !important; }
 body.module-raidcard-off #raid-card { display: none !important; }
 body.module-nowplaying-off #now-playing { display: none !important; }
 body.module-customcommands-off #custom-command-player { display: none !important; }
-body.module-messages-off #messages-ticker,
-body.module-messages-off #messages-panel { display: none !important; }
+body.module-messages-off .messages-ticker,
+body.module-messages-off .messages-panel { display: none !important; }
 
 #graffiti-canvas {
   position: fixed;
@@ -131,7 +131,8 @@ body.module-messages-off #messages-panel { display: none !important; }
 }
 
 /* Messages personnalisés : bandeau défilant (comme activity-feed) ou panneau un message à la fois */
-#messages-ticker {
+/* Une instance par zone de messages configurée (board), créée dynamiquement par overlay.js */
+.messages-ticker {
   position: fixed;
   display: none;
   overflow: hidden;
@@ -141,7 +142,7 @@ body.module-messages-off #messages-panel { display: none !important; }
   perspective: 800px;
 }
 
-#messages-ticker-track {
+.messages-ticker-track {
   display: inline-flex;
   gap: 3rem;
   padding-left: 100%;
@@ -165,14 +166,14 @@ body.module-messages-off #messages-panel { display: none !important; }
   vertical-align: middle;
 }
 
-#messages-panel {
+.messages-panel {
   position: fixed;
   display: none;
   font-family: system-ui, sans-serif;
   perspective: 800px;
 }
 
-#messages-panel-inner {
+.messages-panel-inner {
   display: flex;
   align-items: center;
   gap: 0.6em;
@@ -184,9 +185,9 @@ body.module-messages-off #messages-panel { display: none !important; }
   transform-style: preserve-3d;
 }
 
-#messages-panel.visible #messages-panel-inner { opacity: 1; }
-#messages-panel-img { height: 1.6em; width: auto; object-fit: contain; }
-#messages-panel-img[hidden] { display: none; }
+.messages-panel.visible .messages-panel-inner { opacity: 1; }
+.messages-panel-img { height: 1.6em; width: auto; object-fit: contain; }
+.messages-panel-img[hidden] { display: none; }
 
 @keyframes scrollUp {
   from { transform: translateY(0); }

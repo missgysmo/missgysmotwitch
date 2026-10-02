@@ -18,20 +18,10 @@ const nowPlayingEl = document.getElementById('now-playing');
 const nowPlayingArtEl = document.getElementById('now-playing-art');
 const nowPlayingTitleEl = document.getElementById('now-playing-title');
 const nowPlayingArtistEl = document.getElementById('now-playing-artist');
-const messagesTickerEl = document.getElementById('messages-ticker');
-const messagesTickerTrackEl = document.getElementById('messages-ticker-track');
-const messagesPanelEl = document.getElementById('messages-panel');
-const messagesPanelInnerEl = document.getElementById('messages-panel-inner');
-const messagesPanelImgEl = document.getElementById('messages-panel-img');
-const messagesPanelTextEl = document.getElementById('messages-panel-text');
-// Messages personnalisés (bandeau défilant ou panneau), configurables : permanent ou par
-// intermittence (apparaît showDurationSeconds toutes les intervalSeconds). En mode panneau, les
-// messages activés tournent un par un ; en mode bandeau, ils défilent tous ensemble en continu.
-// Déclaré ici (avant le tout premier applySettings() plus bas) pour la même raison que
-// lastEventEls plus haut : sinon applyMessagesLayout() planterait en référençant une variable
-// `let` pas encore initialisée (zone morte temporelle).
-let messagesTimer = null;
-let messagesRotationIndex = 0;
+// Zones de messages personnalisés (bandeau défilant ou panneau), plusieurs zones indépendantes
+// possibles (ex: un bandeau sponsors en haut + un panneau annonces en bas) : les éléments DOM sont
+// créés/détruits dynamiquement par board (voir applyMessageBoards plus bas), pas de const fixe ici.
+const messageBoardEls = new Map(); // boardId -> { tickerEl, tickerTrackEl, panelEl, panelInnerEl, panelImgEl, panelTextEl, timer, rotationIndex }
 
 // Affichage permanent "Dernier follow/sub/bits/raid : {user}", indépendant des alertes
 // temporaires (showEvent) : créé une fois ici (avant le tout premier applySettings() plus bas,
@@ -183,10 +173,7 @@ let settings = {
   customCommandsPlayer: {
     position: { x: 20, y: 15, width: 60, height: 60 },
   },
-  messages: {
-    enabled: false, style: 'ticker', displayMode: 'always', intervalSeconds: 300, showDurationSeconds: 15,
-    speedSeconds: 20, position: { x: 10, y: 90, width: 80, height: 8 }, items: [],
-  },
+  messageBoards: [],
 };
 
 // Résolution de référence sur laquelle les tailles d'avatar (en px) ont été pensées.
@@ -236,7 +223,7 @@ function applySettings(newSettings) {
   applyNowPlayingLayout();
   applyCustomCommandsPlayerLayout();
   applyLastEventsLayout();
-  applyMessagesLayout();
+  applyMessageBoards();
 }
 
 applySettings(settings);
@@ -902,74 +889,132 @@ function messageItemHtml(item) {
   return `<span class="messages-ticker-item" style="${style}">${img}${escapeHtml(item.text)}</span>`;
 }
 
-function showMessagesPanelItem(item) {
-  messagesPanelEl.style.display = 'block';
-  messagesPanelImgEl.hidden = !item.image;
-  if (item.image) messagesPanelImgEl.src = `/message-media/${item.image}`;
-  messagesPanelTextEl.textContent = item.text;
-  const rgb = hexToRgb(item.bgColor);
-  messagesPanelInnerEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${item.bgOpacity / 100})`;
-  messagesPanelInnerEl.style.color = item.textColor;
-  messagesPanelInnerEl.style.fontFamily = item.fontFamily && item.fontFamily !== 'system-ui' ? `'${item.fontFamily}', system-ui` : '';
-  messagesPanelInnerEl.style.fontSize = `${item.fontSize}px`;
-  messagesPanelInnerEl.style.transform = messageItemTransform(item);
-  requestAnimationFrame(() => messagesPanelEl.classList.add('visible'));
+// Crée (une seule fois par board) les éléments DOM d'une zone de messages, retirés dès que la
+// zone correspondante n'existe plus côté réglages (voir applyMessageBoards).
+function ensureBoardEls(boardId) {
+  if (messageBoardEls.has(boardId)) return messageBoardEls.get(boardId);
+
+  const tickerEl = document.createElement('div');
+  tickerEl.className = 'messages-ticker';
+  const tickerTrackEl = document.createElement('div');
+  tickerTrackEl.className = 'messages-ticker-track';
+  tickerEl.appendChild(tickerTrackEl);
+
+  const panelEl = document.createElement('div');
+  panelEl.className = 'messages-panel';
+  const panelInnerEl = document.createElement('div');
+  panelInnerEl.className = 'messages-panel-inner';
+  const panelImgEl = document.createElement('img');
+  panelImgEl.className = 'messages-panel-img';
+  panelImgEl.alt = '';
+  const panelTextEl = document.createElement('span');
+  panelTextEl.className = 'messages-panel-text';
+  panelInnerEl.append(panelImgEl, panelTextEl);
+  panelEl.appendChild(panelInnerEl);
+
+  document.body.append(tickerEl, panelEl);
+
+  const state = { tickerEl, tickerTrackEl, panelEl, panelInnerEl, panelImgEl, panelTextEl, timer: null, rotationIndex: 0 };
+  messageBoardEls.set(boardId, state);
+  return state;
 }
 
-function applyMessagesLayout() {
-  const m = settings.messages;
-  clearTimeout(messagesTimer);
-  messagesTimer = null;
+function removeBoardEls(boardId) {
+  const state = messageBoardEls.get(boardId);
+  if (!state) return;
+  clearTimeout(state.timer);
+  state.tickerEl.remove();
+  state.panelEl.remove();
+  messageBoardEls.delete(boardId);
+}
 
-  for (const el of [messagesTickerEl, messagesPanelEl]) {
-    el.style.left = `${m.position.x}%`;
-    el.style.top = `${m.position.y}%`;
+function showBoardPanelItem(state, item) {
+  state.panelEl.style.display = 'block';
+  state.panelImgEl.hidden = !item.image;
+  if (item.image) state.panelImgEl.src = `/message-media/${item.image}`;
+  state.panelTextEl.textContent = item.text;
+  const rgb = hexToRgb(item.bgColor);
+  state.panelInnerEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${item.bgOpacity / 100})`;
+  state.panelInnerEl.style.color = item.textColor;
+  state.panelInnerEl.style.fontFamily = item.fontFamily && item.fontFamily !== 'system-ui' ? `'${item.fontFamily}', system-ui` : '';
+  state.panelInnerEl.style.fontSize = `${item.fontSize}px`;
+  state.panelInnerEl.style.transform = messageItemTransform(item);
+  requestAnimationFrame(() => state.panelEl.classList.add('visible'));
+}
+
+// rotationMode 'sequential' avance dans l'ordre de la liste (état gardé sur le board, d'un
+// affichage à l'autre) ; 'random' pioche à chaque fois, sans mémoire.
+function pickNextIndex(board, items, state) {
+  if (board.rotationMode === 'random') return Math.floor(Math.random() * items.length);
+  const idx = state.rotationIndex % items.length;
+  state.rotationIndex += 1;
+  return idx;
+}
+
+function tickerTrackHtml(board, items) {
+  const order = board.rotationMode === 'random' ? [...items].sort(() => Math.random() - 0.5) : items;
+  const html = order.map(messageItemHtml).join('');
+  return html + html; // dupliqué pour un défilement continu sans trou visible
+}
+
+function applyOneBoard(board) {
+  const state = ensureBoardEls(board.id);
+  clearTimeout(state.timer);
+  state.timer = null;
+
+  for (const el of [state.tickerEl, state.panelEl]) {
+    el.style.left = `${board.position.x}%`;
+    el.style.top = `${board.position.y}%`;
   }
-  messagesTickerEl.style.width = `${m.position.width}%`;
-  messagesTickerEl.style.height = `${m.position.height}%`;
-  messagesTickerTrackEl.style.animationDuration = `${m.speedSeconds}s`;
+  state.tickerEl.style.width = `${board.position.width}%`;
+  state.tickerEl.style.height = `${board.position.height}%`;
+  state.tickerTrackEl.style.animationDuration = `${board.speedSeconds}s`;
 
-  messagesTickerEl.style.display = 'none';
-  messagesPanelEl.style.display = 'none';
-  messagesPanelEl.classList.remove('visible');
+  state.tickerEl.style.display = 'none';
+  state.panelEl.style.display = 'none';
+  state.panelEl.classList.remove('visible');
 
-  const items = (m.items || []).filter((i) => i.enabled && i.text);
-  if (!m.enabled || !items.length) return;
+  const items = (board.items || []).filter((i) => i.enabled && i.text);
+  if (!board.enabled || !items.length) return;
 
-  if (m.style === 'ticker') {
-    const html = items.map(messageItemHtml).join('');
-    messagesTickerTrackEl.innerHTML = html + html;
-  }
-  messagesRotationIndex = 0;
+  state.rotationIndex = 0;
 
-  if (m.displayMode === 'always') {
-    if (m.style === 'ticker') {
-      messagesTickerEl.style.display = 'block';
+  if (board.displayMode === 'always') {
+    if (board.style === 'ticker') {
+      state.tickerTrackEl.innerHTML = tickerTrackHtml(board, items);
+      state.tickerEl.style.display = 'block';
     } else {
-      showMessagesPanelItem(items[0]);
-      const next = () => {
-        messagesRotationIndex = (messagesRotationIndex + 1) % items.length;
-        showMessagesPanelItem(items[messagesRotationIndex]);
-        messagesTimer = setTimeout(next, m.showDurationSeconds * 1000);
+      const showNext = () => {
+        showBoardPanelItem(state, items[pickNextIndex(board, items, state)]);
+        state.timer = setTimeout(showNext, board.showDurationSeconds * 1000);
       };
-      messagesTimer = setTimeout(next, m.showDurationSeconds * 1000);
+      showNext();
     }
   } else {
     const cycle = () => {
-      if (m.style === 'ticker') {
-        messagesTickerEl.style.display = 'block';
+      if (board.style === 'ticker') {
+        state.tickerTrackEl.innerHTML = tickerTrackHtml(board, items);
+        state.tickerEl.style.display = 'block';
       } else {
-        showMessagesPanelItem(items[messagesRotationIndex % items.length]);
-        messagesRotationIndex += 1;
+        showBoardPanelItem(state, items[pickNextIndex(board, items, state)]);
       }
-      messagesTimer = setTimeout(() => {
-        messagesTickerEl.style.display = 'none';
-        messagesPanelEl.classList.remove('visible');
-        messagesTimer = setTimeout(cycle, m.intervalSeconds * 1000);
-      }, m.showDurationSeconds * 1000);
+      state.timer = setTimeout(() => {
+        state.tickerEl.style.display = 'none';
+        state.panelEl.classList.remove('visible');
+        state.timer = setTimeout(cycle, board.intervalSeconds * 1000);
+      }, board.showDurationSeconds * 1000);
     };
-    messagesTimer = setTimeout(cycle, 500);
+    state.timer = setTimeout(cycle, 500);
   }
+}
+
+function applyMessageBoards() {
+  const boards = settings.messageBoards || [];
+  const seenIds = new Set(boards.map((b) => b.id));
+  for (const id of [...messageBoardEls.keys()]) {
+    if (!seenIds.has(id)) removeBoardEls(id);
+  }
+  for (const board of boards) applyOneBoard(board);
 }
 
 function updateLastEvent(eventType, event) {

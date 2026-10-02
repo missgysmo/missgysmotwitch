@@ -81,23 +81,6 @@ const activityFeedFields = {
   heightOut: document.getElementById('activity-height-out'),
 };
 
-const messagesFields = {
-  enabled: document.getElementById('msg-enabled'),
-  style: document.getElementById('msg-style'),
-  displayMode: document.getElementById('msg-displaymode'),
-  interval: document.getElementById('msg-interval'),
-  duration: document.getElementById('msg-duration'),
-  speed: document.getElementById('msg-speed'),
-  posX: document.getElementById('msg-posx'),
-  posXOut: document.getElementById('msg-posx-out'),
-  posY: document.getElementById('msg-posy'),
-  posYOut: document.getElementById('msg-posy-out'),
-  width: document.getElementById('msg-width'),
-  widthOut: document.getElementById('msg-width-out'),
-  height: document.getElementById('msg-height'),
-  heightOut: document.getElementById('msg-height-out'),
-};
-
 const followListFields = {
   enabled: document.getElementById('followlist-enabled'),
   mode: document.getElementById('followlist-mode'),
@@ -786,10 +769,6 @@ function updateOutputs() {
   activityFeedFields.posYOut.textContent = `${activityFeedFields.posY.value}%`;
   activityFeedFields.widthOut.textContent = `${activityFeedFields.width.value}%`;
   activityFeedFields.heightOut.textContent = `${activityFeedFields.height.value}%`;
-  messagesFields.posXOut.textContent = `${messagesFields.posX.value}%`;
-  messagesFields.posYOut.textContent = `${messagesFields.posY.value}%`;
-  messagesFields.widthOut.textContent = `${messagesFields.width.value}%`;
-  messagesFields.heightOut.textContent = `${messagesFields.height.value}%`;
   followListFields.fontSizeOut.textContent = `${followListFields.fontSize.value}px`;
   followListFields.bgOpacityOut.textContent = `${followListFields.bgOpacity.value}%`;
   followListFields.posXOut.textContent = `${followListFields.posX.value}%`;
@@ -867,10 +846,6 @@ activityFeedFields.posX.addEventListener('input', updateOutputs);
 activityFeedFields.posY.addEventListener('input', updateOutputs);
 activityFeedFields.width.addEventListener('input', updateOutputs);
 activityFeedFields.height.addEventListener('input', updateOutputs);
-messagesFields.posX.addEventListener('input', updateOutputs);
-messagesFields.posY.addEventListener('input', updateOutputs);
-messagesFields.width.addEventListener('input', updateOutputs);
-messagesFields.height.addEventListener('input', updateOutputs);
 followListFields.fontSize.addEventListener('input', updateOutputs);
 followListFields.bgOpacity.addEventListener('input', updateOutputs);
 followListFields.posX.addEventListener('input', updateOutputs);
@@ -985,17 +960,7 @@ async function loadSettings() {
   activityFeedFields.posY.value = s.activityFeed.position.y;
   activityFeedFields.width.value = s.activityFeed.position.width;
   activityFeedFields.height.value = s.activityFeed.position.height;
-  messagesFields.enabled.checked = s.messages.enabled;
-  messagesFields.style.value = s.messages.style;
-  messagesFields.displayMode.value = s.messages.displayMode;
-  messagesFields.interval.value = s.messages.intervalSeconds;
-  messagesFields.duration.value = s.messages.showDurationSeconds;
-  messagesFields.speed.value = s.messages.speedSeconds;
-  messagesFields.posX.value = s.messages.position.x;
-  messagesFields.posY.value = s.messages.position.y;
-  messagesFields.width.value = s.messages.position.width;
-  messagesFields.height.value = s.messages.position.height;
-  renderMessagesList(s.messages.items);
+  renderMessageBoards(s.messageBoards);
   followListFields.enabled.checked = s.followList.enabled;
   followListFields.mode.value = s.followList.mode;
   followListFields.speed.value = s.followList.speedSeconds;
@@ -1158,20 +1123,6 @@ async function saveSettings() {
         y: Number(activityFeedFields.posY.value),
         width: Number(activityFeedFields.width.value),
         height: Number(activityFeedFields.height.value),
-      },
-    },
-    messages: {
-      enabled: messagesFields.enabled.checked,
-      style: messagesFields.style.value,
-      displayMode: messagesFields.displayMode.value,
-      intervalSeconds: Number(messagesFields.interval.value),
-      showDurationSeconds: Number(messagesFields.duration.value),
-      speedSeconds: Number(messagesFields.speed.value),
-      position: {
-        x: Number(messagesFields.posX.value),
-        y: Number(messagesFields.posY.value),
-        width: Number(messagesFields.width.value),
-        height: Number(messagesFields.height.value),
       },
     },
     followList: {
@@ -1423,15 +1374,12 @@ loadSpeciesCatalog();
 // --- Messages personnalisés (bandeau/panneau) ---
 // Mêmes principes que customCommands plus bas : items mutés via leurs propres routes,
 // jamais via le formulaire de réglages classique.
-function renderMessagesList(items) {
-  const listEl = document.getElementById('msg-list');
-  if (!listEl) return;
-  if (!items.length) {
-    listEl.innerHTML = '<p class="hint">Aucun message pour le moment — ajoutes-en un ci-dessous.</p>';
-    return;
-  }
-  listEl.innerHTML = items.map((m) => `
-    <div class="cc-card" data-id="${m.id}">
+// --- Zones de messages personnalisés (bandeau/panneau), plusieurs zones indépendantes ---
+// Mutées via leurs propres routes dédiées (jamais via le formulaire de réglages classique),
+// donc chaque action ci-dessous recharge juste les réglages plutôt que d'appeler saveSettings().
+function messageItemCardHtml(boardId, m) {
+  return `
+    <div class="cc-card" data-board-id="${boardId}" data-id="${m.id}">
       <div class="cc-card-head">
         ${m.image ? `<img src="/message-media/${m.image}" alt="" style="width:40px;height:40px;object-fit:contain;" />` : ''}
         <div class="cc-card-actions">
@@ -1457,103 +1405,234 @@ function renderMessagesList(items) {
         <label>Bascule 3D vers le fond (°) <input type="range" class="msg-tilt-input" min="-90" max="90" step="1" value="${m.tilt}" /><output>${m.tilt}°</output></label>
       </div>
     </div>
-  `).join('');
-  listEl.querySelectorAll('.msg-fontfamily-select').forEach((select, i) => {
+  `;
+}
+
+function boardCardHtml(b) {
+  return `
+    <div class="cc-card board-card" data-board-id="${b.id}">
+      <div class="cc-card-head">
+        <input type="text" class="board-label-input" maxlength="40" value="${escapeHtmlPanel(b.label)}" style="font-weight:700;" />
+        <div class="cc-card-actions">
+          <button type="button" class="board-delete-btn">Supprimer la zone</button>
+        </div>
+      </div>
+      <div class="cc-card-body">
+        <label><input type="checkbox" class="board-enabled-cb" ${b.enabled ? 'checked' : ''} /> Activer cette zone</label>
+        <label>
+          Style
+          <select class="board-style-select">
+            <option value="ticker" ${b.style === 'ticker' ? 'selected' : ''}>Bandeau défilant</option>
+            <option value="panel" ${b.style === 'panel' ? 'selected' : ''}>Panneau (un message à la fois)</option>
+          </select>
+        </label>
+        <label>
+          Affichage
+          <select class="board-displaymode-select">
+            <option value="always" ${b.displayMode === 'always' ? 'selected' : ''}>En permanence</option>
+            <option value="interval" ${b.displayMode === 'interval' ? 'selected' : ''}>Par intermittence</option>
+          </select>
+        </label>
+        <label>
+          Ordre des messages
+          <select class="board-rotationmode-select">
+            <option value="sequential" ${b.rotationMode === 'sequential' ? 'selected' : ''}>En liste (dans l'ordre)</option>
+            <option value="random" ${b.rotationMode === 'random' ? 'selected' : ''}>Aléatoire</option>
+          </select>
+        </label>
+        <label>Toutes les (s, si intermittent) <input type="number" class="board-interval-input" min="10" max="7200" value="${b.intervalSeconds}" /></label>
+        <label>Durée d'affichage (s) <input type="number" class="board-duration-input" min="3" max="600" value="${b.showDurationSeconds}" /></label>
+        <label>Vitesse de défilement (s, si bandeau) <input type="number" class="board-speed-input" min="3" max="300" value="${b.speedSeconds}" /></label>
+        <label>Position horizontale <input type="range" class="board-posx-input" min="0" max="100" step="1" value="${b.position.x}" /><output>${b.position.x}%</output></label>
+        <label>Position verticale <input type="range" class="board-posy-input" min="0" max="100" step="1" value="${b.position.y}" /><output>${b.position.y}%</output></label>
+        <label>Largeur (bandeau) <input type="range" class="board-width-input" min="5" max="100" step="1" value="${b.position.width}" /><output>${b.position.width}%</output></label>
+        <label>Hauteur (bandeau) <input type="range" class="board-height-input" min="5" max="100" step="1" value="${b.position.height}" /><output>${b.position.height}%</output></label>
+      </div>
+      <h3>Messages de cette zone</h3>
+      <div class="cc-list board-items-list">
+        ${b.items.length ? b.items.map((m) => messageItemCardHtml(b.id, m)).join('') : '<p class="hint">Aucun message — ajoutes-en un ci-dessous.</p>'}
+      </div>
+      <label>Nouveau message <input type="text" class="board-new-text-input" maxlength="300" placeholder="Ex : Merci de suivre sur Twitter @missgysmo !" /></label>
+      <button type="button" class="board-add-message-btn">➕ Ajouter</button>
+      <p class="board-create-status hint" hidden></p>
+    </div>
+  `;
+}
+
+function renderMessageBoards(boards) {
+  const listEl = document.getElementById('msg-boards-list');
+  if (!listEl) return;
+  if (!boards.length) {
+    listEl.innerHTML = '<p class="hint">Aucune zone pour le moment — crées-en une ci-dessous.</p>';
+    return;
+  }
+  listEl.innerHTML = boards.map(boardCardHtml).join('');
+  listEl.querySelectorAll('.msg-fontfamily-select').forEach((select) => {
+    const card = select.closest('.cc-card[data-id]');
+    const board = boards.find((b) => b.id === card.dataset.boardId);
+    const item = board?.items.find((m) => m.id === card.dataset.id);
     select.innerHTML = document.getElementById('msg-fontfamily-options').innerHTML;
-    select.value = items[i].fontFamily;
+    if (item) select.value = item.fontFamily;
   });
 }
 
-async function patchMessage(id, body) {
-  await fetch(`/api/admin/messages/${id}`, {
+async function patchBoard(boardId, body) {
+  await fetch(`/api/admin/message-boards/${boardId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-document.getElementById('msg-create-btn')?.addEventListener('click', async () => {
-  const statusEl = document.getElementById('msg-create-status');
-  const textEl = document.getElementById('msg-new-text');
-  const text = textEl.value.trim();
-  if (!text) { statusEl.hidden = false; statusEl.textContent = 'Texte requis.'; return; }
+async function patchMessage(boardId, itemId, body) {
+  await fetch(`/api/admin/message-boards/${boardId}/items/${itemId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+document.getElementById('board-create-btn')?.addEventListener('click', async () => {
+  const statusEl = document.getElementById('board-create-status');
+  const labelEl = document.getElementById('board-new-label');
   statusEl.hidden = false;
   statusEl.textContent = 'Création...';
   try {
-    const res = await fetch('/api/admin/messages', {
+    const res = await fetch('/api/admin/message-boards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ label: labelEl.value.trim() }),
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || 'échec');
-    statusEl.textContent = 'Message ajouté — tu peux lui ajouter une image ci-dessous.';
-    textEl.value = '';
+    statusEl.textContent = `"${body.label}" créée — ajoute des messages ci-dessous.`;
+    labelEl.value = '';
     await loadSettings();
   } catch (err) {
     statusEl.textContent = `Échec : ${err.message}`;
   }
 });
 
-document.getElementById('msg-list')?.addEventListener('click', async (e) => {
-  const card = e.target.closest('.cc-card');
-  if (!card) return;
-  const id = card.dataset.id;
+const BOARD_SLIDER_SUFFIX = { 'board-posx-input': '%', 'board-posy-input': '%', 'board-width-input': '%', 'board-height-input': '%' };
+const MSG_SLIDER_SUFFIX = { 'msg-fontsize-input': 'px', 'msg-bgopacity-input': '%', 'msg-rotation-input': '°', 'msg-tilt-input': '°' };
 
-  if (e.target.classList.contains('msg-delete-btn')) {
-    if (!confirm('Supprimer ce message ?')) return;
-    await fetch(`/api/admin/messages/${id}`, { method: 'DELETE' });
+document.getElementById('msg-boards-list')?.addEventListener('input', (e) => {
+  const boardCls = [...e.target.classList].find((c) => c in BOARD_SLIDER_SUFFIX);
+  if (boardCls) {
+    e.target.nextElementSibling.textContent = `${e.target.value}${BOARD_SLIDER_SUFFIX[boardCls]}`;
+    updatePreviewMarker();
+    return;
+  }
+  const msgCls = [...e.target.classList].find((c) => c in MSG_SLIDER_SUFFIX);
+  if (msgCls) e.target.nextElementSibling.textContent = `${e.target.value}${MSG_SLIDER_SUFFIX[msgCls]}`;
+});
+
+document.getElementById('msg-boards-list')?.addEventListener('click', async (e) => {
+  const boardCard = e.target.closest('.board-card');
+  const itemCard = e.target.closest('.cc-card[data-id]');
+  const boardId = boardCard?.dataset.boardId;
+
+  if (e.target.classList.contains('board-delete-btn')) {
+    if (!confirm('Supprimer cette zone et tous ses messages ?')) return;
+    await fetch(`/api/admin/message-boards/${boardId}`, { method: 'DELETE' });
     await loadSettings();
-  } else if (e.target.classList.contains('msg-image-remove-btn')) {
-    await fetch(`/api/admin/messages/${id}/image`, { method: 'DELETE' });
+  } else if (e.target.classList.contains('board-add-message-btn')) {
+    const input = boardCard.querySelector('.board-new-text-input');
+    const statusEl = boardCard.querySelector('.board-create-status');
+    const text = input.value.trim();
+    if (!text) { input.focus(); return; }
+    statusEl.hidden = false;
+    statusEl.textContent = 'Ajout...';
+    try {
+      const res = await fetch(`/api/admin/message-boards/${boardId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'échec');
+      await loadSettings();
+    } catch (err) {
+      statusEl.textContent = `Échec : ${err.message}`;
+    }
+  } else if (itemCard && e.target.classList.contains('msg-delete-btn')) {
+    if (!confirm('Supprimer ce message ?')) return;
+    await fetch(`/api/admin/message-boards/${boardId}/items/${itemCard.dataset.id}`, { method: 'DELETE' });
+    await loadSettings();
+  } else if (itemCard && e.target.classList.contains('msg-image-remove-btn')) {
+    await fetch(`/api/admin/message-boards/${boardId}/items/${itemCard.dataset.id}/image`, { method: 'DELETE' });
     await loadSettings();
   }
 });
 
-const MSG_SLIDER_SUFFIX = { 'msg-fontsize-input': 'px', 'msg-bgopacity-input': '%', 'msg-rotation-input': '°', 'msg-tilt-input': '°' };
-document.getElementById('msg-list')?.addEventListener('input', (e) => {
-  const cls = [...e.target.classList].find((c) => c in MSG_SLIDER_SUFFIX);
-  if (cls) e.target.nextElementSibling.textContent = `${e.target.value}${MSG_SLIDER_SUFFIX[cls]}`;
-});
+document.getElementById('msg-boards-list')?.addEventListener('change', async (e) => {
+  const boardCard = e.target.closest('.board-card');
+  const itemCard = e.target.closest('.cc-card[data-id]');
+  if (!boardCard) return;
+  const boardId = boardCard.dataset.boardId;
 
-document.getElementById('msg-list')?.addEventListener('change', async (e) => {
-  const card = e.target.closest('.cc-card');
-  if (!card) return;
-  const id = card.dataset.id;
+  // Réglages de la zone elle-même (pas d'un message en particulier)
+  if (!itemCard) {
+    if (e.target.classList.contains('board-label-input')) {
+      const label = e.target.value.trim();
+      if (!label) { e.target.focus(); return; }
+      await patchBoard(boardId, { label });
+    } else if (e.target.classList.contains('board-enabled-cb')) {
+      await patchBoard(boardId, { enabled: e.target.checked });
+    } else if (e.target.classList.contains('board-style-select')) {
+      await patchBoard(boardId, { style: e.target.value });
+    } else if (e.target.classList.contains('board-displaymode-select')) {
+      await patchBoard(boardId, { displayMode: e.target.value });
+    } else if (e.target.classList.contains('board-rotationmode-select')) {
+      await patchBoard(boardId, { rotationMode: e.target.value });
+    } else if (e.target.classList.contains('board-interval-input')) {
+      await patchBoard(boardId, { intervalSeconds: Number(e.target.value) });
+    } else if (e.target.classList.contains('board-duration-input')) {
+      await patchBoard(boardId, { showDurationSeconds: Number(e.target.value) });
+    } else if (e.target.classList.contains('board-speed-input')) {
+      await patchBoard(boardId, { speedSeconds: Number(e.target.value) });
+    } else if (e.target.classList.contains('board-posx-input')) {
+      await patchBoard(boardId, { position: { x: Number(e.target.value) } });
+    } else if (e.target.classList.contains('board-posy-input')) {
+      await patchBoard(boardId, { position: { y: Number(e.target.value) } });
+    } else if (e.target.classList.contains('board-width-input')) {
+      await patchBoard(boardId, { position: { width: Number(e.target.value) } });
+    } else if (e.target.classList.contains('board-height-input')) {
+      await patchBoard(boardId, { position: { height: Number(e.target.value) } });
+    }
+    return;
+  }
 
+  // Réglages d'un message précis dans la zone
+  const itemId = itemCard.dataset.id;
   if (e.target.classList.contains('msg-enabled-cb')) {
-    await patchMessage(id, { enabled: e.target.checked });
+    await patchMessage(boardId, itemId, { enabled: e.target.checked });
   } else if (e.target.classList.contains('msg-text-input')) {
     const text = e.target.value.trim();
     if (!text) { e.target.focus(); return; }
-    await patchMessage(id, { text });
+    await patchMessage(boardId, itemId, { text });
   } else if (e.target.classList.contains('msg-textcolor-input')) {
-    await patchMessage(id, { textColor: e.target.value });
+    await patchMessage(boardId, itemId, { textColor: e.target.value });
   } else if (e.target.classList.contains('msg-fontfamily-select')) {
-    await patchMessage(id, { fontFamily: e.target.value });
+    await patchMessage(boardId, itemId, { fontFamily: e.target.value });
   } else if (e.target.classList.contains('msg-fontsize-input')) {
-    e.target.nextElementSibling.textContent = `${e.target.value}px`;
-    await patchMessage(id, { fontSize: Number(e.target.value) });
+    await patchMessage(boardId, itemId, { fontSize: Number(e.target.value) });
   } else if (e.target.classList.contains('msg-bgcolor-input')) {
-    await patchMessage(id, { bgColor: e.target.value });
+    await patchMessage(boardId, itemId, { bgColor: e.target.value });
   } else if (e.target.classList.contains('msg-bgopacity-input')) {
-    e.target.nextElementSibling.textContent = `${e.target.value}%`;
-    await patchMessage(id, { bgOpacity: Number(e.target.value) });
+    await patchMessage(boardId, itemId, { bgOpacity: Number(e.target.value) });
   } else if (e.target.classList.contains('msg-rotation-input')) {
-    e.target.nextElementSibling.textContent = `${e.target.value}°`;
-    await patchMessage(id, { rotation: Number(e.target.value) });
+    await patchMessage(boardId, itemId, { rotation: Number(e.target.value) });
   } else if (e.target.classList.contains('msg-tilt-input')) {
-    e.target.nextElementSibling.textContent = `${e.target.value}°`;
-    await patchMessage(id, { tilt: Number(e.target.value) });
+    await patchMessage(boardId, itemId, { tilt: Number(e.target.value) });
   } else if (e.target.classList.contains('msg-image-file')) {
     const file = e.target.files[0];
     if (!file) return;
-    const statusText = card.querySelector('.cc-status-text');
+    const statusText = itemCard.querySelector('.cc-status-text');
     statusText.textContent = 'Envoi...';
     try {
       const formData = new FormData();
       formData.append('image', file);
-      const res = await fetch(`/api/admin/messages/${id}/image`, { method: 'POST', body: formData });
+      const res = await fetch(`/api/admin/message-boards/${boardId}/items/${itemId}/image`, { method: 'POST', body: formData });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'échec');
       await loadSettings();
     } catch (err) {
@@ -1795,14 +1874,17 @@ function updatePreviewMarker() {
         '#ff5ecb',
       );
     } else if (tool === 'messages') {
-      addPreviewBox(
-        Number(messagesFields.posX.value),
-        Number(messagesFields.posY.value),
-        Number(messagesFields.width.value),
-        Number(messagesFields.height.value),
-        'Messages',
-        '#2ed573',
-      );
+      document.querySelectorAll('#msg-boards-list .board-card').forEach((card) => {
+        const label = card.querySelector('.board-label-input')?.value || 'Zone';
+        addPreviewBox(
+          Number(card.querySelector('.board-posx-input').value),
+          Number(card.querySelector('.board-posy-input').value),
+          Number(card.querySelector('.board-width-input').value),
+          Number(card.querySelector('.board-height-input').value),
+          label,
+          '#2ed573',
+        );
+      });
     } else if (tool === 'followlist') {
       addPreviewBox(
         Number(followListFields.posX.value),
