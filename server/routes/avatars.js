@@ -1,12 +1,11 @@
 const express = require('express');
-const species = require('../species');
 
 // Personnalisation d'avatar (page /customize/) : consultation + choix d'un skin, réservé aux followers.
-function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower }) {
+function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, speciesCatalog }) {
   const router = express.Router();
 
   router.get('/api/species', (req, res) => {
-    res.json(species.getSelectable().map((s) => ({ id: s.id, label: s.label, file: s.file })));
+    res.json(speciesCatalog.getSelectable().map((s) => ({ id: s.id, label: s.label, src: s.src })));
   });
 
   router.get('/api/avatar/:login', publicApiRateLimit, async (req, res) => {
@@ -28,8 +27,8 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower })
     }
 
     const { speciesId, hue } = req.body;
-    const match = species.getById(speciesId);
-    if (!match || match.reserved) return res.status(400).json({ error: 'species invalide' });
+    const match = speciesCatalog.getById(speciesId);
+    if (!match || match.reserved || !match.enabled) return res.status(400).json({ error: 'species invalide' });
 
     const hueValue = Number.isFinite(hue) ? ((hue % 360) + 360) % 360 : 0;
     const skin = store.setAvatar(login, { species: speciesId, hue: hueValue });

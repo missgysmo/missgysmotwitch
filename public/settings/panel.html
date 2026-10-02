@@ -31,6 +31,7 @@
           <button type="button" class="nav-tab-btn" data-tab="presence"><span class="nav-icon">⏳</span>Présence</button>
           <button type="button" class="nav-tab-btn" data-tab="nametag"><span class="nav-icon">🏷️</span>Pseudo</button>
           <button type="button" class="nav-tab-btn" data-tab="owner"><span class="nav-icon">👑</span>Mon avatar</button>
+          <button type="button" class="nav-tab-btn" data-tab="catalog"><span class="nav-icon">🗂️</span>Catalogue d'avatars</button>
           <button type="button" class="nav-tab-btn" data-tab="test"><span class="nav-icon">🧪</span>Test avatars</button>
         </div>
         <div class="nav-subtabs" data-cat-group="alerts" hidden>
@@ -770,6 +771,21 @@
           </div>
         </div>
         <p class="hint">Ces infos sont sauvegardées et survivent aux redémarrages du serveur : rien ne s'affiche que si aucun événement du type concerné n'est encore jamais survenu.</p>
+      </fieldset>
+
+      <fieldset data-nav-panel="catalog" hidden>
+        <legend>Catalogue d'avatars</legend>
+        <p class="hint">Ajoute de nouveaux avatars (image + nom) et active/désactive ceux que les followers peuvent choisir. "Mon avatar" (réservé) n'apparaît pas ici. Désactiver un avatar ne supprime pas les choix déjà faits par les viewers qui l'utilisent déjà — ça retire juste l'option pour un nouveau choix.</p>
+
+        <div class="cc-card" style="margin-bottom: 16px;">
+          <h3>Ajouter un avatar</h3>
+          <label>Nom <input type="text" id="species-new-label" maxlength="40" placeholder="Ex: Dragon" /></label>
+          <label>Image <input type="file" id="species-new-file" accept="image/*" /></label>
+          <button type="button" id="species-create-btn">Ajouter</button>
+          <p id="species-create-status" class="hint"></p>
+        </div>
+
+        <div id="species-catalog-list" class="cc-list"></div>
       </fieldset>
 
       <fieldset data-nav-panel="test" hidden>

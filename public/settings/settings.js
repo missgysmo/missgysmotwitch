@@ -1213,6 +1213,90 @@ form.addEventListener('submit', (e) => {
   saveSettings();
 });
 
+// --- Catalogue d'avatars (ajout/activation, routes dédiées — pas settings.json) ---
+async function loadSpeciesCatalog() {
+  const res = await fetch('/api/admin/species');
+  const list = await res.json();
+  renderSpeciesCatalog(list.filter((s) => !s.reserved));
+}
+
+function renderSpeciesCatalog(list) {
+  const listEl = document.getElementById('species-catalog-list');
+  if (!listEl) return;
+  if (!list.length) {
+    listEl.innerHTML = '<p class="hint">Aucun avatar.</p>';
+    return;
+  }
+  listEl.innerHTML = list.map((s) => `
+    <div class="cc-card" data-id="${s.id}">
+      <div class="cc-card-head">
+        <img src="${s.src}" alt="" style="width:40px;height:40px;object-fit:contain;" />
+        <span class="cc-card-title">${escapeHtmlPanel(s.label)}</span>
+        <span class="cc-badge ${s.custom ? '' : 'cc-badge-owner'}">${s.custom ? '🆕 Personnalisé' : '📦 Natif'}</span>
+        <div class="cc-card-actions">
+          ${s.custom ? '<button type="button" class="species-delete-btn">Supprimer</button>' : ''}
+        </div>
+      </div>
+      <div class="cc-card-body">
+        <label><input type="checkbox" class="species-enabled" ${s.enabled ? 'checked' : ''} /> Sélectionnable par les followers</label>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('species-create-btn')?.addEventListener('click', async () => {
+  const statusEl = document.getElementById('species-create-status');
+  const labelEl = document.getElementById('species-new-label');
+  const fileEl = document.getElementById('species-new-file');
+  const label = labelEl.value.trim();
+  const file = fileEl.files[0];
+  if (!label || !file) { statusEl.textContent = 'Nom et image requis.'; return; }
+
+  statusEl.textContent = 'Envoi...';
+  try {
+    const formData = new FormData();
+    formData.append('label', label);
+    formData.append('sprite', file);
+    const res = await fetch('/api/admin/species', { method: 'POST', body: formData });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = `"${body.label}" ajouté !`;
+    labelEl.value = '';
+    fileEl.value = '';
+    await loadSpeciesCatalog();
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  }
+});
+
+document.getElementById('species-catalog-list')?.addEventListener('click', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.classList.contains('species-delete-btn')) {
+    if (!confirm('Supprimer cet avatar ? Les viewers qui l\'utilisent déjà garderont leur choix affiché, mais ça ne sera plus modifiable vers ce même avatar.')) return;
+    await fetch(`/api/admin/species/${id}`, { method: 'DELETE' });
+    await loadSpeciesCatalog();
+  }
+});
+
+document.getElementById('species-catalog-list')?.addEventListener('change', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.classList.contains('species-enabled')) {
+    await fetch(`/api/admin/species/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: e.target.checked }),
+    });
+  }
+});
+
+loadSpeciesCatalog();
+
 // --- Commandes de tchat personnalisées (soundboard) ---
 // Mutées via leurs propres routes dédiées (jamais via le formulaire de réglages classique),
 // donc chaque action ci-dessous recharge juste les réglages plutôt que d'appeler saveSettings().

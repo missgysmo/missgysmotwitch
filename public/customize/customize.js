@@ -23,7 +23,7 @@ async function loadSpecies() {
     const opt = document.createElement('div');
     opt.className = 'species-option';
     opt.dataset.id = s.id;
-    opt.innerHTML = `<img src="/overlay/sprites/${s.file}" alt="${s.label}"><span>${s.label}</span>`;
+    opt.innerHTML = `<img src="${s.src}" alt="${s.label}"><span>${s.label}</span>`;
     opt.addEventListener('click', () => selectSpecies(s.id));
     speciesGrid.appendChild(opt);
   });
@@ -42,7 +42,7 @@ function currentSpecies() {
 
 function updatePreview() {
   const species = currentSpecies();
-  if (species) previewImg.src = `/overlay/sprites/${species.file}`;
+  if (species) previewImg.src = species.src;
   previewImg.style.filter = `hue-rotate(${hueInput.value}deg)`;
   previewName.textContent = loginInput.value.trim() || 'pseudo';
 }

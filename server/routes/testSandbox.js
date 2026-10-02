@@ -1,5 +1,4 @@
 const express = require('express');
-const species = require('../species');
 const { TAMAGOTCHI_REACTIONS } = require('../lib/sanitizeSettings');
 
 // Tout ce qui sert aux boutons "Tester" du dashboard. testAvatars est créé ici et exposé (via
@@ -14,7 +13,7 @@ const EVENT_TYPE_MAP = {
   raid: 'channel.raid',
 };
 
-function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi, store }) {
+function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi, store, speciesCatalog }) {
   const router = express.Router();
   const testAvatars = new Map(); // login -> { species, hue }
 
@@ -75,7 +74,9 @@ function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, 
   });
 
   router.post('/api/admin/test-avatar/:speciesId', requireAdmin, (req, res) => {
-    const match = species.getById(req.params.speciesId);
+    // getById (pas getSelectable) : l'admin doit pouvoir prévisualiser un avatar désactivé
+    // avant de le réactiver, contrairement aux viewers qui ne voient que les activés.
+    const match = speciesCatalog.getById(req.params.speciesId);
     if (!match) return res.status(400).json({ error: 'species invalide' });
     testAvatars.set(`test-${req.params.speciesId}`, { species: req.params.speciesId, hue: 0 });
     broadcastToPreview(follower.buildState(true));

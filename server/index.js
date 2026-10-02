@@ -6,7 +6,7 @@ const path = require('path');
 const { WebSocketServer } = require('ws');
 
 const store = require('./store');
-const species = require('./species');
+const { createSpeciesCatalog } = require('./speciesCatalog');
 const { createChatTracker } = require('./twitchChat');
 
 const logger = require('./lib/logger');
@@ -30,6 +30,7 @@ const { createSpotifyRouter } = require('./routes/spotify');
 const { createTwitchAuthRouter } = require('./routes/twitchAuth');
 const { createFollowListSyncRouter } = require('./routes/followListSync');
 const { createCustomCommandsRouter } = require('./routes/customCommands');
+const { createSpeciesAdminRouter } = require('./routes/speciesAdmin');
 
 const twitchEvents = require('./twitchEvents');
 
@@ -109,9 +110,11 @@ const chatTracker = createChatTracker(CHANNEL, {
 });
 let lastChatSoundAt = 0;
 
+const speciesCatalog = createSpeciesCatalog({ store });
+
 const follower = createFollowerService({
   store,
-  species,
+  species: speciesCatalog,
   twitchEvents,
   CHANNEL,
   CLIENT_ID,
@@ -155,9 +158,15 @@ fs.mkdirSync(MEDIA_DIR, { recursive: true });
 app.use('/media', express.static(MEDIA_DIR, { maxAge: '1y' }));
 app.use(createCustomCommandsRouter({ store, requireAdmin, broadcast, broadcastToPreview, mediaDir: MEDIA_DIR }));
 
+// --- Sprites des avatars personnalisés (upload par l'admin, en plus du catalogue codé en dur) ---
+const AVATAR_SPRITES_DIR = path.join(store.DATA_DIR, 'avatar-sprites');
+fs.mkdirSync(AVATAR_SPRITES_DIR, { recursive: true });
+app.use('/avatar-sprites', express.static(AVATAR_SPRITES_DIR, { maxAge: '1y' }));
+app.use(createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesDir: AVATAR_SPRITES_DIR }));
+
 app.use(createSettingsRouter({ store, requireAdmin, broadcast }));
-app.use(createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower }));
-app.use(createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower }));
+app.use(createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, speciesCatalog }));
+app.use(createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower, speciesCatalog }));
 
 const { router: timersRouter, activeTimers } = createTimersRouter({ store, requireAdmin, broadcast });
 app.use(timersRouter);
@@ -167,7 +176,7 @@ app.use(createViewerNotesRouter({ store, requireAdmin, twitchEvents, CLIENT_ID, 
 app.use(createHealthRouter({ requireAdmin, chatTracker, botHealth, overlayClients, logger }));
 
 const { router: testSandboxRouter, getTestAvatars } = createTestSandboxRouter({
-  requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi, store,
+  requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi, store, speciesCatalog,
 });
 const testSandbox = { getTestAvatars };
 app.use(testSandboxRouter);

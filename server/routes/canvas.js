@@ -1,5 +1,4 @@
 const express = require('express');
-const species = require('../species');
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 const GRAFFITI_COLORS = {
@@ -23,7 +22,7 @@ function resolveGraffitiColor(arg) {
 }
 
 // Graffiti collectif (page /canvas/, réservée aux followers comme les avatars) + statut de suivi public.
-function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower }) {
+function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower, speciesCatalog }) {
   const router = express.Router();
 
   // login (lowercase) -> timestamp du dernier pixel/sticker placé
@@ -77,8 +76,8 @@ function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast
       if (!color) return res.status(400).json({ error: 'couleur invalide' });
       cell = { type: 'pixel', color, login };
     } else if (req.body.type === 'sticker') {
-      const match = species.getById(String(req.body.species || '').toLowerCase());
-      if (!match || match.reserved) return res.status(400).json({ error: 'personnage invalide' });
+      const match = speciesCatalog.getById(String(req.body.species || '').toLowerCase());
+      if (!match || match.reserved || !match.enabled) return res.status(400).json({ error: 'personnage invalide' });
       cell = { type: 'sticker', species: match.id, login };
     } else if (req.body.type === 'erase') {
       const existing = store.getCanvas().cells[`${x},${y}`];

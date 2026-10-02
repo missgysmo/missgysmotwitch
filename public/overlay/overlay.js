@@ -91,6 +91,21 @@ const SPECIES_FILES = {
   witch: 'witch.png',
 };
 
+// Avatars personnalisés ajoutés par l'admin (en plus de SPECIES_FILES ci-dessus, codé en dur) :
+// chargés une fois au démarrage, et utilisés comme repli par spriteSrcFor() ci-dessous.
+const CUSTOM_SPECIES_SRC = {};
+fetch('/api/species').then((r) => r.json()).then((list) => {
+  for (const s of list) {
+    if (s.src && !SPECIES_FILES[s.id]) CUSTOM_SPECIES_SRC[s.id] = s.src;
+  }
+}).catch(() => {});
+
+function spriteSrcFor(species) {
+  if (SPECIES_FILES[species]) return `/overlay/sprites/${SPECIES_FILES[species]}`;
+  if (CUSTOM_SPECIES_SRC[species]) return CUSTOM_SPECIES_SRC[species];
+  return `/overlay/sprites/${SPECIES_FILES.cat}`;
+}
+
 const avatars = new Map(); // login -> { el, moveTimer }
 
 let settings = {
@@ -310,9 +325,8 @@ function removeAvatarEl(entry) {
 function applySkin(el, skin) {
   const img = el.querySelector('.avatar');
   const name = el.querySelector('.avatar-name');
-  const file = SPECIES_FILES[skin.species] || SPECIES_FILES.cat;
-  const src = `/overlay/sprites/${file}`;
-  if (!img.src.endsWith(file)) img.src = src;
+  const src = spriteSrcFor(skin.species);
+  if (!img.src.endsWith(src)) img.src = src;
   el.dataset.species = skin.species;
 
   if (skin.species === 'mon-avatar') {
@@ -366,7 +380,7 @@ const stickerImages = {};
 function getStickerImage(species) {
   if (!stickerImages[species]) {
     const img = new Image();
-    img.src = `/overlay/sprites/${SPECIES_FILES[species] || SPECIES_FILES.cat}`;
+    img.src = spriteSrcFor(species);
     stickerImages[species] = img;
   }
   return stickerImages[species];
@@ -500,7 +514,7 @@ function applyTamagotchiLayout() {
   tamagotchiEl.style.left = `${t.position.x}%`;
   tamagotchiEl.style.top = `${t.position.y}%`;
   tamagotchiEl.style.width = `${t.size}px`;
-  tamagotchiImgEl.src = t.species === 'mascot' ? '/overlay/sprites/mascot.png' : `/overlay/sprites/${SPECIES_FILES[t.species] || SPECIES_FILES.cat}`;
+  tamagotchiImgEl.src = t.species === 'mascot' ? '/overlay/sprites/mascot.png' : spriteSrcFor(t.species);
   tamagotchiEl.classList.toggle('hide-bar', !t.showBar);
   startTamagotchiBehavior();
 }

@@ -11,6 +11,8 @@ const TAMAGOTCHI_PATH = path.join(DATA_DIR, 'tamagotchi.json');
 const VIEWER_NOTES_PATH = path.join(DATA_DIR, 'viewerNotes.json');
 const SPOTIFY_TOKENS_PATH = path.join(DATA_DIR, 'spotifyTokens.json');
 const LAST_EVENTS_PATH = path.join(DATA_DIR, 'lastEvents.json');
+const CUSTOM_SPECIES_PATH = path.join(DATA_DIR, 'customSpecies.json');
+const SPECIES_ENABLED_PATH = path.join(DATA_DIR, 'speciesEnabled.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -259,6 +261,38 @@ function setLastEvent(kind, data, skipIfOlder = false) {
   return lastEvents;
 }
 
+// Avatars personnalisés ajoutés par l'admin (en plus du catalogue codé en dur dans species.js) :
+// {id, label, file} — file pointe vers un sprite uploadé, servi depuis /avatar-sprites.
+function getCustomSpecies() {
+  return readJson(CUSTOM_SPECIES_PATH, []);
+}
+
+function addCustomSpecies(entry) {
+  const list = getCustomSpecies();
+  list.push(entry);
+  writeJson(CUSTOM_SPECIES_PATH, list);
+  return list;
+}
+
+function removeCustomSpecies(id) {
+  const list = getCustomSpecies().filter((s) => s.id !== id);
+  writeJson(CUSTOM_SPECIES_PATH, list);
+  return list;
+}
+
+// Activé/désactivé par avatar (codé en dur ou personnalisé) — absent de la map = activé par défaut,
+// pour que tout le catalogue existant reste sélectionnable sans migration au moment de l'ajout de cette fonctionnalité.
+function getSpeciesEnabled() {
+  return readJson(SPECIES_ENABLED_PATH, {});
+}
+
+function setSpeciesEnabled(id, enabled) {
+  const map = getSpeciesEnabled();
+  map[id] = enabled;
+  writeJson(SPECIES_ENABLED_PATH, map);
+  return map;
+}
+
 // Humeur du mascotte (0-100), persiste entre les redémarrages du serveur
 function getTamagotchiState() {
   return readJson(TAMAGOTCHI_PATH, { mood: 70, updatedAt: Date.now() });
@@ -435,6 +469,11 @@ module.exports = {
   addPerson,
   getLastEvents,
   setLastEvent,
+  getCustomSpecies,
+  addCustomSpecies,
+  removeCustomSpecies,
+  getSpeciesEnabled,
+  setSpeciesEnabled,
   getTamagotchiState,
   setTamagotchiState,
   getViewerNotes,
