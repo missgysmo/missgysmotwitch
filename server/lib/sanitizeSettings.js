@@ -299,8 +299,12 @@ function sanitizeSettings(body, current) {
     },
     ownerNameColor: HEX_COLOR.test(ownerNameColor) ? ownerNameColor : d.ownerNameColor,
     ownerSize: clamp(ownerSize, 24, 200, d.ownerSize),
+    // Union des clés déjà connues et de celles envoyées par le formulaire : sinon un avatar
+    // ajouté après coup (catalogue d'avatars personnalisés) ne peut jamais être enregistré ici,
+    // puisqu'il n'existe dans aucune des deux listes avant son tout premier enregistrement.
     spriteFlip: Object.fromEntries(
-      Object.keys(d.spriteFlip).map((id) => [id, typeof spriteFlip?.[id] === 'boolean' ? spriteFlip[id] : d.spriteFlip[id]])
+      [...new Set([...Object.keys(d.spriteFlip), ...Object.keys(spriteFlip || {})])]
+        .map((id) => [id, typeof spriteFlip?.[id] === 'boolean' ? spriteFlip[id] : (d.spriteFlip[id] ?? false)])
     ),
     timers: {
       intro: sanitizeTimerConfig(timers?.intro, d.timers.intro),

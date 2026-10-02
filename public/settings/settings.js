@@ -1272,7 +1272,7 @@ document.getElementById('species-create-btn')?.addEventListener('click', async (
     statusEl.textContent = `"${body.label}" ajouté !`;
     labelEl.value = '';
     fileEl.value = '';
-    await loadSpeciesCatalog();
+    await Promise.all([loadSpeciesCatalog(), loadTestAvatars()]);
   } catch (err) {
     statusEl.textContent = `Échec : ${err.message}`;
   }
@@ -1286,7 +1286,7 @@ document.getElementById('species-catalog-list')?.addEventListener('click', async
   if (e.target.classList.contains('species-delete-btn')) {
     if (!confirm('Supprimer cet avatar ? Les viewers qui l\'utilisent déjà garderont leur choix affiché, mais ça ne sera plus modifiable vers ce même avatar.')) return;
     await fetch(`/api/admin/species/${id}`, { method: 'DELETE' });
-    await loadSpeciesCatalog();
+    await Promise.all([loadSpeciesCatalog(), loadTestAvatars()]);
   } else if (e.target.classList.contains('species-lock-btn')) {
     const costInput = card.querySelector('.species-cost-input');
     const cost = Number(costInput.value);
@@ -1679,8 +1679,10 @@ document.querySelectorAll('.nav-cat-btn').forEach((btn) => {
 const spriteFlipFields = { 'mon-avatar': document.getElementById('ownerFlip') };
 
 async function loadTestAvatars() {
-  const res = await fetch('/api/species');
-  const list = await res.json();
+  // /api/admin/species (pas /api/species) : la liste de test doit inclure même les avatars
+  // verrouillés par points, pour pouvoir les prévisualiser/régler le flip avant de les proposer.
+  const res = await fetch('/api/admin/species');
+  const list = (await res.json()).filter((s) => !s.reserved);
   const container = document.getElementById('test-avatar-list');
   container.innerHTML = '';
   list.forEach((s) => {
