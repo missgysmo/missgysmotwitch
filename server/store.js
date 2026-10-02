@@ -136,19 +136,15 @@ const DEFAULT_SETTINGS = {
   },
   // Messages personnalisés (bandeau défilant ou panneau) : même principe que customCommands ci-dessous,
   // "items" mutés uniquement via server/routes/messages.js, jamais via le formulaire classique.
+  // Couleur/police/taille/fond/rotation sont réglables PAR message (dans chaque item), pas ici :
+  // ce bloc ne gère que le comportement du conteneur (style, affichage, position).
   messages: {
     enabled: false,
     style: 'ticker', // 'ticker' (bandeau défilant) | 'panel' (un message à la fois, en fondu)
     displayMode: 'always', // 'always' (en permanence) | 'interval' (par intermittence)
     intervalSeconds: 300,
     showDurationSeconds: 15,
-    fontFamily: 'system-ui',
-    fontSize: 18,
-    textColor: '#ffffff',
-    bgColor: '#000000',
-    bgOpacity: 60,
     speedSeconds: 20,
-    rotation: 0,
     position: { x: 10, y: 90, width: 80, height: 8 },
     items: [],
   },

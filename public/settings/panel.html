@@ -501,18 +501,23 @@
         <label>Toutes les (secondes, si intermittent) <input type="number" id="msg-interval" min="10" max="7200" /></label>
         <label>Durée d'affichage (secondes) <input type="number" id="msg-duration" min="3" max="600" /></label>
         <label>Vitesse de défilement (secondes, si bandeau) <input type="number" id="msg-speed" min="3" max="300" /></label>
-        <label>Rotation / inclinaison (degrés) <input type="range" id="msg-rotation" min="-180" max="180" step="1" /><output id="msg-rotation-out"></output></label>
-        <label>Couleur du texte <input type="color" id="msg-textcolor" /></label>
-        <label>Calligraphie <select id="msg-fontfamily" class="lastevent-fontfamily-select"></select></label>
-        <label>Taille du texte <input type="range" id="msg-fontsize" min="8" max="60" step="1" /><output id="msg-fontsize-out"></output></label>
-        <label>Couleur de fond <input type="color" id="msg-bgcolor" /></label>
-        <label>Opacité du fond (%) <input type="range" id="msg-bgopacity" min="0" max="100" step="1" /><output id="msg-bgopacity-out"></output></label>
         <label>Position horizontale <input type="range" id="msg-posx" min="0" max="100" step="1" /><output id="msg-posx-out"></output></label>
         <label>Position verticale <input type="range" id="msg-posy" min="0" max="100" step="1" /><output id="msg-posy-out"></output></label>
         <label>Largeur (bandeau) <input type="range" id="msg-width" min="5" max="100" step="1" /><output id="msg-width-out"></output></label>
         <label>Hauteur (bandeau) <input type="range" id="msg-height" min="5" max="100" step="1" /><output id="msg-height-out"></output></label>
 
         <h3>Messages</h3>
+        <p class="hint">Chaque message a ses propres réglages (couleur, police, taille, fond, rotation).</p>
+        <template id="msg-fontfamily-options">
+              <option value="system-ui">Standard</option>
+              <option value="Bangers">Bangers (BD)</option>
+              <option value="Permanent Marker">Permanent Marker (feutre)</option>
+              <option value="Pacifico">Pacifico (script)</option>
+              <option value="Press Start 2P">Press Start 2P (pixel)</option>
+              <option value="Russo One">Russo One (impact)</option>
+              <option value="Caveat">Caveat (manuscrite)</option>
+              <option value="Creepster">Creepster (horreur)</option>
+        </template>
         <div id="msg-list" class="cc-list"></div>
 
         <h3>Ajouter un message</h3>

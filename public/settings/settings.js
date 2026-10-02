@@ -88,15 +88,6 @@ const messagesFields = {
   interval: document.getElementById('msg-interval'),
   duration: document.getElementById('msg-duration'),
   speed: document.getElementById('msg-speed'),
-  rotation: document.getElementById('msg-rotation'),
-  rotationOut: document.getElementById('msg-rotation-out'),
-  textColor: document.getElementById('msg-textcolor'),
-  fontFamily: document.getElementById('msg-fontfamily'),
-  fontSize: document.getElementById('msg-fontsize'),
-  fontSizeOut: document.getElementById('msg-fontsize-out'),
-  bgColor: document.getElementById('msg-bgcolor'),
-  bgOpacity: document.getElementById('msg-bgopacity'),
-  bgOpacityOut: document.getElementById('msg-bgopacity-out'),
   posX: document.getElementById('msg-posx'),
   posXOut: document.getElementById('msg-posx-out'),
   posY: document.getElementById('msg-posy'),
@@ -795,13 +786,10 @@ function updateOutputs() {
   activityFeedFields.posYOut.textContent = `${activityFeedFields.posY.value}%`;
   activityFeedFields.widthOut.textContent = `${activityFeedFields.width.value}%`;
   activityFeedFields.heightOut.textContent = `${activityFeedFields.height.value}%`;
-  messagesFields.fontSizeOut.textContent = `${messagesFields.fontSize.value}px`;
-  messagesFields.bgOpacityOut.textContent = `${messagesFields.bgOpacity.value}%`;
   messagesFields.posXOut.textContent = `${messagesFields.posX.value}%`;
   messagesFields.posYOut.textContent = `${messagesFields.posY.value}%`;
   messagesFields.widthOut.textContent = `${messagesFields.width.value}%`;
   messagesFields.heightOut.textContent = `${messagesFields.height.value}%`;
-  messagesFields.rotationOut.textContent = `${messagesFields.rotation.value}°`;
   followListFields.fontSizeOut.textContent = `${followListFields.fontSize.value}px`;
   followListFields.bgOpacityOut.textContent = `${followListFields.bgOpacity.value}%`;
   followListFields.posXOut.textContent = `${followListFields.posX.value}%`;
@@ -879,13 +867,10 @@ activityFeedFields.posX.addEventListener('input', updateOutputs);
 activityFeedFields.posY.addEventListener('input', updateOutputs);
 activityFeedFields.width.addEventListener('input', updateOutputs);
 activityFeedFields.height.addEventListener('input', updateOutputs);
-messagesFields.fontSize.addEventListener('input', updateOutputs);
-messagesFields.bgOpacity.addEventListener('input', updateOutputs);
 messagesFields.posX.addEventListener('input', updateOutputs);
 messagesFields.posY.addEventListener('input', updateOutputs);
 messagesFields.width.addEventListener('input', updateOutputs);
 messagesFields.height.addEventListener('input', updateOutputs);
-messagesFields.rotation.addEventListener('input', updateOutputs);
 followListFields.fontSize.addEventListener('input', updateOutputs);
 followListFields.bgOpacity.addEventListener('input', updateOutputs);
 followListFields.posX.addEventListener('input', updateOutputs);
@@ -1006,12 +991,6 @@ async function loadSettings() {
   messagesFields.interval.value = s.messages.intervalSeconds;
   messagesFields.duration.value = s.messages.showDurationSeconds;
   messagesFields.speed.value = s.messages.speedSeconds;
-  messagesFields.rotation.value = s.messages.rotation;
-  messagesFields.textColor.value = s.messages.textColor;
-  messagesFields.fontFamily.value = s.messages.fontFamily;
-  messagesFields.fontSize.value = s.messages.fontSize;
-  messagesFields.bgColor.value = s.messages.bgColor;
-  messagesFields.bgOpacity.value = s.messages.bgOpacity;
   messagesFields.posX.value = s.messages.position.x;
   messagesFields.posY.value = s.messages.position.y;
   messagesFields.width.value = s.messages.position.width;
@@ -1188,12 +1167,6 @@ async function saveSettings() {
       intervalSeconds: Number(messagesFields.interval.value),
       showDurationSeconds: Number(messagesFields.duration.value),
       speedSeconds: Number(messagesFields.speed.value),
-      rotation: Number(messagesFields.rotation.value),
-      textColor: messagesFields.textColor.value,
-      fontFamily: messagesFields.fontFamily.value,
-      fontSize: Number(messagesFields.fontSize.value),
-      bgColor: messagesFields.bgColor.value,
-      bgOpacity: Number(messagesFields.bgOpacity.value),
       position: {
         x: Number(messagesFields.posX.value),
         y: Number(messagesFields.posY.value),
@@ -1474,8 +1447,29 @@ function renderMessagesList(items) {
         <label class="sound-upload-btn">Choisir une image<input type="file" class="msg-image-file" accept="image/*" hidden /></label>
         ${m.image ? '<button type="button" class="msg-image-remove-btn">Retirer</button>' : ''}
       </div>
+      <div class="cc-card-body">
+        <label>Couleur du texte <input type="color" class="msg-textcolor-input" value="${m.textColor}" /></label>
+        <label>Calligraphie <select class="msg-fontfamily-select"></select></label>
+        <label>Taille <input type="range" class="msg-fontsize-input" min="8" max="60" step="1" value="${m.fontSize}" /><output>${m.fontSize}px</output></label>
+        <label>Couleur de fond <input type="color" class="msg-bgcolor-input" value="${m.bgColor}" /></label>
+        <label>Opacité du fond (%) <input type="range" class="msg-bgopacity-input" min="0" max="100" step="1" value="${m.bgOpacity}" /><output>${m.bgOpacity}%</output></label>
+        <label>Rotation à plat (°) <input type="range" class="msg-rotation-input" min="-180" max="180" step="1" value="${m.rotation}" /><output>${m.rotation}°</output></label>
+        <label>Bascule 3D vers le fond (°) <input type="range" class="msg-tilt-input" min="-90" max="90" step="1" value="${m.tilt}" /><output>${m.tilt}°</output></label>
+      </div>
     </div>
   `).join('');
+  listEl.querySelectorAll('.msg-fontfamily-select').forEach((select, i) => {
+    select.innerHTML = document.getElementById('msg-fontfamily-options').innerHTML;
+    select.value = items[i].fontFamily;
+  });
+}
+
+async function patchMessage(id, body) {
+  await fetch(`/api/admin/messages/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 }
 
 document.getElementById('msg-create-btn')?.addEventListener('click', async () => {
@@ -1516,25 +1510,41 @@ document.getElementById('msg-list')?.addEventListener('click', async (e) => {
   }
 });
 
+const MSG_SLIDER_SUFFIX = { 'msg-fontsize-input': 'px', 'msg-bgopacity-input': '%', 'msg-rotation-input': '°', 'msg-tilt-input': '°' };
+document.getElementById('msg-list')?.addEventListener('input', (e) => {
+  const cls = [...e.target.classList].find((c) => c in MSG_SLIDER_SUFFIX);
+  if (cls) e.target.nextElementSibling.textContent = `${e.target.value}${MSG_SLIDER_SUFFIX[cls]}`;
+});
+
 document.getElementById('msg-list')?.addEventListener('change', async (e) => {
   const card = e.target.closest('.cc-card');
   if (!card) return;
   const id = card.dataset.id;
 
   if (e.target.classList.contains('msg-enabled-cb')) {
-    await fetch(`/api/admin/messages/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enabled: e.target.checked }),
-    });
+    await patchMessage(id, { enabled: e.target.checked });
   } else if (e.target.classList.contains('msg-text-input')) {
     const text = e.target.value.trim();
     if (!text) { e.target.focus(); return; }
-    await fetch(`/api/admin/messages/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    });
+    await patchMessage(id, { text });
+  } else if (e.target.classList.contains('msg-textcolor-input')) {
+    await patchMessage(id, { textColor: e.target.value });
+  } else if (e.target.classList.contains('msg-fontfamily-select')) {
+    await patchMessage(id, { fontFamily: e.target.value });
+  } else if (e.target.classList.contains('msg-fontsize-input')) {
+    e.target.nextElementSibling.textContent = `${e.target.value}px`;
+    await patchMessage(id, { fontSize: Number(e.target.value) });
+  } else if (e.target.classList.contains('msg-bgcolor-input')) {
+    await patchMessage(id, { bgColor: e.target.value });
+  } else if (e.target.classList.contains('msg-bgopacity-input')) {
+    e.target.nextElementSibling.textContent = `${e.target.value}%`;
+    await patchMessage(id, { bgOpacity: Number(e.target.value) });
+  } else if (e.target.classList.contains('msg-rotation-input')) {
+    e.target.nextElementSibling.textContent = `${e.target.value}°`;
+    await patchMessage(id, { rotation: Number(e.target.value) });
+  } else if (e.target.classList.contains('msg-tilt-input')) {
+    e.target.nextElementSibling.textContent = `${e.target.value}°`;
+    await patchMessage(id, { tilt: Number(e.target.value) });
   } else if (e.target.classList.contains('msg-image-file')) {
     const file = e.target.files[0];
     if (!file) return;

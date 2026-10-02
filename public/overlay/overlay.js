@@ -21,6 +21,7 @@ const nowPlayingArtistEl = document.getElementById('now-playing-artist');
 const messagesTickerEl = document.getElementById('messages-ticker');
 const messagesTickerTrackEl = document.getElementById('messages-ticker-track');
 const messagesPanelEl = document.getElementById('messages-panel');
+const messagesPanelInnerEl = document.getElementById('messages-panel-inner');
 const messagesPanelImgEl = document.getElementById('messages-panel-img');
 const messagesPanelTextEl = document.getElementById('messages-panel-text');
 // Messages personnalisés (bandeau défilant ou panneau), configurables : permanent ou par
@@ -184,8 +185,7 @@ let settings = {
   },
   messages: {
     enabled: false, style: 'ticker', displayMode: 'always', intervalSeconds: 300, showDurationSeconds: 15,
-    fontFamily: 'system-ui', fontSize: 18, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 60, speedSeconds: 20,
-    rotation: 0, position: { x: 10, y: 90, width: 80, height: 8 }, items: [],
+    speedSeconds: 20, position: { x: 10, y: 90, width: 80, height: 8 }, items: [],
   },
 };
 
@@ -887,16 +887,32 @@ function applyLastEventsLayout() {
   }
 }
 
+// transform = inclinaison à plat (rotation, rotateZ) + bascule en profondeur (tilt, rotateX,
+// l'effet "vers le fond") ; perspective sur le parent nécessaire pour que rotateX ait un effet 3D visible.
+function messageItemTransform(item) {
+  return `rotateX(${item.tilt || 0}deg) rotate(${item.rotation || 0}deg)`;
+}
+
 function messageItemHtml(item) {
   const img = item.image ? `<img src="/message-media/${item.image}" alt="" />` : '';
-  return `<span class="messages-ticker-item">${img}${escapeHtml(item.text)}</span>`;
+  const rgb = hexToRgb(item.bgColor);
+  const bg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${item.bgOpacity / 100})`;
+  const fontFamily = item.fontFamily && item.fontFamily !== 'system-ui' ? `'${item.fontFamily}', system-ui` : 'inherit';
+  const style = `color:${item.textColor};font-family:${fontFamily};font-size:${item.fontSize}px;background:${bg};transform:${messageItemTransform(item)};`;
+  return `<span class="messages-ticker-item" style="${style}">${img}${escapeHtml(item.text)}</span>`;
 }
 
 function showMessagesPanelItem(item) {
-  messagesPanelEl.style.display = 'flex';
+  messagesPanelEl.style.display = 'block';
   messagesPanelImgEl.hidden = !item.image;
   if (item.image) messagesPanelImgEl.src = `/message-media/${item.image}`;
   messagesPanelTextEl.textContent = item.text;
+  const rgb = hexToRgb(item.bgColor);
+  messagesPanelInnerEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${item.bgOpacity / 100})`;
+  messagesPanelInnerEl.style.color = item.textColor;
+  messagesPanelInnerEl.style.fontFamily = item.fontFamily && item.fontFamily !== 'system-ui' ? `'${item.fontFamily}', system-ui` : '';
+  messagesPanelInnerEl.style.fontSize = `${item.fontSize}px`;
+  messagesPanelInnerEl.style.transform = messageItemTransform(item);
   requestAnimationFrame(() => messagesPanelEl.classList.add('visible'));
 }
 
@@ -905,17 +921,9 @@ function applyMessagesLayout() {
   clearTimeout(messagesTimer);
   messagesTimer = null;
 
-  const rgb = hexToRgb(m.bgColor);
-  const bg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${m.bgOpacity / 100})`;
-  const fontFamily = m.fontFamily && m.fontFamily !== 'system-ui' ? `'${m.fontFamily}', system-ui` : '';
   for (const el of [messagesTickerEl, messagesPanelEl]) {
     el.style.left = `${m.position.x}%`;
     el.style.top = `${m.position.y}%`;
-    el.style.fontSize = `${m.fontSize}px`;
-    el.style.color = m.textColor;
-    el.style.fontFamily = fontFamily;
-    el.style.background = bg;
-    el.style.transform = `rotate(${m.rotation}deg)`;
   }
   messagesTickerEl.style.width = `${m.position.width}%`;
   messagesTickerEl.style.height = `${m.position.height}%`;

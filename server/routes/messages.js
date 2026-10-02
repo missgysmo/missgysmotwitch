@@ -8,11 +8,28 @@ const MAX_MESSAGES = 50;
 const TEXT_MAX_LEN = 300;
 const IMAGE_MAX_BYTES = 4 * 1024 * 1024;
 const SAFE_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+const MESSAGE_FONTS = ['system-ui', 'Bangers', 'Permanent Marker', 'Pacifico', 'Press Start 2P', 'Russo One', 'Caveat', 'Creepster'];
+const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
 
+const MESSAGE_DEFAULTS = {
+  textColor: '#ffffff', fontFamily: 'system-ui', fontSize: 18, bgColor: '#000000', bgOpacity: 60, rotation: 0, tilt: 0,
+};
+
+// Réglages PAR message (couleur/police/taille/fond/rotation/bascule 3D) : chaque message garde
+// les siens, contrairement au conteneur (position/style/affichage) qui reste partagé.
 function sanitizeMessageFields(input, fallback) {
   return {
     text: typeof input?.text === 'string' ? input.text.trim().slice(0, TEXT_MAX_LEN) : fallback.text,
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    fontFamily: MESSAGE_FONTS.includes(input?.fontFamily) ? input.fontFamily : fallback.fontFamily,
+    fontSize: clamp(input?.fontSize, 8, 60, fallback.fontSize),
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    // rotation = inclinaison à plat (rotateZ) ; tilt = bascule en profondeur (rotateX, effet 3D "vers le fond")
+    rotation: clamp(input?.rotation, -180, 180, fallback.rotation),
+    tilt: clamp(input?.tilt, -90, 90, fallback.tilt),
   };
 }
 
@@ -43,7 +60,7 @@ function createMessagesRouter({ store, requireAdmin, broadcast, mediaDir }) {
     const text = typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, TEXT_MAX_LEN) : '';
     if (!text) return res.status(400).json({ error: 'Texte manquant.' });
 
-    const newMessage = { id: crypto.randomBytes(8).toString('hex'), text, enabled: true, image: null };
+    const newMessage = { id: crypto.randomBytes(8).toString('hex'), text, enabled: true, image: null, ...MESSAGE_DEFAULTS };
     settings.messages.items.push(newMessage);
     store.setSettings(settings);
     broadcast({ type: 'settings', settings });

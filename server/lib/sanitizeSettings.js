@@ -199,13 +199,7 @@ function sanitizeMessagesConfig(input, fallback) {
     displayMode: MESSAGE_DISPLAY_MODES.includes(input?.displayMode) ? input.displayMode : fallback.displayMode,
     intervalSeconds: clamp(input?.intervalSeconds, 10, 7200, fallback.intervalSeconds),
     showDurationSeconds: clamp(input?.showDurationSeconds, 3, 600, fallback.showDurationSeconds),
-    fontFamily: EVENT_FONTS.includes(input?.fontFamily) ? input.fontFamily : fallback.fontFamily,
-    fontSize: clamp(input?.fontSize, 8, 60, fallback.fontSize),
-    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
-    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
-    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
     speedSeconds: clamp(input?.speedSeconds, 3, 300, fallback.speedSeconds),
-    rotation: clamp(input?.rotation, -180, 180, fallback.rotation),
     position: {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),
