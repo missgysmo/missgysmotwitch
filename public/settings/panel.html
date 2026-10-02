@@ -52,6 +52,7 @@
           <button type="button" class="nav-tab-btn" data-tab="raidcard"><span class="nav-icon">🎴</span>Fiche raid</button>
           <button type="button" class="nav-tab-btn" data-tab="nowplaying"><span class="nav-icon">🎵</span>Musique en cours</button>
           <button type="button" class="nav-tab-btn" data-tab="customcommands"><span class="nav-icon">🎬</span>Commandes de tchat</button>
+          <button type="button" class="nav-tab-btn" data-tab="messages"><span class="nav-icon">📰</span>Messages</button>
           <button type="button" class="nav-tab-btn" data-tab="health"><span class="nav-icon">🩺</span>Santé du bot</button>
           <button type="button" class="nav-tab-btn" data-tab="obslinks"><span class="nav-icon">🔗</span>Liens OBS</button>
         </div>
@@ -476,6 +477,47 @@
         <label>Cooldown (secondes) <input type="number" id="cc-new-cooldown" min="0" max="300" value="10" /></label>
         <button type="button" id="cc-create-btn">➕ Créer la commande</button>
         <p id="cc-create-status" class="hint" hidden></p>
+      </fieldset>
+
+      <fieldset data-nav-panel="messages" hidden>
+        <legend>Messages personnalisés</legend>
+        <p class="hint">Une liste de messages (texte + image facultative) qui défilent en bandeau ou s'affichent un par un en panneau, en permanence ou par intermittence.</p>
+
+        <label><input type="checkbox" id="msg-enabled" /> Activer le module</label>
+        <label>
+          Style d'affichage
+          <select id="msg-style">
+            <option value="ticker">Bandeau défilant</option>
+            <option value="panel">Panneau (un message à la fois)</option>
+          </select>
+        </label>
+        <label>
+          Affichage
+          <select id="msg-displaymode">
+            <option value="always">En permanence</option>
+            <option value="interval">Par intermittence</option>
+          </select>
+        </label>
+        <label>Toutes les (secondes, si intermittent) <input type="number" id="msg-interval" min="10" max="7200" /></label>
+        <label>Durée d'affichage (secondes) <input type="number" id="msg-duration" min="3" max="600" /></label>
+        <label>Vitesse de défilement (secondes, si bandeau) <input type="number" id="msg-speed" min="3" max="300" /></label>
+        <label>Couleur du texte <input type="color" id="msg-textcolor" /></label>
+        <label>Calligraphie <select id="msg-fontfamily" class="lastevent-fontfamily-select"></select></label>
+        <label>Taille du texte <input type="range" id="msg-fontsize" min="8" max="60" step="1" /><output id="msg-fontsize-out"></output></label>
+        <label>Couleur de fond <input type="color" id="msg-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="msg-bgopacity" min="0" max="100" step="1" /><output id="msg-bgopacity-out"></output></label>
+        <label>Position horizontale <input type="range" id="msg-posx" min="0" max="100" step="1" /><output id="msg-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="msg-posy" min="0" max="100" step="1" /><output id="msg-posy-out"></output></label>
+        <label>Largeur (bandeau) <input type="range" id="msg-width" min="5" max="100" step="1" /><output id="msg-width-out"></output></label>
+        <label>Hauteur (bandeau) <input type="range" id="msg-height" min="5" max="100" step="1" /><output id="msg-height-out"></output></label>
+
+        <h3>Messages</h3>
+        <div id="msg-list" class="cc-list"></div>
+
+        <h3>Ajouter un message</h3>
+        <label>Texte <input type="text" id="msg-new-text" maxlength="300" placeholder="Ex : Merci de suivre sur Twitter @missgysmo !" /></label>
+        <button type="button" id="msg-create-btn">➕ Ajouter</button>
+        <p id="msg-create-status" class="hint" hidden></p>
       </fieldset>
 
       <fieldset data-nav-panel="health" hidden>

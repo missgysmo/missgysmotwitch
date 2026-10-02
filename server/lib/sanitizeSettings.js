@@ -187,6 +187,33 @@ function sanitizeNowPlayingConfig(input, fallback) {
   };
 }
 
+const MESSAGE_STYLES = ['ticker', 'panel'];
+const MESSAGE_DISPLAY_MODES = ['always', 'interval'];
+
+// "items" jamais accepté ici (voir plus bas où il est repris de d.messages.items, jamais de
+// l'input) : mutés uniquement via server/routes/messages.js, même principe que customCommands.
+function sanitizeMessagesConfig(input, fallback) {
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    style: MESSAGE_STYLES.includes(input?.style) ? input.style : fallback.style,
+    displayMode: MESSAGE_DISPLAY_MODES.includes(input?.displayMode) ? input.displayMode : fallback.displayMode,
+    intervalSeconds: clamp(input?.intervalSeconds, 10, 7200, fallback.intervalSeconds),
+    showDurationSeconds: clamp(input?.showDurationSeconds, 3, 600, fallback.showDurationSeconds),
+    fontFamily: EVENT_FONTS.includes(input?.fontFamily) ? input.fontFamily : fallback.fontFamily,
+    fontSize: clamp(input?.fontSize, 8, 60, fallback.fontSize),
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    speedSeconds: clamp(input?.speedSeconds, 3, 300, fallback.speedSeconds),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
+      height: clamp(input?.position?.height, 5, 100, fallback.position.height),
+    },
+  };
+}
+
 function sanitizeCustomCommandsPlayerConfig(input, fallback) {
   return {
     position: {
@@ -260,7 +287,7 @@ function sanitizeSettings(body, current) {
     avatarSize, zone, moveIntervalMs, moveVarianceMs, transitionSeconds,
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect,
     nameTag, events, lastEvents, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
-    activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer,
+    activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer, messages,
   } = body;
   const d = current;
 
@@ -324,6 +351,9 @@ function sanitizeSettings(body, current) {
     // Jamais touché ici : customCommands ne se modifie que via ses propres routes (créer/éditer/
     // supprimer/uploader un média), pour ne jamais risquer de l'écraser via le formulaire général.
     customCommands: d.customCommands,
+    // Même principe pour messages.items (voir server/routes/messages.js) — le reste du bloc
+    // (style/affichage/police/position) passe lui par le formulaire classique comme d'habitude.
+    messages: { ...sanitizeMessagesConfig(messages, d.messages), items: d.messages.items },
   };
 
   return settings;

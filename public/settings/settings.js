@@ -81,6 +81,30 @@ const activityFeedFields = {
   heightOut: document.getElementById('activity-height-out'),
 };
 
+const messagesFields = {
+  enabled: document.getElementById('msg-enabled'),
+  style: document.getElementById('msg-style'),
+  displayMode: document.getElementById('msg-displaymode'),
+  interval: document.getElementById('msg-interval'),
+  duration: document.getElementById('msg-duration'),
+  speed: document.getElementById('msg-speed'),
+  textColor: document.getElementById('msg-textcolor'),
+  fontFamily: document.getElementById('msg-fontfamily'),
+  fontSize: document.getElementById('msg-fontsize'),
+  fontSizeOut: document.getElementById('msg-fontsize-out'),
+  bgColor: document.getElementById('msg-bgcolor'),
+  bgOpacity: document.getElementById('msg-bgopacity'),
+  bgOpacityOut: document.getElementById('msg-bgopacity-out'),
+  posX: document.getElementById('msg-posx'),
+  posXOut: document.getElementById('msg-posx-out'),
+  posY: document.getElementById('msg-posy'),
+  posYOut: document.getElementById('msg-posy-out'),
+  width: document.getElementById('msg-width'),
+  widthOut: document.getElementById('msg-width-out'),
+  height: document.getElementById('msg-height'),
+  heightOut: document.getElementById('msg-height-out'),
+};
+
 const followListFields = {
   enabled: document.getElementById('followlist-enabled'),
   mode: document.getElementById('followlist-mode'),
@@ -525,6 +549,7 @@ const OBS_MODULES = [
   { id: 'nowplaying', label: '🎵 Musique en cours' },
   { id: 'customcommands', label: '🎬 Commandes de tchat (vidéo)' },
   { id: 'lastevents', label: '📌 Derniers événements' },
+  { id: 'messages', label: '📰 Messages personnalisés' },
 ];
 
 function initObsLinkGenerator() {
@@ -768,6 +793,12 @@ function updateOutputs() {
   activityFeedFields.posYOut.textContent = `${activityFeedFields.posY.value}%`;
   activityFeedFields.widthOut.textContent = `${activityFeedFields.width.value}%`;
   activityFeedFields.heightOut.textContent = `${activityFeedFields.height.value}%`;
+  messagesFields.fontSizeOut.textContent = `${messagesFields.fontSize.value}px`;
+  messagesFields.bgOpacityOut.textContent = `${messagesFields.bgOpacity.value}%`;
+  messagesFields.posXOut.textContent = `${messagesFields.posX.value}%`;
+  messagesFields.posYOut.textContent = `${messagesFields.posY.value}%`;
+  messagesFields.widthOut.textContent = `${messagesFields.width.value}%`;
+  messagesFields.heightOut.textContent = `${messagesFields.height.value}%`;
   followListFields.fontSizeOut.textContent = `${followListFields.fontSize.value}px`;
   followListFields.bgOpacityOut.textContent = `${followListFields.bgOpacity.value}%`;
   followListFields.posXOut.textContent = `${followListFields.posX.value}%`;
@@ -845,6 +876,12 @@ activityFeedFields.posX.addEventListener('input', updateOutputs);
 activityFeedFields.posY.addEventListener('input', updateOutputs);
 activityFeedFields.width.addEventListener('input', updateOutputs);
 activityFeedFields.height.addEventListener('input', updateOutputs);
+messagesFields.fontSize.addEventListener('input', updateOutputs);
+messagesFields.bgOpacity.addEventListener('input', updateOutputs);
+messagesFields.posX.addEventListener('input', updateOutputs);
+messagesFields.posY.addEventListener('input', updateOutputs);
+messagesFields.width.addEventListener('input', updateOutputs);
+messagesFields.height.addEventListener('input', updateOutputs);
 followListFields.fontSize.addEventListener('input', updateOutputs);
 followListFields.bgOpacity.addEventListener('input', updateOutputs);
 followListFields.posX.addEventListener('input', updateOutputs);
@@ -959,6 +996,22 @@ async function loadSettings() {
   activityFeedFields.posY.value = s.activityFeed.position.y;
   activityFeedFields.width.value = s.activityFeed.position.width;
   activityFeedFields.height.value = s.activityFeed.position.height;
+  messagesFields.enabled.checked = s.messages.enabled;
+  messagesFields.style.value = s.messages.style;
+  messagesFields.displayMode.value = s.messages.displayMode;
+  messagesFields.interval.value = s.messages.intervalSeconds;
+  messagesFields.duration.value = s.messages.showDurationSeconds;
+  messagesFields.speed.value = s.messages.speedSeconds;
+  messagesFields.textColor.value = s.messages.textColor;
+  messagesFields.fontFamily.value = s.messages.fontFamily;
+  messagesFields.fontSize.value = s.messages.fontSize;
+  messagesFields.bgColor.value = s.messages.bgColor;
+  messagesFields.bgOpacity.value = s.messages.bgOpacity;
+  messagesFields.posX.value = s.messages.position.x;
+  messagesFields.posY.value = s.messages.position.y;
+  messagesFields.width.value = s.messages.position.width;
+  messagesFields.height.value = s.messages.position.height;
+  renderMessagesList(s.messages.items);
   followListFields.enabled.checked = s.followList.enabled;
   followListFields.mode.value = s.followList.mode;
   followListFields.speed.value = s.followList.speedSeconds;
@@ -1121,6 +1174,25 @@ async function saveSettings() {
         y: Number(activityFeedFields.posY.value),
         width: Number(activityFeedFields.width.value),
         height: Number(activityFeedFields.height.value),
+      },
+    },
+    messages: {
+      enabled: messagesFields.enabled.checked,
+      style: messagesFields.style.value,
+      displayMode: messagesFields.displayMode.value,
+      intervalSeconds: Number(messagesFields.interval.value),
+      showDurationSeconds: Number(messagesFields.duration.value),
+      speedSeconds: Number(messagesFields.speed.value),
+      textColor: messagesFields.textColor.value,
+      fontFamily: messagesFields.fontFamily.value,
+      fontSize: Number(messagesFields.fontSize.value),
+      bgColor: messagesFields.bgColor.value,
+      bgOpacity: Number(messagesFields.bgOpacity.value),
+      position: {
+        x: Number(messagesFields.posX.value),
+        y: Number(messagesFields.posY.value),
+        width: Number(messagesFields.width.value),
+        height: Number(messagesFields.height.value),
       },
     },
     followList: {
@@ -1369,6 +1441,103 @@ document.getElementById('species-catalog-list')?.addEventListener('change', asyn
 
 loadSpeciesCatalog();
 
+// --- Messages personnalisés (bandeau/panneau) ---
+// Mêmes principes que customCommands plus bas : items mutés via leurs propres routes,
+// jamais via le formulaire de réglages classique.
+function renderMessagesList(items) {
+  const listEl = document.getElementById('msg-list');
+  if (!listEl) return;
+  if (!items.length) {
+    listEl.innerHTML = '<p class="hint">Aucun message pour le moment — ajoutes-en un ci-dessous.</p>';
+    return;
+  }
+  listEl.innerHTML = items.map((m) => `
+    <div class="cc-card" data-id="${m.id}">
+      <div class="cc-card-head">
+        ${m.image ? `<img src="/message-media/${m.image}" alt="" style="width:40px;height:40px;object-fit:contain;" />` : ''}
+        <span class="cc-card-title">${escapeHtmlPanel(m.text)}</span>
+        <div class="cc-card-actions">
+          <button type="button" class="msg-delete-btn">Supprimer</button>
+        </div>
+      </div>
+      <div class="cc-card-body">
+        <label><input type="checkbox" class="msg-enabled-cb" ${m.enabled ? 'checked' : ''} /> Activé</label>
+      </div>
+      <div class="cc-card-media-row">
+        <span class="cc-status-text">${m.image ? 'Image ajoutée ✅' : 'Aucune image'}</span>
+        <label class="sound-upload-btn">Choisir une image<input type="file" class="msg-image-file" accept="image/*" hidden /></label>
+        ${m.image ? '<button type="button" class="msg-image-remove-btn">Retirer</button>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('msg-create-btn')?.addEventListener('click', async () => {
+  const statusEl = document.getElementById('msg-create-status');
+  const textEl = document.getElementById('msg-new-text');
+  const text = textEl.value.trim();
+  if (!text) { statusEl.hidden = false; statusEl.textContent = 'Texte requis.'; return; }
+  statusEl.hidden = false;
+  statusEl.textContent = 'Création...';
+  try {
+    const res = await fetch('/api/admin/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = 'Message ajouté — tu peux lui ajouter une image ci-dessous.';
+    textEl.value = '';
+    await loadSettings();
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  }
+});
+
+document.getElementById('msg-list')?.addEventListener('click', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.classList.contains('msg-delete-btn')) {
+    if (!confirm('Supprimer ce message ?')) return;
+    await fetch(`/api/admin/messages/${id}`, { method: 'DELETE' });
+    await loadSettings();
+  } else if (e.target.classList.contains('msg-image-remove-btn')) {
+    await fetch(`/api/admin/messages/${id}/image`, { method: 'DELETE' });
+    await loadSettings();
+  }
+});
+
+document.getElementById('msg-list')?.addEventListener('change', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.classList.contains('msg-enabled-cb')) {
+    await fetch(`/api/admin/messages/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: e.target.checked }),
+    });
+  } else if (e.target.classList.contains('msg-image-file')) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const statusText = card.querySelector('.cc-status-text');
+    statusText.textContent = 'Envoi...';
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await fetch(`/api/admin/messages/${id}/image`, { method: 'POST', body: formData });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'échec');
+      await loadSettings();
+    } catch (err) {
+      statusText.textContent = `Échec de l'envoi : ${err.message}`;
+    }
+  }
+});
+
 // --- Commandes de tchat personnalisées (soundboard) ---
 // Mutées via leurs propres routes dédiées (jamais via le formulaire de réglages classique),
 // donc chaque action ci-dessous recharge juste les réglages plutôt que d'appeler saveSettings().
@@ -1600,6 +1769,15 @@ function updatePreviewMarker() {
         Number(activityFeedFields.height.value),
         'Activité récente',
         '#ff5ecb',
+      );
+    } else if (tool === 'messages') {
+      addPreviewBox(
+        Number(messagesFields.posX.value),
+        Number(messagesFields.posY.value),
+        Number(messagesFields.width.value),
+        Number(messagesFields.height.value),
+        'Messages',
+        '#2ed573',
       );
     } else if (tool === 'followlist') {
       addPreviewBox(

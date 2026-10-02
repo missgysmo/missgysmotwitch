@@ -134,6 +134,23 @@ const DEFAULT_SETTINGS = {
     bgOpacity: 60,
     position: { x: 2, y: 88, width: 26, height: 10 },
   },
+  // Messages personnalisés (bandeau défilant ou panneau) : même principe que customCommands ci-dessous,
+  // "items" mutés uniquement via server/routes/messages.js, jamais via le formulaire classique.
+  messages: {
+    enabled: false,
+    style: 'ticker', // 'ticker' (bandeau défilant) | 'panel' (un message à la fois, en fondu)
+    displayMode: 'always', // 'always' (en permanence) | 'interval' (par intermittence)
+    intervalSeconds: 300,
+    showDurationSeconds: 15,
+    fontFamily: 'system-ui',
+    fontSize: 18,
+    textColor: '#ffffff',
+    bgColor: '#000000',
+    bgOpacity: 60,
+    speedSeconds: 20,
+    position: { x: 10, y: 90, width: 80, height: 8 },
+    items: [],
+  },
   // Commandes de chat personnalisées (soundboard) : mutées uniquement via leurs propres routes
   // (server/routes/customCommands.js), jamais via le formulaire de réglages classique — comme ça
   // pas de risque qu'une sauvegarde de réglages sans rapport n'écrase la liste ou les médias uploadés.
@@ -449,6 +466,12 @@ function getSettings() {
       ...DEFAULT_SETTINGS.nowPlaying,
       ...(saved.nowPlaying || {}),
       position: { ...DEFAULT_SETTINGS.nowPlaying.position, ...(saved.nowPlaying?.position || {}) },
+    },
+    messages: {
+      ...DEFAULT_SETTINGS.messages,
+      ...(saved.messages || {}),
+      position: { ...DEFAULT_SETTINGS.messages.position, ...(saved.messages?.position || {}) },
+      items: Array.isArray(saved.messages?.items) ? saved.messages.items : DEFAULT_SETTINGS.messages.items,
     },
     customCommands: Array.isArray(saved.customCommands) ? saved.customCommands : DEFAULT_SETTINGS.customCommands,
     customCommandsPlayer: {

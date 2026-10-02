@@ -30,6 +30,7 @@ const { createSpotifyRouter } = require('./routes/spotify');
 const { createTwitchAuthRouter } = require('./routes/twitchAuth');
 const { createFollowListSyncRouter } = require('./routes/followListSync');
 const { createCustomCommandsRouter } = require('./routes/customCommands');
+const { createMessagesRouter } = require('./routes/messages');
 const { createSpeciesAdminRouter } = require('./routes/speciesAdmin');
 
 const twitchEvents = require('./twitchEvents');
@@ -157,6 +158,12 @@ const MEDIA_DIR = path.join(store.DATA_DIR, 'media');
 fs.mkdirSync(MEDIA_DIR, { recursive: true });
 app.use('/media', express.static(MEDIA_DIR, { maxAge: '1y' }));
 app.use(createCustomCommandsRouter({ store, requireAdmin, broadcast, broadcastToPreview, mediaDir: MEDIA_DIR }));
+
+// --- Images des messages personnalisés (bandeau/panneau), sur le même volume que MEDIA_DIR ---
+const MESSAGES_MEDIA_DIR = path.join(store.DATA_DIR, 'message-media');
+fs.mkdirSync(MESSAGES_MEDIA_DIR, { recursive: true });
+app.use('/message-media', express.static(MESSAGES_MEDIA_DIR, { maxAge: '1y' }));
+app.use(createMessagesRouter({ store, requireAdmin, broadcast, mediaDir: MESSAGES_MEDIA_DIR }));
 
 // --- Sprites des avatars personnalisés (upload par l'admin, en plus du catalogue codé en dur) ---
 const AVATAR_SPRITES_DIR = path.join(store.DATA_DIR, 'avatar-sprites');

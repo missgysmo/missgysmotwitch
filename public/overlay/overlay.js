@@ -18,6 +18,19 @@ const nowPlayingEl = document.getElementById('now-playing');
 const nowPlayingArtEl = document.getElementById('now-playing-art');
 const nowPlayingTitleEl = document.getElementById('now-playing-title');
 const nowPlayingArtistEl = document.getElementById('now-playing-artist');
+const messagesTickerEl = document.getElementById('messages-ticker');
+const messagesTickerTrackEl = document.getElementById('messages-ticker-track');
+const messagesPanelEl = document.getElementById('messages-panel');
+const messagesPanelImgEl = document.getElementById('messages-panel-img');
+const messagesPanelTextEl = document.getElementById('messages-panel-text');
+// Messages personnalisés (bandeau défilant ou panneau), configurables : permanent ou par
+// intermittence (apparaît showDurationSeconds toutes les intervalSeconds). En mode panneau, les
+// messages activés tournent un par un ; en mode bandeau, ils défilent tous ensemble en continu.
+// Déclaré ici (avant le tout premier applySettings() plus bas) pour la même raison que
+// lastEventEls plus haut : sinon applyMessagesLayout() planterait en référençant une variable
+// `let` pas encore initialisée (zone morte temporelle).
+let messagesTimer = null;
+let messagesRotationIndex = 0;
 
 // Affichage permanent "Dernier follow/sub/bits/raid : {user}", indépendant des alertes
 // temporaires (showEvent) : créé une fois ici (avant le tout premier applySettings() plus bas,
@@ -66,6 +79,7 @@ if (!moduleEnabled('nowplaying')) document.body.classList.add('module-nowplaying
 if (!moduleEnabled('customcommands')) document.body.classList.add('module-customcommands-off');
 if (!moduleEnabled('lastevents')) document.body.classList.add('module-lastevents-off');
 if (!moduleEnabled('alerts')) document.body.classList.add('module-alerts-off');
+if (!moduleEnabled('messages')) document.body.classList.add('module-messages-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -168,6 +182,11 @@ let settings = {
   customCommandsPlayer: {
     position: { x: 20, y: 15, width: 60, height: 60 },
   },
+  messages: {
+    enabled: false, style: 'ticker', displayMode: 'always', intervalSeconds: 300, showDurationSeconds: 15,
+    fontFamily: 'system-ui', fontSize: 18, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 60, speedSeconds: 20,
+    position: { x: 10, y: 90, width: 80, height: 8 }, items: [],
+  },
 };
 
 // Résolution de référence sur laquelle les tailles d'avatar (en px) ont été pensées.
@@ -217,6 +236,7 @@ function applySettings(newSettings) {
   applyNowPlayingLayout();
   applyCustomCommandsPlayerLayout();
   applyLastEventsLayout();
+  applyMessagesLayout();
 }
 
 applySettings(settings);
@@ -864,6 +884,82 @@ function applyLastEventsLayout() {
     el.style.color = cfg.color;
     el.style.fontFamily = cfg.fontFamily && cfg.fontFamily !== 'system-ui' ? `'${cfg.fontFamily}', system-ui` : '';
     el.style.fontSize = `${cfg.fontSize}px`;
+  }
+}
+
+function messageItemHtml(item) {
+  const img = item.image ? `<img src="/message-media/${item.image}" alt="" />` : '';
+  return `<span class="messages-ticker-item">${img}${escapeHtml(item.text)}</span>`;
+}
+
+function showMessagesPanelItem(item) {
+  messagesPanelEl.style.display = 'flex';
+  messagesPanelImgEl.hidden = !item.image;
+  if (item.image) messagesPanelImgEl.src = `/message-media/${item.image}`;
+  messagesPanelTextEl.textContent = item.text;
+  requestAnimationFrame(() => messagesPanelEl.classList.add('visible'));
+}
+
+function applyMessagesLayout() {
+  const m = settings.messages;
+  clearTimeout(messagesTimer);
+  messagesTimer = null;
+
+  const rgb = hexToRgb(m.bgColor);
+  const bg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${m.bgOpacity / 100})`;
+  const fontFamily = m.fontFamily && m.fontFamily !== 'system-ui' ? `'${m.fontFamily}', system-ui` : '';
+  for (const el of [messagesTickerEl, messagesPanelEl]) {
+    el.style.left = `${m.position.x}%`;
+    el.style.top = `${m.position.y}%`;
+    el.style.fontSize = `${m.fontSize}px`;
+    el.style.color = m.textColor;
+    el.style.fontFamily = fontFamily;
+    el.style.background = bg;
+  }
+  messagesTickerEl.style.width = `${m.position.width}%`;
+  messagesTickerEl.style.height = `${m.position.height}%`;
+  messagesTickerTrackEl.style.animationDuration = `${m.speedSeconds}s`;
+
+  messagesTickerEl.style.display = 'none';
+  messagesPanelEl.style.display = 'none';
+  messagesPanelEl.classList.remove('visible');
+
+  const items = (m.items || []).filter((i) => i.enabled && i.text);
+  if (!m.enabled || !items.length) return;
+
+  if (m.style === 'ticker') {
+    const html = items.map(messageItemHtml).join('');
+    messagesTickerTrackEl.innerHTML = html + html;
+  }
+  messagesRotationIndex = 0;
+
+  if (m.displayMode === 'always') {
+    if (m.style === 'ticker') {
+      messagesTickerEl.style.display = 'block';
+    } else {
+      showMessagesPanelItem(items[0]);
+      const next = () => {
+        messagesRotationIndex = (messagesRotationIndex + 1) % items.length;
+        showMessagesPanelItem(items[messagesRotationIndex]);
+        messagesTimer = setTimeout(next, m.showDurationSeconds * 1000);
+      };
+      messagesTimer = setTimeout(next, m.showDurationSeconds * 1000);
+    }
+  } else {
+    const cycle = () => {
+      if (m.style === 'ticker') {
+        messagesTickerEl.style.display = 'block';
+      } else {
+        showMessagesPanelItem(items[messagesRotationIndex % items.length]);
+        messagesRotationIndex += 1;
+      }
+      messagesTimer = setTimeout(() => {
+        messagesTickerEl.style.display = 'none';
+        messagesPanelEl.classList.remove('visible');
+        messagesTimer = setTimeout(cycle, m.intervalSeconds * 1000);
+      }, m.showDurationSeconds * 1000);
+    };
+    messagesTimer = setTimeout(cycle, 500);
   }
 }
 
