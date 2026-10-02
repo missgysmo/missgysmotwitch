@@ -1247,6 +1247,7 @@ function renderSpeciesCatalog(list) {
              <button type="button" class="species-unlock-btn">Déverrouiller (redevient gratuit)</button>`
           : `<input type="number" class="species-cost-input" min="1" max="1000000" placeholder="Coût en points" style="width:140px" />
              <button type="button" class="species-lock-btn">Verrouiller contre des points</button>`}
+        <button type="button" class="species-icons-btn" data-src="${s.src}" data-label="${escapeHtmlPanel(s.id)}">Télécharger les icônes pour Twitch</button>
       </div>
     </div>
   `).join('');
@@ -1310,8 +1311,47 @@ document.getElementById('species-catalog-list')?.addEventListener('click', async
     if (!confirm('Déverrouiller cet avatar ? Il redevient gratuit pour tout le monde, et la récompense est retirée de Twitch.')) return;
     await fetch(`/api/admin/species/${id}/reward`, { method: 'DELETE' });
     await loadSpeciesCatalog();
+  } else if (e.target.classList.contains('species-icons-btn')) {
+    await downloadRewardIcons(e.target.dataset.src, e.target.dataset.label);
   }
 });
+
+// Twitch exige 3 tailles exactes pour l'icône d'une récompense (28/56/112px), en PNG carré.
+// Générées ici côté navigateur (centrées, fond transparent) plutôt que de demander à l'utilisatrice
+// de les redimensionner elle-même avec un outil externe — source probable des échecs d'upload.
+const REWARD_ICON_SIZES = [28, 56, 112];
+
+function downloadRewardIcons(src, label) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      for (const size of REWARD_ICON_SIZES) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const scale = Math.min(size / img.width, size / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${label}-${size}x${size}.png`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      }
+      resolve();
+    };
+    img.onerror = () => { alert('Impossible de charger cette image.'); resolve(); };
+    img.src = src;
+  });
+}
 
 document.getElementById('species-catalog-list')?.addEventListener('change', async (e) => {
   const card = e.target.closest('.cc-card');
