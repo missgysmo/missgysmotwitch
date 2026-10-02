@@ -185,7 +185,7 @@ let settings = {
   messages: {
     enabled: false, style: 'ticker', displayMode: 'always', intervalSeconds: 300, showDurationSeconds: 15,
     fontFamily: 'system-ui', fontSize: 18, textColor: '#ffffff', bgColor: '#000000', bgOpacity: 60, speedSeconds: 20,
-    position: { x: 10, y: 90, width: 80, height: 8 }, items: [],
+    rotation: 0, position: { x: 10, y: 90, width: 80, height: 8 }, items: [],
   },
 };
 
@@ -915,6 +915,7 @@ function applyMessagesLayout() {
     el.style.color = m.textColor;
     el.style.fontFamily = fontFamily;
     el.style.background = bg;
+    el.style.transform = `rotate(${m.rotation}deg)`;
   }
   messagesTickerEl.style.width = `${m.position.width}%`;
   messagesTickerEl.style.height = `${m.position.height}%`;

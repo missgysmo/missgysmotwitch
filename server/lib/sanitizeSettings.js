@@ -205,6 +205,7 @@ function sanitizeMessagesConfig(input, fallback) {
     bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
     bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
     speedSeconds: clamp(input?.speedSeconds, 3, 300, fallback.speedSeconds),
+    rotation: clamp(input?.rotation, -180, 180, fallback.rotation),
     position: {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),

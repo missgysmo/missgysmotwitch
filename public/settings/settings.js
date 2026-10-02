@@ -88,6 +88,8 @@ const messagesFields = {
   interval: document.getElementById('msg-interval'),
   duration: document.getElementById('msg-duration'),
   speed: document.getElementById('msg-speed'),
+  rotation: document.getElementById('msg-rotation'),
+  rotationOut: document.getElementById('msg-rotation-out'),
   textColor: document.getElementById('msg-textcolor'),
   fontFamily: document.getElementById('msg-fontfamily'),
   fontSize: document.getElementById('msg-fontsize'),
@@ -799,6 +801,7 @@ function updateOutputs() {
   messagesFields.posYOut.textContent = `${messagesFields.posY.value}%`;
   messagesFields.widthOut.textContent = `${messagesFields.width.value}%`;
   messagesFields.heightOut.textContent = `${messagesFields.height.value}%`;
+  messagesFields.rotationOut.textContent = `${messagesFields.rotation.value}°`;
   followListFields.fontSizeOut.textContent = `${followListFields.fontSize.value}px`;
   followListFields.bgOpacityOut.textContent = `${followListFields.bgOpacity.value}%`;
   followListFields.posXOut.textContent = `${followListFields.posX.value}%`;
@@ -882,6 +885,7 @@ messagesFields.posX.addEventListener('input', updateOutputs);
 messagesFields.posY.addEventListener('input', updateOutputs);
 messagesFields.width.addEventListener('input', updateOutputs);
 messagesFields.height.addEventListener('input', updateOutputs);
+messagesFields.rotation.addEventListener('input', updateOutputs);
 followListFields.fontSize.addEventListener('input', updateOutputs);
 followListFields.bgOpacity.addEventListener('input', updateOutputs);
 followListFields.posX.addEventListener('input', updateOutputs);
@@ -1002,6 +1006,7 @@ async function loadSettings() {
   messagesFields.interval.value = s.messages.intervalSeconds;
   messagesFields.duration.value = s.messages.showDurationSeconds;
   messagesFields.speed.value = s.messages.speedSeconds;
+  messagesFields.rotation.value = s.messages.rotation;
   messagesFields.textColor.value = s.messages.textColor;
   messagesFields.fontFamily.value = s.messages.fontFamily;
   messagesFields.fontSize.value = s.messages.fontSize;
@@ -1183,6 +1188,7 @@ async function saveSettings() {
       intervalSeconds: Number(messagesFields.interval.value),
       showDurationSeconds: Number(messagesFields.duration.value),
       speedSeconds: Number(messagesFields.speed.value),
+      rotation: Number(messagesFields.rotation.value),
       textColor: messagesFields.textColor.value,
       fontFamily: messagesFields.fontFamily.value,
       fontSize: Number(messagesFields.fontSize.value),
@@ -1455,12 +1461,12 @@ function renderMessagesList(items) {
     <div class="cc-card" data-id="${m.id}">
       <div class="cc-card-head">
         ${m.image ? `<img src="/message-media/${m.image}" alt="" style="width:40px;height:40px;object-fit:contain;" />` : ''}
-        <span class="cc-card-title">${escapeHtmlPanel(m.text)}</span>
         <div class="cc-card-actions">
           <button type="button" class="msg-delete-btn">Supprimer</button>
         </div>
       </div>
       <div class="cc-card-body">
+        <label>Texte <input type="text" class="msg-text-input" maxlength="300" value="${escapeHtmlPanel(m.text)}" /></label>
         <label><input type="checkbox" class="msg-enabled-cb" ${m.enabled ? 'checked' : ''} /> Activé</label>
       </div>
       <div class="cc-card-media-row">
@@ -1520,6 +1526,14 @@ document.getElementById('msg-list')?.addEventListener('change', async (e) => {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: e.target.checked }),
+    });
+  } else if (e.target.classList.contains('msg-text-input')) {
+    const text = e.target.value.trim();
+    if (!text) { e.target.focus(); return; }
+    await fetch(`/api/admin/messages/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
     });
   } else if (e.target.classList.contains('msg-image-file')) {
     const file = e.target.files[0];

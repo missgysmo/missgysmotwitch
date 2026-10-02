@@ -148,6 +148,7 @@ const DEFAULT_SETTINGS = {
     bgColor: '#000000',
     bgOpacity: 60,
     speedSeconds: 20,
+    rotation: 0,
     position: { x: 10, y: 90, width: 80, height: 8 },
     items: [],
   },
