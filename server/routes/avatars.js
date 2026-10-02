@@ -5,7 +5,19 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, s
   const router = express.Router();
 
   router.get('/api/species', (req, res) => {
-    res.json(speciesCatalog.getSelectable().map((s) => ({ id: s.id, label: s.label, src: s.src })));
+    const login = typeof req.query.login === 'string' ? req.query.login.trim().toLowerCase() : '';
+    if (!login) {
+      // Pas de viewer précis : uniquement les avatars gratuits (jamais un verrouillé par erreur).
+      return res.json(speciesCatalog.getSelectable().map((s) => ({ id: s.id, label: s.label, src: s.src })));
+    }
+    const unlocked = new Set(store.getUnlockedAvatars(login));
+    const list = speciesCatalog.getAll()
+      .filter((s) => !s.reserved && s.enabled)
+      .map((s) => ({
+        id: s.id, label: s.label, src: s.src,
+        locked: !!s.reward, cost: s.reward?.cost || null, unlocked: !s.reward || unlocked.has(s.id),
+      }));
+    res.json(list);
   });
 
   router.get('/api/avatar/:login', publicApiRateLimit, async (req, res) => {
@@ -27,8 +39,9 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, s
     }
 
     const { speciesId, hue } = req.body;
-    const match = speciesCatalog.getById(speciesId);
-    if (!match || match.reserved || !match.enabled) return res.status(400).json({ error: 'species invalide' });
+    if (!speciesCatalog.isAvailableFor(login, speciesId)) {
+      return res.status(400).json({ error: 'species invalide ou pas encore débloqué' });
+    }
 
     const hueValue = Number.isFinite(hue) ? ((hue % 360) + 360) % 360 : 0;
     const skin = store.setAvatar(login, { species: speciesId, hue: hueValue });

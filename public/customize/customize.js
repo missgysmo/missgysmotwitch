@@ -15,19 +15,40 @@ let selectedSpecies = null;
 let isReserved = false;
 let isNotFollower = false;
 
-async function loadSpecies() {
-  const res = await fetch('/api/species');
-  speciesList = await res.json();
+function renderSpeciesGrid() {
   speciesGrid.innerHTML = '';
   speciesList.forEach((s) => {
+    const locked = s.locked && !s.unlocked;
     const opt = document.createElement('div');
-    opt.className = 'species-option';
+    opt.className = `species-option${locked ? ' locked' : ''}`;
     opt.dataset.id = s.id;
-    opt.innerHTML = `<img src="${s.src}" alt="${s.label}"><span>${s.label}</span>`;
-    opt.addEventListener('click', () => selectSpecies(s.id));
+    opt.innerHTML = `<img src="${s.src}" alt="${s.label}"><span>${s.label}</span>${locked ? `<span class="locked-badge">🔒 ${s.cost} points</span>` : ''}`;
+    if (!locked) opt.addEventListener('click', () => selectSpecies(s.id));
     speciesGrid.appendChild(opt);
   });
-  selectSpecies(speciesList[0]?.id);
+  // si l'avatar sélectionné vient d'être verrouillé (changement côté admin) ou n'existe plus,
+  // retombe sur le premier disponible plutôt que de laisser une sélection invalide.
+  const current = speciesList.find((s) => s.id === selectedSpecies);
+  if (!current || (current.locked && !current.unlocked)) {
+    selectSpecies(speciesList.find((s) => !s.locked || s.unlocked)?.id);
+  } else {
+    selectSpecies(selectedSpecies);
+  }
+}
+
+// Sans pseudo connu, on ne peut pas savoir ce que le viewer a débloqué : uniquement les gratuits.
+async function loadSpecies() {
+  const res = await fetch('/api/species');
+  speciesList = (await res.json()).map((s) => ({ ...s, locked: false, unlocked: true }));
+  renderSpeciesGrid();
+}
+
+// Une fois le pseudo connu, recharge avec les avatars verrouillés (affichés mais non cliquables,
+// avec leur prix) en plus des gratuits, pour que les viewers découvrent ce qui existe.
+async function loadSpeciesFor(login) {
+  const res = await fetch(`/api/species?login=${encodeURIComponent(login)}`);
+  speciesList = await res.json();
+  renderSpeciesGrid();
 }
 
 function selectSpecies(id) {
@@ -71,7 +92,7 @@ async function checkReserved() {
       previewImg.src = '/overlay/sprites/mon-avatar.png';
       previewImg.style.filter = 'none';
     } else if (!isNotFollower) {
-      updatePreview();
+      await loadSpeciesFor(login);
     }
   } catch {
     // pas bloquant si la vérification échoue

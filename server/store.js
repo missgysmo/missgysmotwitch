@@ -13,6 +13,8 @@ const SPOTIFY_TOKENS_PATH = path.join(DATA_DIR, 'spotifyTokens.json');
 const LAST_EVENTS_PATH = path.join(DATA_DIR, 'lastEvents.json');
 const CUSTOM_SPECIES_PATH = path.join(DATA_DIR, 'customSpecies.json');
 const SPECIES_ENABLED_PATH = path.join(DATA_DIR, 'speciesEnabled.json');
+const SPECIES_REWARDS_PATH = path.join(DATA_DIR, 'speciesRewards.json');
+const UNLOCKED_AVATARS_PATH = path.join(DATA_DIR, 'unlockedAvatars.json');
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -293,6 +295,41 @@ function setSpeciesEnabled(id, enabled) {
   return map;
 }
 
+// Avatars verrouillés contre des points de chaîne : id -> { rewardId, cost, title } (rewardId =
+// la récompense Twitch créée via l'API, pour pouvoir la retrouver/supprimer plus tard).
+function getSpeciesRewards() {
+  return readJson(SPECIES_REWARDS_PATH, {});
+}
+
+function setSpeciesReward(id, reward) {
+  const map = getSpeciesRewards();
+  map[id] = reward;
+  writeJson(SPECIES_REWARDS_PATH, map);
+  return map;
+}
+
+function removeSpeciesReward(id) {
+  const map = getSpeciesRewards();
+  delete map[id];
+  writeJson(SPECIES_REWARDS_PATH, map);
+  return map;
+}
+
+// Avatars débloqués par viewer (définitif, une fois échangé contre des points) : login -> [speciesId, ...]
+function getUnlockedAvatars(login) {
+  const map = readJson(UNLOCKED_AVATARS_PATH, {});
+  return map[(login || '').toLowerCase()] || [];
+}
+
+function unlockAvatarForUser(login, speciesId) {
+  const map = readJson(UNLOCKED_AVATARS_PATH, {});
+  const key = (login || '').toLowerCase();
+  const list = map[key] || (map[key] = []);
+  if (!list.includes(speciesId)) list.push(speciesId);
+  writeJson(UNLOCKED_AVATARS_PATH, map);
+  return list;
+}
+
 // Humeur du mascotte (0-100), persiste entre les redémarrages du serveur
 function getTamagotchiState() {
   return readJson(TAMAGOTCHI_PATH, { mood: 70, updatedAt: Date.now() });
@@ -474,6 +511,11 @@ module.exports = {
   removeCustomSpecies,
   getSpeciesEnabled,
   setSpeciesEnabled,
+  getSpeciesRewards,
+  setSpeciesReward,
+  removeSpeciesReward,
+  getUnlockedAvatars,
+  unlockAvatarForUser,
   getTamagotchiState,
   setTamagotchiState,
   getViewerNotes,

@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const store = require('./store');
 
 const EVENTSUB_WS_URL = 'wss://eventsub.wss.twitch.tv/ws';
-const SCOPES = ['moderator:read:followers', 'channel:read:subscriptions', 'bits:read'];
+const SCOPES = ['moderator:read:followers', 'channel:read:subscriptions', 'bits:read', 'channel:manage:redemptions'];
 
 function getAuthUrl({ clientId, redirectUri, state }) {
   const params = new URLSearchParams({
@@ -162,6 +162,47 @@ async function getChannelInfo({ clientId, clientSecret, login }) {
   };
 }
 
+// Crée une récompense à points de chaîne (pour débloquer un avatar saisonnier). Nécessite le
+// scope channel:manage:redemptions. is_enabled: true par défaut, visible immédiatement dans le chat.
+async function createCustomReward({ clientId, clientSecret, broadcasterId, title, cost }) {
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcasterId}`,
+    {
+      method: 'POST',
+      headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      // skip_request_queue: true — déblocage immédiat et automatique, pas besoin que le
+      // streamer valide chaque échange depuis son tableau de bord Twitch.
+      body: JSON.stringify({ title, cost, is_enabled: true, should_redemptions_skip_request_queue: true }),
+    },
+  ));
+  if (!res.ok) throw new Error(`createCustomReward failed: ${res.status} ${await res.text()}`);
+  const body = await res.json();
+  return body.data[0];
+}
+
+async function deleteCustomReward({ clientId, clientSecret, broadcasterId, rewardId }) {
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcasterId}&id=${rewardId}`,
+    { method: 'DELETE', headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
+  // 404 = déjà supprimée côté Twitch (ex: streamer l'a retirée à la main) : pas une vraie erreur ici.
+  if (!res.ok && res.status !== 404) throw new Error(`deleteCustomReward failed: ${res.status} ${await res.text()}`);
+}
+
+// FULFILLED = points définitivement consommés, CANCELED = rembourse automatiquement le viewer.
+async function updateRedemptionStatus({ clientId, clientSecret, broadcasterId, rewardId, redemptionId, status }) {
+  const params = new URLSearchParams({ id: redemptionId, broadcaster_id: broadcasterId, reward_id: rewardId });
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?${params.toString()}`,
+    {
+      method: 'PATCH',
+      headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    },
+  ));
+  if (!res.ok) throw new Error(`updateRedemptionStatus failed: ${res.status} ${await res.text()}`);
+}
+
 async function subscribe({ clientId, clientSecret, type, version, condition, sessionId }) {
   const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
     'https://api.twitch.tv/helix/eventsub/subscriptions',
@@ -212,6 +253,7 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
           await subscribe({ clientId, clientSecret, type: 'channel.subscribe', version: '1', condition, sessionId });
           await subscribe({ clientId, clientSecret, type: 'channel.cheer', version: '1', condition, sessionId });
           await subscribe({ clientId, clientSecret, type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: broadcasterId }, sessionId });
+          await subscribe({ clientId, clientSecret, type: 'channel.channel_points_custom_reward_redemption.add', version: '1', condition, sessionId });
         } else {
           console.log('[twitchEvents] reconnecté à EventSub (abonnements conservés)');
         }
@@ -256,4 +298,7 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
   connectSocket();
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile, getAllFollowers, getAllSubscribers, connectEventSub };
+module.exports = {
+  getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile,
+  getAllFollowers, getAllSubscribers, connectEventSub, createCustomReward, deleteCustomReward, updateRedemptionStatus,
+};

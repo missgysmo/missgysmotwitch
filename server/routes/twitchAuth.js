@@ -81,6 +81,19 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
     }
   }
 
+  // Débloque un avatar saisonnier quand le viewer échange la récompense à points correspondante.
+  // Ignore silencieusement les redemptions d'autres récompenses (le streamer peut en avoir
+  // d'autres, sans rapport avec les avatars) — ne touche que celles qu'on a nous-même créées.
+  function handleRewardRedemption(event) {
+    const rewards = store.getSpeciesRewards();
+    const entry = Object.entries(rewards).find(([, r]) => r.rewardId === event.reward.id);
+    if (!entry) return;
+    const [speciesId] = entry;
+    const login = event.user_login;
+    store.unlockAvatarForUser(login, speciesId);
+    console.log(`[avatars] ${login} a débloqué l'avatar "${speciesId}" contre des points.`);
+  }
+
   async function startEventSub() {
     const tokens = store.getTokens();
     if (!tokens) {
@@ -95,6 +108,10 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
         broadcasterId,
         onEvent: (type, event) => {
           console.log(`[twitchEvents] event reçu: ${type}`);
+          if (type === 'channel.channel_points_custom_reward_redemption.add') {
+            handleRewardRedemption(event);
+            return;
+          }
           broadcast({ type: 'event', eventType: type, event, cast: follower.buildCast() });
           recordActivity(type, event);
         },

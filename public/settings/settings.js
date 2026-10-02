@@ -1233,12 +1233,20 @@ function renderSpeciesCatalog(list) {
         <img src="${s.src}" alt="" style="width:40px;height:40px;object-fit:contain;" />
         <span class="cc-card-title">${escapeHtmlPanel(s.label)}</span>
         <span class="cc-badge ${s.custom ? '' : 'cc-badge-owner'}">${s.custom ? '🆕 Personnalisé' : '📦 Natif'}</span>
+        ${s.reward ? `<span class="cc-badge cc-badge-video">🔒 ${s.reward.cost} points</span>` : ''}
         <div class="cc-card-actions">
           ${s.custom ? '<button type="button" class="species-delete-btn">Supprimer</button>' : ''}
         </div>
       </div>
       <div class="cc-card-body">
         <label><input type="checkbox" class="species-enabled" ${s.enabled ? 'checked' : ''} /> Sélectionnable par les followers</label>
+      </div>
+      <div class="cc-card-body">
+        ${s.reward
+          ? `<span class="cc-status-text">Verrouillé contre ${s.reward.cost} points de chaîne ("${escapeHtmlPanel(s.reward.title)}")</span>
+             <button type="button" class="species-unlock-btn">Déverrouiller (redevient gratuit)</button>`
+          : `<input type="number" class="species-cost-input" min="1" max="1000000" placeholder="Coût en points" style="width:140px" />
+             <button type="button" class="species-lock-btn">Verrouiller contre des points</button>`}
       </div>
     </div>
   `).join('');
@@ -1277,6 +1285,30 @@ document.getElementById('species-catalog-list')?.addEventListener('click', async
   if (e.target.classList.contains('species-delete-btn')) {
     if (!confirm('Supprimer cet avatar ? Les viewers qui l\'utilisent déjà garderont leur choix affiché, mais ça ne sera plus modifiable vers ce même avatar.')) return;
     await fetch(`/api/admin/species/${id}`, { method: 'DELETE' });
+    await loadSpeciesCatalog();
+  } else if (e.target.classList.contains('species-lock-btn')) {
+    const costInput = card.querySelector('.species-cost-input');
+    const cost = Number(costInput.value);
+    if (!Number.isInteger(cost) || cost < 1) { costInput.focus(); return; }
+    e.target.disabled = true;
+    e.target.textContent = 'Création sur Twitch...';
+    try {
+      const res = await fetch(`/api/admin/species/${id}/reward`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cost }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'échec');
+      await loadSpeciesCatalog();
+    } catch (err) {
+      alert(`Échec : ${err.message}`);
+      e.target.disabled = false;
+      e.target.textContent = 'Verrouiller contre des points';
+    }
+  } else if (e.target.classList.contains('species-unlock-btn')) {
+    if (!confirm('Déverrouiller cet avatar ? Il redevient gratuit pour tout le monde, et la récompense est retirée de Twitch.')) return;
+    await fetch(`/api/admin/species/${id}/reward`, { method: 'DELETE' });
     await loadSpeciesCatalog();
   }
 });

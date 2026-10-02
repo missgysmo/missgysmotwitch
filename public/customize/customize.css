@@ -84,6 +84,9 @@ button:hover { background: #7d2ff0; }
 }
 .species-option span { font-size: 0.68rem; text-align: center; }
 .species-option.selected { border-color: #9147ff; background: #2a2035; }
+.species-option.locked { cursor: not-allowed; opacity: 0.55; }
+.species-option.locked img { filter: grayscale(1); }
+.locked-badge { font-size: 0.6rem; color: #ffd633; font-weight: 700; }
 
 #preview-wrap { margin-top: 2rem; text-align: center; }
 #preview {
