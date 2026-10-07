@@ -231,11 +231,17 @@ window.addEventListener('resize', () => applySettings(settings));
 
 function zoneBounds() {
   const { top, right, bottom, left } = settings.zone;
-  const minX = (left / 100) * window.innerWidth;
-  const maxX = window.innerWidth - (right / 100) * window.innerWidth - scaledAvatarSize();
-  const minY = (top / 100) * window.innerHeight;
-  const maxY = window.innerHeight - (bottom / 100) * window.innerHeight - scaledAvatarSize();
-  return { minX, maxX: Math.max(minX, maxX), minY, maxY: Math.max(minY, maxY) };
+  const size = scaledAvatarSize();
+  let minX = (left / 100) * window.innerWidth;
+  let maxX = window.innerWidth - (right / 100) * window.innerWidth - size;
+  let minY = (top / 100) * window.innerHeight;
+  let maxY = window.innerHeight - (bottom / 100) * window.innerHeight - size;
+  // Si les marges configurées + la taille de l'avatar laissent une zone de largeur/hauteur
+  // nulle ou négative, on retombe sur tout l'écran plutôt que de coller tous les avatars
+  // au même coin (minX/minY) sans aucune marge de déplacement.
+  if (maxX <= minX) { minX = 0; maxX = Math.max(0, window.innerWidth - size); }
+  if (maxY <= minY) { minY = 0; maxY = Math.max(0, window.innerHeight - size); }
+  return { minX, maxX, minY, maxY };
 }
 
 function randomPos() {
