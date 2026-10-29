@@ -245,6 +245,29 @@ form {
   margin-bottom: 1.25rem;
 }
 
+.cmdlist-dashboard-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #2a2a35;
+  border-radius: 10px;
+  background: #14141a;
+}
+
+.cmdlist-dashboard-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  font-size: 0.9rem;
+}
+
+.cmdlist-dashboard-word {
+  color: #9147ff;
+  font-weight: bold;
+}
+
 .cc-card {
   padding: 0.8rem 1rem;
   border: 1px solid #2a2a35;

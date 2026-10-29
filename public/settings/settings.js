@@ -1047,6 +1047,7 @@ async function loadSettings() {
   cmdListFields.width.value = s.commandsList.position.width;
   cmdListFields.height.value = s.commandsList.position.height;
   renderCustomCommands(s.customCommands);
+  renderCommandsListPreview(s.customCommands);
   for (const key of SOCIAL_PLATFORM_KEYS) {
     socialLinkFields[key].enabled.checked = s.socialPlatforms[key];
     socialLinkFields[key].link.value = s.socialLinks[key];
@@ -1720,6 +1721,22 @@ function renderCustomCommands(commands) {
   `).join('');
 }
 
+function renderCommandsListPreview(commands) {
+  const el = document.getElementById('cmdlist-dashboard-preview');
+  if (!el) return;
+  const active = (commands || []).filter((c) => c.enabled && c.media);
+  if (!active.length) {
+    el.innerHTML = '<p class="hint">Aucune commande active pour le moment.</p>';
+    return;
+  }
+  el.innerHTML = active.map((c) => `
+    <div class="cmdlist-dashboard-item">
+      <span class="cmdlist-dashboard-word">${escapeHtmlPanel(c.command)}</span>
+      <span class="cmdlist-dashboard-label">${escapeHtmlPanel(c.label)}</span>
+    </div>
+  `).join('');
+}
+
 document.getElementById('cc-create-btn')?.addEventListener('click', async () => {
   const statusEl = document.getElementById('cc-create-status');
   const label = document.getElementById('cc-new-label').value;
@@ -1788,6 +1805,7 @@ document.getElementById('cc-list')?.addEventListener('change', async (e) => {
         followersAllowed: card.querySelector('.cc-followers').checked,
       }),
     });
+    await loadSettings();
   } else if (e.target.classList.contains('cc-cooldown')) {
     await fetch(`/api/admin/custom-commands/${id}`, {
       method: 'PATCH',
