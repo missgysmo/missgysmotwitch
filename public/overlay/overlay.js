@@ -180,6 +180,13 @@ let settings = {
   commandsList: {
     enabled: false,
     title: 'Commandes',
+    textColor: '#ffffff',
+    bgColor: '#140a1e',
+    bgOpacity: 75,
+    fontFamily: 'system-ui',
+    fontSize: 15,
+    orientation: 'vertical',
+    rotation: 0,
     position: { x: 2, y: 20, width: 20, height: 40 },
   },
   messageBoards: [],
@@ -706,6 +713,13 @@ function applyCommandsListLayout() {
   commandsListEl.style.top = `${c.position.y}%`;
   commandsListEl.style.width = `${c.position.width}%`;
   commandsListEl.style.height = `${c.position.height}%`;
+  commandsListEl.style.transform = `rotate(${c.rotation}deg)`;
+  commandsListEl.style.color = c.textColor;
+  commandsListEl.style.fontFamily = c.fontFamily;
+  commandsListEl.style.fontSize = `${c.fontSize}px`;
+  const { r, g, b } = hexToRgb(c.bgColor);
+  commandsListEl.style.background = `rgba(${r}, ${g}, ${b}, ${c.bgOpacity / 100})`;
+  commandsListItemsEl.classList.toggle('commands-list-items-horizontal', c.orientation === 'horizontal');
   commandsListTitleEl.textContent = c.title;
   document.body.classList.toggle('commands-list-disabled', !c.enabled);
   renderCommandsList();

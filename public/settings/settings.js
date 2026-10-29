@@ -261,6 +261,16 @@ const nowPlayingFields = {
 const cmdListFields = {
   enabled: document.getElementById('cmdlist-enabled'),
   title: document.getElementById('cmdlist-title'),
+  textColor: document.getElementById('cmdlist-textcolor'),
+  bgColor: document.getElementById('cmdlist-bgcolor'),
+  bgOpacity: document.getElementById('cmdlist-bgopacity'),
+  bgOpacityOut: document.getElementById('cmdlist-bgopacity-out'),
+  fontFamily: document.getElementById('cmdlist-fontfamily'),
+  fontSize: document.getElementById('cmdlist-fontsize'),
+  fontSizeOut: document.getElementById('cmdlist-fontsize-out'),
+  orientation: document.getElementById('cmdlist-orientation'),
+  rotation: document.getElementById('cmdlist-rotation'),
+  rotationOut: document.getElementById('cmdlist-rotation-out'),
   posX: document.getElementById('cmdlist-posx'),
   posXOut: document.getElementById('cmdlist-posx-out'),
   posY: document.getElementById('cmdlist-posy'),
@@ -811,6 +821,9 @@ function updateOutputs() {
   cmdListFields.posYOut.textContent = `${cmdListFields.posY.value}%`;
   cmdListFields.widthOut.textContent = `${cmdListFields.width.value}%`;
   cmdListFields.heightOut.textContent = `${cmdListFields.height.value}%`;
+  cmdListFields.bgOpacityOut.textContent = `${cmdListFields.bgOpacity.value}%`;
+  cmdListFields.fontSizeOut.textContent = `${cmdListFields.fontSize.value}px`;
+  cmdListFields.rotationOut.textContent = `${cmdListFields.rotation.value}°`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -892,6 +905,9 @@ cmdListFields.posX.addEventListener('input', updateOutputs);
 cmdListFields.posY.addEventListener('input', updateOutputs);
 cmdListFields.width.addEventListener('input', updateOutputs);
 cmdListFields.height.addEventListener('input', updateOutputs);
+cmdListFields.bgOpacity.addEventListener('input', updateOutputs);
+cmdListFields.fontSize.addEventListener('input', updateOutputs);
+cmdListFields.rotation.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -1042,6 +1058,13 @@ async function loadSettings() {
   ccPlayerFields.height.value = s.customCommandsPlayer.position.height;
   cmdListFields.enabled.checked = s.commandsList.enabled;
   cmdListFields.title.value = s.commandsList.title;
+  cmdListFields.textColor.value = s.commandsList.textColor;
+  cmdListFields.bgColor.value = s.commandsList.bgColor;
+  cmdListFields.bgOpacity.value = s.commandsList.bgOpacity;
+  cmdListFields.fontFamily.value = s.commandsList.fontFamily;
+  cmdListFields.fontSize.value = s.commandsList.fontSize;
+  cmdListFields.orientation.value = s.commandsList.orientation;
+  cmdListFields.rotation.value = s.commandsList.rotation;
   cmdListFields.posX.value = s.commandsList.position.x;
   cmdListFields.posY.value = s.commandsList.position.y;
   cmdListFields.width.value = s.commandsList.position.width;
@@ -1225,6 +1248,13 @@ async function saveSettings() {
     commandsList: {
       enabled: cmdListFields.enabled.checked,
       title: cmdListFields.title.value,
+      textColor: cmdListFields.textColor.value,
+      bgColor: cmdListFields.bgColor.value,
+      bgOpacity: Number(cmdListFields.bgOpacity.value),
+      fontFamily: cmdListFields.fontFamily.value,
+      fontSize: Number(cmdListFields.fontSize.value),
+      orientation: cmdListFields.orientation.value,
+      rotation: Number(cmdListFields.rotation.value),
       position: {
         x: Number(cmdListFields.posX.value),
         y: Number(cmdListFields.posY.value),

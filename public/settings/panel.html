@@ -464,6 +464,19 @@
           Afficher le panneau sur le stream
         </label>
         <label>Titre du panneau <input type="text" id="cmdlist-title" maxlength="40" placeholder="Commandes" /></label>
+        <label>Couleur du texte <input type="color" id="cmdlist-textcolor" /></label>
+        <label>Couleur de fond <input type="color" id="cmdlist-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="cmdlist-bgopacity" min="0" max="100" step="1" /><output id="cmdlist-bgopacity-out"></output></label>
+        <label>Calligraphie <select id="cmdlist-fontfamily" class="lastevent-fontfamily-select"></select></label>
+        <label>Taille du texte <input type="range" id="cmdlist-fontsize" min="8" max="40" step="1" /><output id="cmdlist-fontsize-out"></output></label>
+        <label>
+          Orientation
+          <select id="cmdlist-orientation">
+            <option value="vertical">Verticale (liste)</option>
+            <option value="horizontal">Horizontale (en ligne)</option>
+          </select>
+        </label>
+        <label>Rotation (degrés) <input type="range" id="cmdlist-rotation" min="-180" max="180" step="1" /><output id="cmdlist-rotation-out"></output></label>
         <label>Position horizontale <input type="range" id="cmdlist-posx" min="0" max="100" step="1" /><output id="cmdlist-posx-out"></output></label>
         <label>Position verticale <input type="range" id="cmdlist-posy" min="0" max="100" step="1" /><output id="cmdlist-posy-out"></output></label>
         <label>Largeur <input type="range" id="cmdlist-width" min="5" max="100" step="1" /><output id="cmdlist-width-out"></output></label>

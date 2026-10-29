@@ -199,10 +199,19 @@ function sanitizeCustomCommandsPlayerConfig(input, fallback) {
   };
 }
 
+const COMMANDS_LIST_ORIENTATIONS = ['vertical', 'horizontal'];
+
 function sanitizeCommandsListConfig(input, fallback) {
   return {
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
     title: typeof input?.title === 'string' && input.title.trim() ? input.title.trim().slice(0, 40) : fallback.title,
+    textColor: HEX_COLOR.test(input?.textColor) ? input.textColor : fallback.textColor,
+    bgColor: HEX_COLOR.test(input?.bgColor) ? input.bgColor : fallback.bgColor,
+    bgOpacity: clamp(input?.bgOpacity, 0, 100, fallback.bgOpacity),
+    fontFamily: EVENT_FONTS.includes(input?.fontFamily) ? input.fontFamily : fallback.fontFamily,
+    fontSize: clamp(input?.fontSize, 8, 60, fallback.fontSize),
+    orientation: COMMANDS_LIST_ORIENTATIONS.includes(input?.orientation) ? input.orientation : fallback.orientation,
+    rotation: clamp(input?.rotation, -180, 180, fallback.rotation),
     position: {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),

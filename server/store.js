@@ -151,6 +151,13 @@ const DEFAULT_SETTINGS = {
   commandsList: {
     enabled: false,
     title: 'Commandes',
+    textColor: '#ffffff',
+    bgColor: '#140a1e',
+    bgOpacity: 75,
+    fontFamily: 'system-ui',
+    fontSize: 15,
+    orientation: 'vertical',
+    rotation: 0,
     position: { x: 2, y: 20, width: 20, height: 40 },
   },
   tamagotchi: {

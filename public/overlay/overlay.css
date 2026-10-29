@@ -434,18 +434,16 @@ body.module-messages-off .messages-panel { display: none !important; }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: rgba(20, 10, 30, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 12px 14px;
   overflow: hidden auto;
-  font-family: 'Russo One', sans-serif;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  transform-origin: center center;
 }
 
 .commands-list-title {
-  font-size: 18px;
-  color: #fff;
+  font-size: 1.2em;
   text-transform: uppercase;
   letter-spacing: 1px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -453,16 +451,32 @@ body.module-messages-off .messages-panel { display: none !important; }
 }
 
 .commands-list-empty {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
+  opacity: 0.6;
+  font-size: 0.9em;
+}
+
+#commands-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#commands-list-items.commands-list-items-horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
 }
 
 .commands-list-item {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 15px;
-  color: #fff;
+  font-size: 1em;
+}
+
+.commands-list-items-horizontal .commands-list-item {
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
 }
 
 .commands-list-word {
@@ -471,8 +485,12 @@ body.module-messages-off .messages-panel { display: none !important; }
 }
 
 .commands-list-label {
-  color: rgba(255, 255, 255, 0.85);
+  opacity: 0.85;
   text-align: right;
+}
+
+.commands-list-items-horizontal .commands-list-label {
+  text-align: center;
 }
 
 .chat-overlay-name { font-weight: 700; }
