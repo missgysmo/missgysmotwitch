@@ -1,10 +1,41 @@
 const express = require('express');
 const twitchEvents = require('../twitchEvents');
 
+const PEOPLE_KINDS = ['followers', 'subs', 'cheers', 'raids'];
+
 // Reconstitue la liste followers/subs à partir de l'API Twitch (elle ne se remplit sinon
 // qu'au fil des nouveaux follows/subs à venir, en partant d'une liste vide).
 function createFollowListSyncRouter({ store, requireAdmin, broadcast, follower, getRecentActivity, logError, CLIENT_ID, CLIENT_SECRET }) {
   const router = express.Router();
+
+  router.get('/api/admin/people', requireAdmin, (req, res) => {
+    res.json(store.getPeople());
+  });
+
+  // Ajout manuel depuis le dashboard, pour les cas où la synchro Twitch (EventSub ou l'API) ne
+  // marche pas — ex: bits/raids reçus pendant une coupure, ou entrée oubliée par l'historique.
+  router.post('/api/admin/people/manual', requireAdmin, (req, res) => {
+    const { kind, login, displayName, extra } = req.body || {};
+    if (!PEOPLE_KINDS.includes(kind)) return res.status(400).json({ error: 'type invalide' });
+    const cleanLogin = typeof login === 'string' ? login.trim().toLowerCase() : '';
+    if (!cleanLogin) return res.status(400).json({ error: 'pseudo manquant' });
+    const cleanExtra = Number.isFinite(Number(extra)) && extra !== '' ? Number(extra) : undefined;
+
+    store.addPerson(kind, cleanLogin, typeof displayName === 'string' ? displayName.trim() : cleanLogin, undefined, cleanExtra);
+    const people = store.getPeople();
+    broadcast({ type: 'activity', recent: getRecentActivity(), people });
+    res.json({ ok: true, people });
+  });
+
+  router.delete('/api/admin/people/:kind/:login', requireAdmin, (req, res) => {
+    const { kind, login } = req.params;
+    if (!PEOPLE_KINDS.includes(kind)) return res.status(400).json({ error: 'type invalide' });
+
+    store.removePerson(kind, login);
+    const people = store.getPeople();
+    broadcast({ type: 'activity', recent: getRecentActivity(), people });
+    res.json({ ok: true, people });
+  });
 
   router.post('/api/admin/people/resync', requireAdmin, async (req, res) => {
     try {

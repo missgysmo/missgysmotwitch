@@ -269,6 +269,17 @@ function addPerson(kind, login, displayName, since, extra) {
   return people;
 }
 
+// Ajout manuel depuis le dashboard (si la synchro Twitch/EventSub est en panne) ou retrait d'une
+// entrée erronée — mêmes listes que addPerson(), juste déclenchées à la main plutôt que par un event.
+function removePerson(kind, login) {
+  const people = getPeople();
+  const list = people[kind] || [];
+  const lower = (login || '').toLowerCase();
+  people[kind] = list.filter((p) => p.login !== lower);
+  writeJson(PEOPLE_PATH, people);
+  return people;
+}
+
 // Dernier follow/sub/cheer/raid connu (pour l'affichage permanent "Dernier follow : {user}") :
 // contrairement au fil "activité récente" (recentActivity, en mémoire), ça survit aux redémarrages.
 function getLastEvents() {
@@ -533,6 +544,7 @@ module.exports = {
   resetCanvas,
   getPeople,
   addPerson,
+  removePerson,
   getLastEvents,
   setLastEvent,
   getCustomSpecies,

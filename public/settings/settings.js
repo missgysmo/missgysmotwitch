@@ -328,11 +328,86 @@ document.getElementById('followlist-resync-btn')?.addEventListener('click', asyn
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur');
     statusEl.textContent = `Terminé : ${data.followers} follower(s), ${data.subs} sub(s) importés.`;
+    loadPeopleManualList();
   } catch (err) {
     statusEl.textContent = `Échec : ${err.message}`;
   } finally {
     btn.disabled = false;
   }
+});
+
+const PEOPLE_KIND_LABELS = { followers: '💜 Follower', subs: '⭐ Sub', cheers: '💎 Bits', raids: '🚀 Raid' };
+
+function renderPeopleManualList(people) {
+  const el = document.getElementById('people-manual-list');
+  if (!el) return;
+  const rows = [];
+  for (const kind of Object.keys(PEOPLE_KIND_LABELS)) {
+    for (const p of people[kind] || []) {
+      rows.push({ kind, ...p });
+    }
+  }
+  if (!rows.length) {
+    el.innerHTML = '<p class="hint">Aucune entrée.</p>';
+    return;
+  }
+  el.innerHTML = rows.map((p) => `
+    <div class="cc-card" data-kind="${p.kind}" data-login="${escapeHtmlPanel(p.login)}">
+      <div class="cc-card-head">
+        <span class="cc-card-title">${PEOPLE_KIND_LABELS[p.kind]}</span>
+        <span class="cc-card-command">${escapeHtmlPanel(p.displayName)}${p.extra ? ` (${p.extra})` : ''}</span>
+        <div class="cc-card-actions">
+          <button type="button" class="people-manual-remove-btn">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadPeopleManualList() {
+  const res = await fetch('/api/admin/people');
+  if (!res.ok) return;
+  renderPeopleManualList(await res.json());
+}
+
+function updatePeopleManualExtraVisibility() {
+  const kind = document.getElementById('people-manual-kind').value;
+  const needsExtra = kind === 'cheers' || kind === 'raids';
+  document.getElementById('people-manual-extra-label').style.display = needsExtra ? '' : 'none';
+}
+document.getElementById('people-manual-kind')?.addEventListener('change', updatePeopleManualExtraVisibility);
+updatePeopleManualExtraVisibility();
+
+document.getElementById('people-manual-add-btn')?.addEventListener('click', async () => {
+  const statusEl = document.getElementById('people-manual-status');
+  const kind = document.getElementById('people-manual-kind').value;
+  const login = document.getElementById('people-manual-login').value;
+  const extra = document.getElementById('people-manual-extra').value;
+  statusEl.hidden = false;
+  statusEl.textContent = 'Ajout...';
+  try {
+    const res = await fetch('/api/admin/people/manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind, login, displayName: login, extra }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = 'Ajouté.';
+    document.getElementById('people-manual-login').value = '';
+    document.getElementById('people-manual-extra').value = '';
+    renderPeopleManualList(body.people);
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  }
+});
+
+document.getElementById('people-manual-list')?.addEventListener('click', async (e) => {
+  if (!e.target.classList.contains('people-manual-remove-btn')) return;
+  const card = e.target.closest('.cc-card');
+  if (!card || !confirm('Supprimer cette entrée ?')) return;
+  const res = await fetch(`/api/admin/people/${card.dataset.kind}/${encodeURIComponent(card.dataset.login)}`, { method: 'DELETE' });
+  if (res.ok) renderPeopleManualList((await res.json()).people);
 });
 
 document.getElementById('titles-generate-btn')?.addEventListener('click', async () => {
@@ -1867,6 +1942,7 @@ document.getElementById('cc-list')?.addEventListener('change', async (e) => {
 });
 
 Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions(), loadViewerNotes()]).then(loadSettings);
+loadPeopleManualList();
 loadHealth();
 
 document.getElementById('logout')?.addEventListener('click', async () => {

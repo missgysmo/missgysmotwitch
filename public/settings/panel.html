@@ -341,6 +341,25 @@
         <button type="button" id="followlist-resync-btn">🔄 Resynchroniser depuis Twitch</button>
         <p class="hint">La liste ne se remplit sinon qu'avec les nouveaux follows/subs à venir — ce bouton importe une fois tes followers/subs existants.</p>
         <p id="followlist-resync-status" class="hint" hidden></p>
+
+        <h3>Ajouter manuellement</h3>
+        <p class="hint">Si la synchro Twitch ne capte pas un follow/sub/bits/raid (panne, EventSub pas branché...), ajoute-le ici à la main.</p>
+        <label>
+          Type
+          <select id="people-manual-kind">
+            <option value="followers">Follower</option>
+            <option value="subs">Sub</option>
+            <option value="cheers">Bits</option>
+            <option value="raids">Raid</option>
+          </select>
+        </label>
+        <label>Pseudo Twitch <input type="text" id="people-manual-login" maxlength="25" placeholder="pseudotwitch" /></label>
+        <label id="people-manual-extra-label">Montant (bits ou nombre de viewers du raid) <input type="number" id="people-manual-extra" min="0" step="1" /></label>
+        <button type="button" id="people-manual-add-btn">➕ Ajouter</button>
+        <p id="people-manual-status" class="hint" hidden></p>
+
+        <h3>Entrées actuelles</h3>
+        <div id="people-manual-list"></div>
       </fieldset>
 
       <fieldset data-nav-panel="tamagotchi" hidden>
