@@ -127,6 +127,14 @@ body.module-messages-off .messages-panel { display: none !important; }
   font-size: 0.85em;
 }
 
+.follow-list-divider {
+  display: block;
+  height: 4px;
+  width: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #ff5e5e, #ffb347, #fff35e, #7bed9f, #5edfff, #8e7bff, #ff7bed);
+}
+
 @keyframes scrollLeft {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }

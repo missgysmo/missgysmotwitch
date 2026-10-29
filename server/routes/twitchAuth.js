@@ -53,11 +53,13 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
       displayName = event.user_name;
       login = event.user_login;
       extra = event.bits;
+      store.addPerson('cheers', login, displayName, undefined, extra);
     } else if (type === 'channel.raid') {
       kind = 'raid';
       displayName = event.from_broadcaster_user_name;
       login = event.from_broadcaster_user_login;
       extra = event.viewers;
+      store.addPerson('raids', login, displayName, undefined, extra);
     } else {
       return;
     }

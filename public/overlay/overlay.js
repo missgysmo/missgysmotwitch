@@ -520,7 +520,7 @@ function renderActivity(recent) {
 
 function renderPeople(people) {
   const mode = settings.followList.mode;
-  const nameItems = (list, tag) => list.map((p) => `<span class="follow-list-item">${tag} ${escapeHtml(p.displayName)}</span>`);
+  const nameItems = (list, tag) => (list || []).map((p) => `<span class="follow-list-item">${tag} ${escapeHtml(p.displayName)}${p.extra ? ` (${p.extra})` : ''}</span>`);
 
   let items;
   if (mode === 'followers') {
@@ -528,12 +528,21 @@ function renderPeople(people) {
   } else if (mode === 'subs') {
     items = nameItems(people.subs, '⭐');
   } else {
-    // Groupé par section (Followers puis Subs) plutôt que mélangé, pour que ce soit lisible en défilant.
+    // Groupé par section (Followers, Subs, Bits, Raids) plutôt que mélangé, pour que ce soit
+    // lisible en défilant — séparées par une barre multicolore plutôt qu'un simple titre discret.
+    const divider = `<span class="follow-list-divider"></span>`;
     items = [
       `<span class="follow-list-header">Followers</span>`,
       ...nameItems(people.followers, '💜'),
+      divider,
       `<span class="follow-list-header">Subs</span>`,
       ...nameItems(people.subs, '⭐'),
+      divider,
+      `<span class="follow-list-header">Bits</span>`,
+      ...nameItems(people.cheers, '💎'),
+      divider,
+      `<span class="follow-list-header">Raids</span>`,
+      ...nameItems(people.raids, '🚀'),
     ];
   }
   followListTrackEl.innerHTML = items.join('') + items.join('');

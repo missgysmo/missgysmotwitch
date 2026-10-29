@@ -250,18 +250,20 @@ function resetCanvas(cols, rows) {
 
 // Liste complète des followers/subs connus, mise à jour au fil des events (persiste entre les lives)
 function getPeople() {
-  return readJson(PEOPLE_PATH, { followers: [], subs: [] });
+  return readJson(PEOPLE_PATH, { followers: [], subs: [], cheers: [], raids: [] });
 }
 
-function addPerson(kind, login, displayName, since) {
+// extra : bits cumulés (cheers) ou viewers du dernier raid (raids) — ignoré pour followers/subs.
+function addPerson(kind, login, displayName, since, extra) {
   const people = getPeople();
   const list = people[kind] || (people[kind] = []);
   const lower = (login || '').toLowerCase();
   const existing = list.find((p) => p.login === lower);
   if (existing) {
     existing.displayName = displayName || existing.displayName;
+    if (extra !== undefined) existing.extra = kind === 'cheers' ? (existing.extra || 0) + extra : extra;
   } else {
-    list.unshift({ login: lower, displayName: displayName || login, since: since || Date.now() });
+    list.unshift({ login: lower, displayName: displayName || login, since: since || Date.now(), extra });
   }
   writeJson(PEOPLE_PATH, people);
   return people;
