@@ -22,6 +22,7 @@ const fields = {
 };
 
 const ownerNameColorEl = document.getElementById('ownerNameColor');
+const coHostsListEl = document.getElementById('cohosts-list');
 
 const graffitiFields = {
   enabled: document.getElementById('graffiti-enabled'),
@@ -925,6 +926,7 @@ async function loadSettings() {
   fields.nameFontSize.el.value = s.nameTag.fontSize;
   fields.corridorPosition.el.value = s.corridorPosition;
   ownerNameColorEl.value = s.ownerNameColor;
+  coHostsListEl.value = (s.coHosts || []).join('\n');
   fields.ownerSize.el.value = s.ownerSize;
   movementPatternEl.value = s.movementPattern;
   mirrorOnDirectionEl.checked = s.mirrorOnDirection;
@@ -1096,6 +1098,7 @@ async function saveSettings() {
     movementPattern: movementPatternEl.value,
     corridorPosition: Number(fields.corridorPosition.el.value),
     ownerNameColor: ownerNameColorEl.value,
+    coHosts: coHostsListEl.value.split('\n').map((v) => v.trim()).filter(Boolean),
     ownerSize: Number(fields.ownerSize.el.value),
     mirrorOnDirection: mirrorOnDirectionEl.checked,
     inactivityMinutes: Number(fields.inactivityMinutes.el.value),

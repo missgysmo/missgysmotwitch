@@ -40,7 +40,7 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, s
       return res.status(403).json({ error: 'Cet avatar est réservé, il ne peut pas être personnalisé.' });
     }
 
-    const follows = await follower.checkAndCacheFollower(login);
+    const follows = follower.isCoHost(login) || (await follower.checkAndCacheFollower(login));
     if (!follows) {
       return res.status(403).json({ error: 'Tu dois suivre la chaîne sur Twitch pour personnaliser un avatar.' });
     }

@@ -16,6 +16,13 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
     return login.toLowerCase() === CHANNEL.toLowerCase();
   }
 
+  // Collaborateur(s) de co-stream configurés dans le dashboard (onglet "Mon avatar") : traités
+  // comme le streamer lui-même pour l'affichage (toujours visibles, même inactifs) et les permissions
+  // (chat/commandes), mais gardent leur propre avatar choisi au lieu du sprite "mon-avatar".
+  function isCoHost(login) {
+    return (store.getSettings().coHosts || []).some((l) => l.toLowerCase() === login.toLowerCase());
+  }
+
   async function ensureBroadcasterId() {
     if (broadcasterId) return broadcasterId;
     if (!store.getTokens()) return null;
@@ -44,7 +51,7 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
   // et relance une vérification en arrière-plan si absente ou périmée (une seule à la fois par pseudo,
   // même si buildState() est appelé plusieurs fois avant que la première vérification ne réponde).
   function isFollowerCached(login) {
-    if (isChannelOwner(login)) return true;
+    if (isChannelOwner(login) || isCoHost(login)) return true;
     const key = login.toLowerCase();
     const cached = followerCache.get(key);
     if ((!cached || Date.now() - cached.checkedAt > FOLLOWER_TTL_MS) && !followerChecksInFlight.has(key)) {
@@ -75,9 +82,14 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
   function buildState(includeTest = false) {
     const active = getActiveLogins().filter((login) => !isChannelOwner(login));
     const real = active.filter(isFollowerCached).map((login) => ({ login, skin: getSkin(login) }));
+    const realLower = new Set(real.map((v) => v.login.toLowerCase()));
+    // Les collaborateurs restent affichés même sans message récent dans le chat (comme le streamer).
+    const coHosts = (store.getSettings().coHosts || [])
+      .filter((login) => !isChannelOwner(login) && !realLower.has(login.toLowerCase()))
+      .map((login) => ({ login, skin: getSkin(login) }));
     const test = includeTest ? [...getTestAvatars().entries()].map(([login, skin]) => ({ login, skin })) : [];
     const owner = { login: CHANNEL, skin: getSkin(CHANNEL) };
-    return { type: 'state', viewers: [owner, ...real, ...test] };
+    return { type: 'state', viewers: [owner, ...real, ...coHosts, ...test] };
   }
 
   // Liste complète des avatars connus, utilisée pour les réactions "tout le monde apparaît" (ex: rebond de raid).
@@ -105,6 +117,7 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
 
   return {
     isChannelOwner,
+    isCoHost,
     ensureBroadcasterId,
     checkAndCacheFollower,
     isFollowerCached,

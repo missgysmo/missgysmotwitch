@@ -30,6 +30,7 @@ const DEFAULT_SETTINGS = {
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   ownerNameColor: '#ffd633',
   ownerSize: 64,
+  coHosts: [],
   spriteFlip: {
     cat: true,
     'cosmic-cat': true,
@@ -470,6 +471,7 @@ function getSettings() {
       position: { ...DEFAULT_SETTINGS.nowPlaying.position, ...(saved.nowPlaying?.position || {}) },
     },
     messageBoards: Array.isArray(saved.messageBoards) ? saved.messageBoards : DEFAULT_SETTINGS.messageBoards,
+    coHosts: Array.isArray(saved.coHosts) ? saved.coHosts : DEFAULT_SETTINGS.coHosts,
     customCommands: Array.isArray(saved.customCommands) ? saved.customCommands : DEFAULT_SETTINGS.customCommands,
     customCommandsPlayer: {
       ...DEFAULT_SETTINGS.customCommandsPlayer,

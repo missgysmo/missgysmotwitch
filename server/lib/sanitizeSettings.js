@@ -8,8 +8,19 @@ const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 const EVENT_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'rain', 'bounce'];
 const TAMAGOTCHI_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'bounce', 'awaken'];
 const EVENT_FONTS = ['system-ui', 'Bangers', 'Permanent Marker', 'Pacifico', 'Press Start 2P', 'Russo One', 'Caveat', 'Creepster'];
+const TWITCH_LOGIN_RE = /^[a-zA-Z0-9_]{1,25}$/;
+const MAX_COHOSTS = 5;
 
 const clamp = (v, min, max, d) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+
+function sanitizeCoHosts(input, fallback) {
+  if (!Array.isArray(input)) return fallback;
+  const cleaned = input
+    .filter((v) => typeof v === 'string')
+    .map((v) => v.trim().toLowerCase())
+    .filter((v) => TWITCH_LOGIN_RE.test(v));
+  return [...new Set(cleaned)].slice(0, MAX_COHOSTS);
+}
 
 function sanitizeEventConfig(input, fallback) {
   return {
@@ -285,7 +296,7 @@ function sanitizeSettings(body, current) {
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect,
     nameTag, events, lastEvents, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
     activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer,
-    commandsList,
+    commandsList, coHosts,
   } = body;
   const d = current;
 
@@ -347,6 +358,7 @@ function sanitizeSettings(body, current) {
     socialPlatforms: sanitizeSocialPlatforms(socialPlatforms, d.socialPlatforms),
     customCommandsPlayer: sanitizeCustomCommandsPlayerConfig(customCommandsPlayer, d.customCommandsPlayer),
     commandsList: sanitizeCommandsListConfig(commandsList, d.commandsList),
+    coHosts: sanitizeCoHosts(coHosts, d.coHosts),
     // Jamais touché ici : customCommands ne se modifie que via ses propres routes (créer/éditer/
     // supprimer/uploader un média), pour ne jamais risquer de l'écraser via le formulaire général.
     customCommands: d.customCommands,
