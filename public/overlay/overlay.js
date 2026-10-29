@@ -543,6 +543,7 @@ function renderPeople(people) {
       divider,
       `<span class="follow-list-header">Raids</span>`,
       ...nameItems(people.raids, '🚀'),
+      divider,
     ];
   }
   followListTrackEl.innerHTML = items.join('') + items.join('');
