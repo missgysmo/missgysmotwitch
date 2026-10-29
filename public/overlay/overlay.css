@@ -437,7 +437,7 @@ body.module-messages-off .messages-panel { display: none !important; }
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 12px 14px;
-  overflow: hidden auto;
+  overflow: hidden;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
   transform-origin: center center;
 }
@@ -448,6 +448,12 @@ body.module-messages-off .messages-panel { display: none !important; }
   letter-spacing: 1px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   padding-bottom: 6px;
+  flex: none;
+}
+
+.commands-list-viewport {
+  flex: 1;
+  overflow: hidden;
 }
 
 .commands-list-empty {
@@ -458,39 +464,26 @@ body.module-messages-off .messages-panel { display: none !important; }
 #commands-list-items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 14px;
+  animation: scrollUp linear infinite;
 }
 
 #commands-list-items.commands-list-items-horizontal {
   flex-direction: row;
-  flex-wrap: wrap;
+  gap: 2.5em;
+  padding-left: 100%;
+  animation: scrollLeft linear infinite;
 }
 
 .commands-list-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
   font-size: 1em;
-}
-
-.commands-list-items-horizontal .commands-list-item {
-  flex-direction: column;
-  gap: 2px;
-  align-items: center;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
 .commands-list-word {
   color: #9147ff;
   font-weight: bold;
-}
-
-.commands-list-label {
-  opacity: 0.85;
-  text-align: right;
-}
-
-.commands-list-items-horizontal .commands-list-label {
-  text-align: center;
 }
 
 .chat-overlay-name { font-weight: 700; }

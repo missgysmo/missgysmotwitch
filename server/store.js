@@ -158,6 +158,7 @@ const DEFAULT_SETTINGS = {
     fontSize: 15,
     orientation: 'vertical',
     rotation: 0,
+    speedSeconds: 20,
     position: { x: 2, y: 20, width: 20, height: 40 },
   },
   tamagotchi: {

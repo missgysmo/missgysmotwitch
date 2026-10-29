@@ -271,6 +271,7 @@ const cmdListFields = {
   orientation: document.getElementById('cmdlist-orientation'),
   rotation: document.getElementById('cmdlist-rotation'),
   rotationOut: document.getElementById('cmdlist-rotation-out'),
+  speed: document.getElementById('cmdlist-speed'),
   posX: document.getElementById('cmdlist-posx'),
   posXOut: document.getElementById('cmdlist-posx-out'),
   posY: document.getElementById('cmdlist-posy'),
@@ -1065,6 +1066,7 @@ async function loadSettings() {
   cmdListFields.fontSize.value = s.commandsList.fontSize;
   cmdListFields.orientation.value = s.commandsList.orientation;
   cmdListFields.rotation.value = s.commandsList.rotation;
+  cmdListFields.speed.value = s.commandsList.speedSeconds;
   cmdListFields.posX.value = s.commandsList.position.x;
   cmdListFields.posY.value = s.commandsList.position.y;
   cmdListFields.width.value = s.commandsList.position.width;
@@ -1255,6 +1257,7 @@ async function saveSettings() {
       fontSize: Number(cmdListFields.fontSize.value),
       orientation: cmdListFields.orientation.value,
       rotation: Number(cmdListFields.rotation.value),
+      speedSeconds: Number(cmdListFields.speed.value),
       position: {
         x: Number(cmdListFields.posX.value),
         y: Number(cmdListFields.posY.value),

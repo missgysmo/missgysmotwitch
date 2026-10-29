@@ -212,6 +212,7 @@ function sanitizeCommandsListConfig(input, fallback) {
     fontSize: clamp(input?.fontSize, 8, 60, fallback.fontSize),
     orientation: COMMANDS_LIST_ORIENTATIONS.includes(input?.orientation) ? input.orientation : fallback.orientation,
     rotation: clamp(input?.rotation, -180, 180, fallback.rotation),
+    speedSeconds: clamp(input?.speedSeconds, 3, 300, fallback.speedSeconds),
     position: {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),

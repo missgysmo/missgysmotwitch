@@ -187,6 +187,7 @@ let settings = {
     fontSize: 15,
     orientation: 'vertical',
     rotation: 0,
+    speedSeconds: 20,
     position: { x: 2, y: 20, width: 20, height: 40 },
   },
   messageBoards: [],
@@ -720,6 +721,7 @@ function applyCommandsListLayout() {
   const { r, g, b } = hexToRgb(c.bgColor);
   commandsListEl.style.background = `rgba(${r}, ${g}, ${b}, ${c.bgOpacity / 100})`;
   commandsListItemsEl.classList.toggle('commands-list-items-horizontal', c.orientation === 'horizontal');
+  commandsListItemsEl.style.animationDuration = `${c.speedSeconds}s`;
   commandsListTitleEl.textContent = c.title;
   document.body.classList.toggle('commands-list-disabled', !c.enabled);
   renderCommandsList();
@@ -728,15 +730,15 @@ function applyCommandsListLayout() {
 function renderCommandsList() {
   const commands = (settings.customCommands || []).filter((cmd) => cmd.enabled && cmd.media);
   if (!commands.length) {
+    commandsListItemsEl.classList.remove('commands-list-items-horizontal');
+    commandsListItemsEl.style.animationName = 'none';
     commandsListItemsEl.innerHTML = '<div class="commands-list-empty">Aucune commande active</div>';
     return;
   }
-  commandsListItemsEl.innerHTML = commands.map((cmd) => `
-    <div class="commands-list-item">
-      <span class="commands-list-word">${escapeHtml(cmd.command)}</span>
-      <span class="commands-list-label">${escapeHtml(cmd.label)}</span>
-    </div>
-  `).join('');
+  commandsListItemsEl.style.animationName = '';
+  const items = commands.map((cmd) => `<span class="commands-list-item">${escapeHtml(cmd.command)}</span>`);
+  // dupliqué pour un défilement continu sans trou visible (même technique que activity-feed/follow-list)
+  commandsListItemsEl.innerHTML = items.join('') + items.join('');
 }
 
 function playCustomCommand(data) {
