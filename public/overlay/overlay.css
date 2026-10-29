@@ -35,6 +35,8 @@ body.module-tamagotchi-off #tamagotchi { display: none !important; }
 body.module-raidcard-off #raid-card { display: none !important; }
 body.module-nowplaying-off #now-playing { display: none !important; }
 body.module-customcommands-off #custom-command-player { display: none !important; }
+body.module-commandslist-off #commands-list-panel,
+body.commands-list-disabled #commands-list-panel { display: none !important; }
 body.module-messages-off .messages-ticker,
 body.module-messages-off .messages-panel { display: none !important; }
 
@@ -425,6 +427,52 @@ body.module-messages-off .messages-panel { display: none !important; }
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 4px 18px rgba(0,0,0,.5));
+}
+
+#commands-list-panel {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(20, 10, 30, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 12px 14px;
+  overflow: hidden auto;
+  font-family: 'Russo One', sans-serif;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.commands-list-title {
+  font-size: 18px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 6px;
+}
+
+.commands-list-empty {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.commands-list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 15px;
+  color: #fff;
+}
+
+.commands-list-word {
+  color: #9147ff;
+  font-weight: bold;
+}
+
+.commands-list-label {
+  color: rgba(255, 255, 255, 0.85);
+  text-align: right;
 }
 
 .chat-overlay-name { font-weight: 700; }

@@ -37,6 +37,9 @@ for (const key of ['follow', 'subscribe', 'cheer', 'raid']) {
 }
 const customCommandPlayerEl = document.getElementById('custom-command-player');
 const customCommandVideoEl = document.getElementById('custom-command-video');
+const commandsListEl = document.getElementById('commands-list-panel');
+const commandsListTitleEl = document.getElementById('commands-list-title');
+const commandsListItemsEl = document.getElementById('commands-list-items');
 
 // Déplacement + gestes de repos de la mascotte : un seul sprite, donc tout est simulé par
 // transformation CSS sur l'image (pas de vraies poses dessinées) plutôt qu'un changement d'image.
@@ -71,6 +74,7 @@ if (!moduleEnabled('customcommands')) document.body.classList.add('module-custom
 if (!moduleEnabled('lastevents')) document.body.classList.add('module-lastevents-off');
 if (!moduleEnabled('alerts')) document.body.classList.add('module-alerts-off');
 if (!moduleEnabled('messages')) document.body.classList.add('module-messages-off');
+if (!moduleEnabled('commandslist')) document.body.classList.add('module-commandslist-off');
 
 const SPECIES_FILES = {
   'mon-avatar': 'mon-avatar.png',
@@ -173,6 +177,11 @@ let settings = {
   customCommandsPlayer: {
     position: { x: 20, y: 15, width: 60, height: 60 },
   },
+  commandsList: {
+    enabled: false,
+    title: 'Commandes',
+    position: { x: 2, y: 20, width: 20, height: 40 },
+  },
   messageBoards: [],
 };
 
@@ -222,6 +231,7 @@ function applySettings(newSettings) {
   applyRaidCardLayout();
   applyNowPlayingLayout();
   applyCustomCommandsPlayerLayout();
+  applyCommandsListLayout();
   applyLastEventsLayout();
   applyMessageBoards();
 }
@@ -686,6 +696,33 @@ function applyCustomCommandsPlayerLayout() {
   customCommandPlayerEl.style.top = `${c.position.y}%`;
   customCommandPlayerEl.style.width = `${c.position.width}%`;
   customCommandPlayerEl.style.height = `${c.position.height}%`;
+}
+
+// Panneau "aide-mémoire" listant les commandes de tchat actives, pour que la streameuse puisse
+// l'afficher rapidement à l'écran (visibilité de la source OBS) sans avoir à l'improviser en vocal.
+function applyCommandsListLayout() {
+  const c = settings.commandsList;
+  commandsListEl.style.left = `${c.position.x}%`;
+  commandsListEl.style.top = `${c.position.y}%`;
+  commandsListEl.style.width = `${c.position.width}%`;
+  commandsListEl.style.height = `${c.position.height}%`;
+  commandsListTitleEl.textContent = c.title;
+  document.body.classList.toggle('commands-list-disabled', !c.enabled);
+  renderCommandsList();
+}
+
+function renderCommandsList() {
+  const commands = (settings.customCommands || []).filter((cmd) => cmd.enabled && cmd.media);
+  if (!commands.length) {
+    commandsListItemsEl.innerHTML = '<div class="commands-list-empty">Aucune commande active</div>';
+    return;
+  }
+  commandsListItemsEl.innerHTML = commands.map((cmd) => `
+    <div class="commands-list-item">
+      <span class="commands-list-word">${escapeHtml(cmd.command)}</span>
+      <span class="commands-list-label">${escapeHtml(cmd.label)}</span>
+    </div>
+  `).join('');
 }
 
 function playCustomCommand(data) {

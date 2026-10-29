@@ -457,6 +457,18 @@
         <label>Largeur <input type="range" id="cc-player-width" min="5" max="100" step="1" /><output id="cc-player-width-out"></output></label>
         <label>Hauteur <input type="range" id="cc-player-height" min="5" max="100" step="1" /><output id="cc-player-height-out"></output></label>
 
+        <h3>Afficher la liste des commandes sur le stream</h3>
+        <p class="hint">Un petit panneau "aide-mémoire" que tu peux afficher ou masquer rapidement sur ton overlay, listant les commandes activées pour que les viewers les voient d'un coup d'œil.</p>
+        <label>
+          <input type="checkbox" id="cmdlist-enabled" />
+          Afficher le panneau sur le stream
+        </label>
+        <label>Titre du panneau <input type="text" id="cmdlist-title" maxlength="40" placeholder="Commandes" /></label>
+        <label>Position horizontale <input type="range" id="cmdlist-posx" min="0" max="100" step="1" /><output id="cmdlist-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="cmdlist-posy" min="0" max="100" step="1" /><output id="cmdlist-posy-out"></output></label>
+        <label>Largeur <input type="range" id="cmdlist-width" min="5" max="100" step="1" /><output id="cmdlist-width-out"></output></label>
+        <label>Hauteur <input type="range" id="cmdlist-height" min="5" max="100" step="1" /><output id="cmdlist-height-out"></output></label>
+
         <h3>Commandes</h3>
         <div id="cc-list" class="cc-list"></div>
 

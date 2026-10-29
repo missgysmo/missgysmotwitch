@@ -258,6 +258,19 @@ const nowPlayingFields = {
   heightOut: document.getElementById('nowplaying-height-out'),
 };
 
+const cmdListFields = {
+  enabled: document.getElementById('cmdlist-enabled'),
+  title: document.getElementById('cmdlist-title'),
+  posX: document.getElementById('cmdlist-posx'),
+  posXOut: document.getElementById('cmdlist-posx-out'),
+  posY: document.getElementById('cmdlist-posy'),
+  posYOut: document.getElementById('cmdlist-posy-out'),
+  width: document.getElementById('cmdlist-width'),
+  widthOut: document.getElementById('cmdlist-width-out'),
+  height: document.getElementById('cmdlist-height'),
+  heightOut: document.getElementById('cmdlist-height-out'),
+};
+
 const ccPlayerFields = {
   posX: document.getElementById('cc-player-posx'),
   posXOut: document.getElementById('cc-player-posx-out'),
@@ -524,6 +537,7 @@ const OBS_MODULES = [
   { id: 'raidcard', label: '🎴 Fiche raid' },
   { id: 'nowplaying', label: '🎵 Musique en cours' },
   { id: 'customcommands', label: '🎬 Commandes de tchat (vidéo)' },
+  { id: 'commandslist', label: '📋 Liste des commandes' },
   { id: 'lastevents', label: '📌 Derniers événements' },
   { id: 'messages', label: '📰 Messages personnalisés' },
 ];
@@ -793,6 +807,10 @@ function updateOutputs() {
   ccPlayerFields.posYOut.textContent = `${ccPlayerFields.posY.value}%`;
   ccPlayerFields.widthOut.textContent = `${ccPlayerFields.width.value}%`;
   ccPlayerFields.heightOut.textContent = `${ccPlayerFields.height.value}%`;
+  cmdListFields.posXOut.textContent = `${cmdListFields.posX.value}%`;
+  cmdListFields.posYOut.textContent = `${cmdListFields.posY.value}%`;
+  cmdListFields.widthOut.textContent = `${cmdListFields.width.value}%`;
+  cmdListFields.heightOut.textContent = `${cmdListFields.height.value}%`;
   updateZonePreview();
   updatePreviewMarker();
 }
@@ -870,6 +888,10 @@ ccPlayerFields.posX.addEventListener('input', updateOutputs);
 ccPlayerFields.posY.addEventListener('input', updateOutputs);
 ccPlayerFields.width.addEventListener('input', updateOutputs);
 ccPlayerFields.height.addEventListener('input', updateOutputs);
+cmdListFields.posX.addEventListener('input', updateOutputs);
+cmdListFields.posY.addEventListener('input', updateOutputs);
+cmdListFields.width.addEventListener('input', updateOutputs);
+cmdListFields.height.addEventListener('input', updateOutputs);
 
 async function loadSettings() {
   const res = await fetch('/api/settings');
@@ -1018,6 +1040,12 @@ async function loadSettings() {
   ccPlayerFields.posY.value = s.customCommandsPlayer.position.y;
   ccPlayerFields.width.value = s.customCommandsPlayer.position.width;
   ccPlayerFields.height.value = s.customCommandsPlayer.position.height;
+  cmdListFields.enabled.checked = s.commandsList.enabled;
+  cmdListFields.title.value = s.commandsList.title;
+  cmdListFields.posX.value = s.commandsList.position.x;
+  cmdListFields.posY.value = s.commandsList.position.y;
+  cmdListFields.width.value = s.commandsList.position.width;
+  cmdListFields.height.value = s.commandsList.position.height;
   renderCustomCommands(s.customCommands);
   for (const key of SOCIAL_PLATFORM_KEYS) {
     socialLinkFields[key].enabled.checked = s.socialPlatforms[key];
@@ -1191,6 +1219,16 @@ async function saveSettings() {
         y: Number(ccPlayerFields.posY.value),
         width: Number(ccPlayerFields.width.value),
         height: Number(ccPlayerFields.height.value),
+      },
+    },
+    commandsList: {
+      enabled: cmdListFields.enabled.checked,
+      title: cmdListFields.title.value,
+      position: {
+        x: Number(cmdListFields.posX.value),
+        y: Number(cmdListFields.posY.value),
+        width: Number(cmdListFields.width.value),
+        height: Number(cmdListFields.height.value),
       },
     },
     socialLinks: Object.fromEntries(SOCIAL_PLATFORM_KEYS.map((key) => [key, socialLinkFields[key].link.value])),
@@ -1925,6 +1963,14 @@ function updatePreviewMarker() {
         Number(ccPlayerFields.height.value),
         'Vidéo commande',
         '#ff6ec7',
+      );
+      addPreviewBox(
+        Number(cmdListFields.posX.value),
+        Number(cmdListFields.posY.value),
+        Number(cmdListFields.width.value),
+        Number(cmdListFields.height.value),
+        'Liste commandes',
+        '#9147ff',
       );
     }
   }

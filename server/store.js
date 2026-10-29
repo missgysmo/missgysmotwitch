@@ -148,6 +148,11 @@ const DEFAULT_SETTINGS = {
   customCommandsPlayer: {
     position: { x: 20, y: 15, width: 60, height: 60 },
   },
+  commandsList: {
+    enabled: false,
+    title: 'Commandes',
+    position: { x: 2, y: 20, width: 20, height: 40 },
+  },
   tamagotchi: {
     enabled: false,
     species: 'mascot',
@@ -462,6 +467,11 @@ function getSettings() {
       ...DEFAULT_SETTINGS.customCommandsPlayer,
       ...(saved.customCommandsPlayer || {}),
       position: { ...DEFAULT_SETTINGS.customCommandsPlayer.position, ...(saved.customCommandsPlayer?.position || {}) },
+    },
+    commandsList: {
+      ...DEFAULT_SETTINGS.commandsList,
+      ...(saved.commandsList || {}),
+      position: { ...DEFAULT_SETTINGS.commandsList.position, ...(saved.commandsList?.position || {}) },
     },
     tamagotchi: {
       ...DEFAULT_SETTINGS.tamagotchi,
