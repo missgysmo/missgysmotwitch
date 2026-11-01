@@ -35,6 +35,12 @@ for (const key of ['follow', 'subscribe', 'cheer', 'raid', 'donation']) {
   document.body.appendChild(el);
   lastEventEls[key] = el;
 }
+let donationTotalAmount = 0;
+const donationTotalEl = document.createElement('div');
+donationTotalEl.className = 'last-event donation-total';
+donationTotalEl.style.display = 'none';
+document.body.appendChild(donationTotalEl);
+
 const customCommandPlayerEl = document.getElementById('custom-command-player');
 const customCommandVideoEl = document.getElementById('custom-command-video');
 const commandsListEl = document.getElementById('commands-list-panel');
@@ -190,6 +196,15 @@ let settings = {
     speedSeconds: 20,
     position: { x: 2, y: 20, width: 20, height: 40 },
   },
+  donationTotal: {
+    enabled: false,
+    text: 'Total des dons : {total}{currency}',
+    currency: '€',
+    color: '#ffffff',
+    fontFamily: 'system-ui',
+    fontSize: 20,
+    position: { x: 2, y: 27 },
+  },
   messageBoards: [],
 };
 
@@ -241,6 +256,7 @@ function applySettings(newSettings) {
   applyCustomCommandsPlayerLayout();
   applyCommandsListLayout();
   applyLastEventsLayout();
+  applyDonationTotalLayout();
   applyMessageBoards();
 }
 
@@ -719,6 +735,26 @@ function applyCustomCommandsPlayerLayout() {
 
 // Panneau "aide-mémoire" listant les commandes de tchat actives, pour que la streameuse puisse
 // l'afficher rapidement à l'écran (visibilité de la source OBS) sans avoir à l'improviser en vocal.
+function renderDonationTotal() {
+  const c = settings.donationTotal;
+  donationTotalEl.textContent = c.text.replace(/\{(\w+)\}/g, (_, k) => {
+    if (k === 'total') return donationTotalAmount;
+    if (k === 'currency') return c.currency;
+    return '';
+  });
+}
+
+function applyDonationTotalLayout() {
+  const c = settings.donationTotal;
+  donationTotalEl.style.display = c.enabled ? 'block' : 'none';
+  donationTotalEl.style.left = `${c.position.x}%`;
+  donationTotalEl.style.top = `${c.position.y}%`;
+  donationTotalEl.style.color = c.color;
+  donationTotalEl.style.fontFamily = c.fontFamily && c.fontFamily !== 'system-ui' ? `'${c.fontFamily}', system-ui` : '';
+  donationTotalEl.style.fontSize = `${c.fontSize}px`;
+  renderDonationTotal();
+}
+
 function applyCommandsListLayout() {
   const c = settings.commandsList;
   commandsListEl.style.left = `${c.position.x}%`;
@@ -1228,7 +1264,12 @@ function showEvent(eventType, event, cast) {
     }
   }
 
-  if (cfg.showText || cfg.image) {
+  // Galerie (cfg.images) prioritaire sur l'ancienne image unique (cfg.image), gardée en repli pour
+  // ne pas perdre une image déjà choisie avant l'ajout de la galerie.
+  const imagePool = cfg.images?.length ? cfg.images : (cfg.image ? [cfg.image] : []);
+  const chosenImage = imagePool.length ? imagePool[Math.floor(Math.random() * imagePool.length)] : null;
+
+  if (cfg.showText || chosenImage) {
     const popup = document.createElement('div');
     popup.className = 'event-popup';
     popup.style.left = `${cfg.position.x}%`;
@@ -1236,10 +1277,10 @@ function showEvent(eventType, event, cast) {
     popup.style.color = cfg.color;
     popup.style.fontFamily = cfg.fontFamily && cfg.fontFamily !== 'system-ui' ? `'${cfg.fontFamily}', system-ui` : '';
     popup.style.fontSize = `${cfg.fontSize}px`;
-    if (cfg.image) {
+    if (chosenImage) {
       const img = document.createElement('img');
       img.className = 'event-popup-img';
-      img.src = `/event-images/${cfg.image}`;
+      img.src = `/event-images/${chosenImage}`;
       popup.appendChild(img);
     }
     if (cfg.showText) {
@@ -1277,6 +1318,7 @@ function connect() {
     }
     if (data.type === 'last-event-preview') updateLastEvent(data.eventType, data.event);
     if (data.type === 'last-event-clear') { const el = lastEventEls[data.kind]; if (el) el.textContent = ''; }
+    if (data.type === 'donation-total') { donationTotalAmount = data.total; renderDonationTotal(); }
     if (data.type === 'chat') showChatBubble(data.login, data.text);
     if (data.type === 'timer') handleTimerMessage(data);
     if (data.type === 'canvas-init') initGraffitiCanvas(data);

@@ -826,14 +826,42 @@
             <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-donation-sound-file" hidden /></label>
             <button type="button" class="sound-remove-btn" data-type="donation" id="evt-donation-sound-remove" hidden>Retirer</button>
           </div>
-          <div class="sound-row" data-image-row="donation">
-            <span class="sound-status" id="evt-donation-image-status">Aucune image</span>
-            <label class="sound-upload-btn">Choisir une image<input type="file" accept="image/*" id="evt-donation-image-file" hidden /></label>
-            <button type="button" class="image-remove-btn" data-type="donation" id="evt-donation-image-remove" hidden>Retirer</button>
-          </div>
+          <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque don (laisse vide pour aucune image).</p>
+          <div id="evt-donation-images-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-donation-images-file" hidden /></label>
+          <p id="evt-donation-images-status" class="hint" hidden></p>
           <button type="button" class="test-event-btn" data-type="donation">Tester cette alerte</button>
         </div>
         <p class="hint">Le test affiche le popup sur <code>/overlay/</code> avec un don fictif de 5€ — pas besoin d'un vrai don ni d'être connecté à Streamlabs pour tester le rendu.</p>
+
+        <h3>Total des dons</h3>
+        <p class="hint">Affichage permanent qui s'incrémente automatiquement à chaque don reçu. Variables : <code>{total}</code>, <code>{currency}</code>.</p>
+        <label><input type="checkbox" id="donationtotal-enabled" /> Afficher en permanence</label>
+        <label>Texte <input type="text" id="donationtotal-text" maxlength="200" /></label>
+        <label>Devise (symbole) <input type="text" id="donationtotal-currency" maxlength="5" style="width:60px" /></label>
+        <label>Couleur <input type="color" id="donationtotal-color" /></label>
+        <label>
+          Calligraphie
+          <select id="donationtotal-fontfamily">
+            <option value="system-ui">Standard</option>
+            <option value="Bangers">Bangers (BD)</option>
+            <option value="Permanent Marker">Permanent Marker (feutre)</option>
+            <option value="Pacifico">Pacifico (script)</option>
+            <option value="Press Start 2P">Press Start 2P (pixel)</option>
+            <option value="Russo One">Russo One (impact)</option>
+            <option value="Caveat">Caveat (manuscrite)</option>
+            <option value="Creepster">Creepster (horreur)</option>
+          </select>
+        </label>
+        <label>Taille <input type="range" id="donationtotal-size" min="8" max="60" step="1" /><output id="donationtotal-size-out"></output></label>
+        <label>Position horizontale <input type="range" id="donationtotal-posx" min="0" max="100" step="1" /><output id="donationtotal-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="donationtotal-posy" min="0" max="100" step="1" /><output id="donationtotal-posy-out"></output></label>
+        <p id="donationtotal-current" class="hint">Total actuel : chargement...</p>
+        <div class="manual-lastevent-row">
+          <input type="number" id="donationtotal-manual-value" placeholder="Nouveau total" min="0" style="width:120px" />
+          <button type="button" id="donationtotal-set-btn">Définir</button>
+          <button type="button" id="donationtotal-reset-btn">Remettre à zéro</button>
+        </div>
       </fieldset>
 
       <fieldset data-nav-panel="lastevents" hidden>

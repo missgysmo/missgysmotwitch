@@ -12,6 +12,7 @@ const VIEWER_NOTES_PATH = path.join(DATA_DIR, 'viewerNotes.json');
 const SPOTIFY_TOKENS_PATH = path.join(DATA_DIR, 'spotifyTokens.json');
 const STREAMLABS_TOKEN_PATH = path.join(DATA_DIR, 'streamlabsToken.json');
 const LAST_EVENTS_PATH = path.join(DATA_DIR, 'lastEvents.json');
+const DONATION_TOTAL_PATH = path.join(DATA_DIR, 'donationTotal.json');
 const CUSTOM_SPECIES_PATH = path.join(DATA_DIR, 'customSpecies.json');
 const SPECIES_ENABLED_PATH = path.join(DATA_DIR, 'speciesEnabled.json');
 const SPECIES_REWARDS_PATH = path.join(DATA_DIR, 'speciesRewards.json');
@@ -163,6 +164,15 @@ const DEFAULT_SETTINGS = {
     speedSeconds: 20,
     position: { x: 2, y: 20, width: 20, height: 40 },
   },
+  donationTotal: {
+    enabled: false,
+    text: 'Total des dons : {total}{currency}',
+    currency: '€',
+    color: '#ffffff',
+    fontFamily: 'system-ui',
+    fontSize: 20,
+    position: { x: 2, y: 27 },
+  },
   tamagotchi: {
     enabled: false,
     species: 'mascot',
@@ -187,11 +197,11 @@ const DEFAULT_SETTINGS = {
     },
   },
   events: {
-    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null, image: null },
-    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null, image: null },
-    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 }, sound: null, image: null },
-    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 }, sound: null, image: null },
-    donation: { enabled: true, showText: true, text: '🎁 {user} a fait un don de {amount}{currency} !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 }, sound: null, image: null },
+    follow: { enabled: true, showText: true, text: '💜 {user} vient de follow !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'pulse', position: { x: 50, y: 14 }, sound: null, image: null, images: [] },
+    subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null, image: null, images: [] },
+    cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 }, sound: null, image: null, images: [] },
+    raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 }, sound: null, image: null, images: [] },
+    donation: { enabled: true, showText: true, text: '🎁 {user} a fait un don de {amount}{currency} !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 }, sound: null, image: null, images: [] },
   },
   // Affichage permanent (contrairement aux alertes "events" ci-dessus qui disparaissent après
   // quelques secondes) : reste à l'écran et se met à jour au prochain événement du même type.
@@ -297,6 +307,24 @@ function setLastEvent(kind, data, skipIfOlder = false) {
   lastEvents[kind] = data;
   writeJson(LAST_EVENTS_PATH, lastEvents);
   return lastEvents;
+}
+
+// Cumul des dons reçus (event caritatif), persiste entre les redémarrages. Séparé des settings
+// classiques car c'est une donnée qui s'accumule au fil du direct, pas un réglage qu'on configure.
+function getDonationTotal() {
+  return readJson(DONATION_TOTAL_PATH, { total: 0 }).total;
+}
+
+function addDonationAmount(amount) {
+  const total = getDonationTotal() + (Number(amount) || 0);
+  writeJson(DONATION_TOTAL_PATH, { total });
+  return total;
+}
+
+function setDonationTotal(total) {
+  const clean = Number(total) || 0;
+  writeJson(DONATION_TOTAL_PATH, { total: clean });
+  return clean;
 }
 
 // Avatars personnalisés ajoutés par l'admin (en plus du catalogue codé en dur dans species.js) :
@@ -509,6 +537,11 @@ function getSettings() {
       ...(saved.commandsList || {}),
       position: { ...DEFAULT_SETTINGS.commandsList.position, ...(saved.commandsList?.position || {}) },
     },
+    donationTotal: {
+      ...DEFAULT_SETTINGS.donationTotal,
+      ...(saved.donationTotal || {}),
+      position: { ...DEFAULT_SETTINGS.donationTotal.position, ...(saved.donationTotal?.position || {}) },
+    },
     tamagotchi: {
       ...DEFAULT_SETTINGS.tamagotchi,
       ...(saved.tamagotchi || {}),
@@ -564,6 +597,9 @@ module.exports = {
   removePerson,
   getLastEvents,
   setLastEvent,
+  getDonationTotal,
+  addDonationAmount,
+  setDonationTotal,
   getCustomSpecies,
   addCustomSpecies,
   removeCustomSpecies,

@@ -39,6 +39,9 @@ function sanitizeEventConfig(input, fallback) {
     // donc on garde la valeur existante tant qu'on ne reçoit pas explicitement une string ou null
     sound: (typeof input?.sound === 'string' || input?.sound === null) ? input.sound : fallback.sound,
     image: (typeof input?.image === 'string' || input?.image === null) ? input.image : fallback.image,
+    // pas envoyé non plus par le formulaire classique — géré par ses propres routes d'upload/retrait
+    // (une image à la fois ajoutée/retirée du tableau, jamais tout le tableau remplacé d'un coup).
+    images: Array.isArray(input?.images) ? input.images.filter((v) => typeof v === 'string') : fallback.images,
   };
 }
 
@@ -211,6 +214,21 @@ function sanitizeCustomCommandsPlayerConfig(input, fallback) {
   };
 }
 
+function sanitizeDonationTotalConfig(input, fallback) {
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    text: typeof input?.text === 'string' && input.text.trim() ? input.text.slice(0, 200) : fallback.text,
+    currency: typeof input?.currency === 'string' ? input.currency.slice(0, 5) : fallback.currency,
+    color: HEX_COLOR.test(input?.color) ? input.color : fallback.color,
+    fontFamily: EVENT_FONTS.includes(input?.fontFamily) ? input.fontFamily : fallback.fontFamily,
+    fontSize: clamp(input?.fontSize, 8, 60, fallback.fontSize),
+    position: {
+      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
+      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
+    },
+  };
+}
+
 const COMMANDS_LIST_ORIENTATIONS = ['vertical', 'horizontal'];
 
 function sanitizeCommandsListConfig(input, fallback) {
@@ -297,7 +315,7 @@ function sanitizeSettings(body, current) {
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect,
     nameTag, events, lastEvents, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
     activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer,
-    commandsList, coHosts,
+    commandsList, coHosts, donationTotal,
   } = body;
   const d = current;
 
@@ -361,6 +379,7 @@ function sanitizeSettings(body, current) {
     socialPlatforms: sanitizeSocialPlatforms(socialPlatforms, d.socialPlatforms),
     customCommandsPlayer: sanitizeCustomCommandsPlayerConfig(customCommandsPlayer, d.customCommandsPlayer),
     commandsList: sanitizeCommandsListConfig(commandsList, d.commandsList),
+    donationTotal: sanitizeDonationTotalConfig(donationTotal, d.donationTotal),
     coHosts: sanitizeCoHosts(coHosts, d.coHosts),
     // Jamais touché ici : customCommands ne se modifie que via ses propres routes (créer/éditer/
     // supprimer/uploader un média), pour ne jamais risquer de l'écraser via le formulaire général.

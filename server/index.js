@@ -212,7 +212,7 @@ app.use(createFollowListSyncRouter({
 // Don caritatif (Streamlabs) : même pipeline d'alerte que les events Twitch (voir recordActivity
 // dans twitchAuth.js), juste déclenché par le Socket API de Streamlabs plutôt qu'EventSub.
 const streamlabs = createStreamlabsService({ store, broadcast, follower, recordActivity, logError: logger.logError });
-app.use(createStreamlabsRouter({ store, requireAdmin, streamlabs }));
+app.use(createStreamlabsRouter({ store, requireAdmin, broadcast, streamlabs }));
 
 // --- WebSocket ---
 const server = http.createServer(app);
@@ -233,6 +233,7 @@ wss.on('connection', (ws, req) => {
   ws.send(JSON.stringify({ type: 'last-events', data: store.getLastEvents() }));
   ws.send(JSON.stringify({ type: 'tamagotchi', mood: tamagotchi.getMood() }));
   ws.send(JSON.stringify({ type: 'now-playing', track: getLastNowPlayingTrack() }));
+  ws.send(JSON.stringify({ type: 'donation-total', total: store.getDonationTotal() }));
   ws.on('close', () => overlayClients.delete(ws));
 });
 

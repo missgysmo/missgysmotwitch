@@ -67,6 +67,8 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
       displayName = event.user_name;
       login = null;
       extra = `${event.amount}${event.currency || ''}`;
+      const total = store.addDonationAmount(event.amount);
+      broadcast({ type: 'donation-total', total });
     } else {
       return;
     }

@@ -129,6 +129,54 @@ function createSoundsRouter({ store, requireAdmin, broadcast, soundsDir, eventIm
     res.json({ ok: true });
   });
 
+  // Galerie d'images (contrairement à "event-image" ci-dessus qui ne garde qu'une seule image) :
+  // à chaque alerte, l'overlay en tire une au hasard — voir showEvent() dans overlay.js.
+  const MAX_IMAGES = 12;
+
+  router.post('/api/admin/event-images/:type', requireAdmin, (req, res) => {
+    imageUpload.single('image')(req, res, (err) => {
+      if (err) {
+        const message = err.code === 'LIMIT_FILE_SIZE' ? `Image trop volumineuse (${IMAGE_MAX_BYTES / 1024 / 1024} Mo max)` : err.message;
+        return res.status(400).json({ error: message });
+      }
+
+      const type = req.params.type;
+      const settings = store.getSettings();
+      const slot = getSoundSlot(settings, type);
+      if (!slot) return res.status(400).json({ error: 'type invalide' });
+      if (!req.file) return res.status(400).json({ error: 'image manquante ou format invalide' });
+      if (slot.images.length >= MAX_IMAGES) return res.status(400).json({ error: `Maximum ${MAX_IMAGES} images.` });
+
+      const rawExt = path.extname(req.file.originalname).toLowerCase();
+      const ext = SAFE_IMAGE_EXT.has(rawExt) ? rawExt : '.png';
+      const filename = `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+      fs.writeFileSync(path.join(eventImagesDir, filename), req.file.buffer);
+
+      slot.images.push(filename);
+      store.setSettings(settings);
+
+      broadcast({ type: 'settings', settings });
+      res.json({ ok: true, images: slot.images });
+    });
+  });
+
+  router.delete('/api/admin/event-images/:type/:filename', requireAdmin, (req, res) => {
+    const { type, filename } = req.params;
+    // Pas de retrait de fichier hors du dossier prévu : le nom doit être exactement celui généré
+    // par l'upload ci-dessus (aucun séparateur de chemin), jamais une valeur construite par le client.
+    if (!/^[a-zA-Z0-9._-]+$/.test(filename)) return res.status(400).json({ error: 'nom de fichier invalide' });
+    const settings = store.getSettings();
+    const slot = getSoundSlot(settings, type);
+    if (!slot) return res.status(400).json({ error: 'type invalide' });
+
+    slot.images = slot.images.filter((f) => f !== filename);
+    store.setSettings(settings);
+    fs.rm(path.join(eventImagesDir, filename), { force: true }, () => {});
+
+    broadcast({ type: 'settings', settings });
+    res.json({ ok: true, images: slot.images });
+  });
+
   return router;
 }
 

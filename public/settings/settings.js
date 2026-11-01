@@ -283,6 +283,20 @@ const cmdListFields = {
   heightOut: document.getElementById('cmdlist-height-out'),
 };
 
+const donationTotalFields = {
+  enabled: document.getElementById('donationtotal-enabled'),
+  text: document.getElementById('donationtotal-text'),
+  currency: document.getElementById('donationtotal-currency'),
+  color: document.getElementById('donationtotal-color'),
+  fontFamily: document.getElementById('donationtotal-fontfamily'),
+  size: document.getElementById('donationtotal-size'),
+  sizeOut: document.getElementById('donationtotal-size-out'),
+  posX: document.getElementById('donationtotal-posx'),
+  posXOut: document.getElementById('donationtotal-posx-out'),
+  posY: document.getElementById('donationtotal-posy'),
+  posYOut: document.getElementById('donationtotal-posy-out'),
+};
+
 const ccPlayerFields = {
   posX: document.getElementById('cc-player-posx'),
   posXOut: document.getElementById('cc-player-posx-out'),
@@ -378,6 +392,41 @@ document.getElementById('streamlabs-disconnect-btn')?.addEventListener('click', 
 });
 
 loadStreamlabsStatus();
+
+async function loadDonationTotal() {
+  const el = document.getElementById('donationtotal-current');
+  if (!el) return;
+  try {
+    const res = await fetch('/api/admin/donation-total');
+    const data = await res.json();
+    el.textContent = `Total actuel : ${data.total}`;
+  } catch {
+    el.textContent = 'Total actuel : erreur de chargement';
+  }
+}
+loadDonationTotal();
+
+document.getElementById('donationtotal-set-btn')?.addEventListener('click', async () => {
+  const value = document.getElementById('donationtotal-manual-value').value;
+  if (value === '') return;
+  await fetch('/api/admin/donation-total', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ total: Number(value) }),
+  });
+  document.getElementById('donationtotal-manual-value').value = '';
+  loadDonationTotal();
+});
+
+document.getElementById('donationtotal-reset-btn')?.addEventListener('click', async () => {
+  if (!confirm('Remettre le total des dons à zéro ?')) return;
+  await fetch('/api/admin/donation-total', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ total: 0 }),
+  });
+  loadDonationTotal();
+});
 
 const PEOPLE_KIND_LABELS = { followers: '💜 Follower', subs: '⭐ Sub', cheers: '💎 Bits', raids: '🚀 Raid' };
 
@@ -941,6 +990,9 @@ function updateOutputs() {
   cmdListFields.posYOut.textContent = `${cmdListFields.posY.value}%`;
   cmdListFields.widthOut.textContent = `${cmdListFields.width.value}%`;
   cmdListFields.heightOut.textContent = `${cmdListFields.height.value}%`;
+  donationTotalFields.sizeOut.textContent = `${donationTotalFields.size.value}px`;
+  donationTotalFields.posXOut.textContent = `${donationTotalFields.posX.value}%`;
+  donationTotalFields.posYOut.textContent = `${donationTotalFields.posY.value}%`;
   cmdListFields.bgOpacityOut.textContent = `${cmdListFields.bgOpacity.value}%`;
   cmdListFields.fontSizeOut.textContent = `${cmdListFields.fontSize.value}px`;
   cmdListFields.rotationOut.textContent = `${cmdListFields.rotation.value}°`;
@@ -1021,6 +1073,9 @@ ccPlayerFields.posX.addEventListener('input', updateOutputs);
 ccPlayerFields.posY.addEventListener('input', updateOutputs);
 ccPlayerFields.width.addEventListener('input', updateOutputs);
 ccPlayerFields.height.addEventListener('input', updateOutputs);
+donationTotalFields.size.addEventListener('input', updateOutputs);
+donationTotalFields.posX.addEventListener('input', updateOutputs);
+donationTotalFields.posY.addEventListener('input', updateOutputs);
 cmdListFields.posX.addEventListener('input', updateOutputs);
 cmdListFields.posY.addEventListener('input', updateOutputs);
 cmdListFields.width.addEventListener('input', updateOutputs);
@@ -1062,7 +1117,7 @@ async function loadSettings() {
     eventFields[type].posX.value = s.events[type].position.x;
     eventFields[type].posY.value = s.events[type].position.y;
     updateSoundStatus(type, s.events[type].sound);
-    if (EVENT_IMAGE_TYPES.includes(type)) updateImageStatus(type, s.events[type].image);
+    if (EVENT_IMAGE_TYPES.includes(type)) renderEventImages(type, s.events[type].images || []);
     lastEventFields[type].enabled.checked = s.lastEvents[type].enabled;
     lastEventFields[type].text.value = s.lastEvents[type].text;
     lastEventFields[type].color.value = s.lastEvents[type].color;
@@ -1178,6 +1233,14 @@ async function loadSettings() {
   ccPlayerFields.posY.value = s.customCommandsPlayer.position.y;
   ccPlayerFields.width.value = s.customCommandsPlayer.position.width;
   ccPlayerFields.height.value = s.customCommandsPlayer.position.height;
+  donationTotalFields.enabled.checked = s.donationTotal.enabled;
+  donationTotalFields.text.value = s.donationTotal.text;
+  donationTotalFields.currency.value = s.donationTotal.currency;
+  donationTotalFields.color.value = s.donationTotal.color;
+  donationTotalFields.fontFamily.value = s.donationTotal.fontFamily;
+  donationTotalFields.size.value = s.donationTotal.fontSize;
+  donationTotalFields.posX.value = s.donationTotal.position.x;
+  donationTotalFields.posY.value = s.donationTotal.position.y;
   cmdListFields.enabled.checked = s.commandsList.enabled;
   cmdListFields.title.value = s.commandsList.title;
   cmdListFields.textColor.value = s.commandsList.textColor;
@@ -1367,6 +1430,18 @@ async function saveSettings() {
         y: Number(ccPlayerFields.posY.value),
         width: Number(ccPlayerFields.width.value),
         height: Number(ccPlayerFields.height.value),
+      },
+    },
+    donationTotal: {
+      enabled: donationTotalFields.enabled.checked,
+      text: donationTotalFields.text.value,
+      currency: donationTotalFields.currency.value,
+      color: donationTotalFields.color.value,
+      fontFamily: donationTotalFields.fontFamily.value,
+      fontSize: Number(donationTotalFields.size.value),
+      position: {
+        x: Number(donationTotalFields.posX.value),
+        y: Number(donationTotalFields.posY.value),
       },
     },
     commandsList: {
@@ -2231,46 +2306,64 @@ function updateSoundStatus(type, sound) {
   eventFields[type].soundRemove.hidden = !sound;
 }
 
-// Image des alertes : pour l'instant seule l'alerte "don" a l'UI correspondante dans le dashboard
-// (voir panel.html), mais la route /api/admin/event-image/:type est générique à tous les types.
+// Galerie d'images des alertes : pour l'instant seule l'alerte "don" a l'UI correspondante dans le
+// dashboard (voir panel.html), mais la route /api/admin/event-images/:type est générique à tous les
+// types. Une image est tirée au hasard dans la liste à chaque alerte (voir showEvent() côté overlay).
 const EVENT_IMAGE_TYPES = ['donation'];
-const eventImageFields = {};
+const eventImagesFields = {};
 for (const type of EVENT_IMAGE_TYPES) {
-  eventImageFields[type] = {
-    file: document.getElementById(`evt-${type}-image-file`),
-    status: document.getElementById(`evt-${type}-image-status`),
-    remove: document.getElementById(`evt-${type}-image-remove`),
+  eventImagesFields[type] = {
+    list: document.getElementById(`evt-${type}-images-list`),
+    file: document.getElementById(`evt-${type}-images-file`),
+    status: document.getElementById(`evt-${type}-images-status`),
   };
 }
 
-function updateImageStatus(type, image) {
-  eventImageFields[type].status.textContent = image ? `Image actuelle : ${image.replace(/^[a-zA-Z]+-\d+/, 'fichier')}` : 'Aucune image';
-  eventImageFields[type].remove.hidden = !image;
+function renderEventImages(type, images) {
+  const listEl = eventImagesFields[type].list;
+  if (!images.length) {
+    listEl.innerHTML = '<p class="hint">Aucune image pour le moment.</p>';
+    return;
+  }
+  listEl.innerHTML = images.map((filename) => `
+    <div class="cc-card" data-filename="${escapeHtmlPanel(filename)}">
+      <div class="cc-card-head">
+        <img src="/event-images/${escapeHtmlPanel(filename)}" alt="" style="height:40px;border-radius:4px" />
+        <div class="cc-card-actions">
+          <button type="button" class="event-image-remove-btn">Retirer</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
 for (const type of EVENT_IMAGE_TYPES) {
-  eventImageFields[type].file.addEventListener('change', async () => {
-    const file = eventImageFields[type].file.files[0];
+  eventImagesFields[type].file.addEventListener('change', async () => {
+    const file = eventImagesFields[type].file.files[0];
     if (!file) return;
-    eventImageFields[type].status.textContent = 'Envoi...';
+    const statusEl = eventImagesFields[type].status;
+    statusEl.hidden = false;
+    statusEl.textContent = 'Envoi...';
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await fetch(`/api/admin/event-image/${type}`, { method: 'POST', body: formData });
+      const res = await fetch(`/api/admin/event-images/${type}`, { method: 'POST', body: formData });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || 'échec');
-      updateImageStatus(type, body.image);
+      statusEl.textContent = 'Image ajoutée.';
+      renderEventImages(type, body.images);
     } catch (err) {
-      eventImageFields[type].status.textContent = `Échec de l'envoi : ${err.message}`;
-      console.error(err);
+      statusEl.textContent = `Échec de l'envoi : ${err.message}`;
     } finally {
-      eventImageFields[type].file.value = '';
+      eventImagesFields[type].file.value = '';
     }
   });
 
-  eventImageFields[type].remove.addEventListener('click', async () => {
-    await fetch(`/api/admin/event-image/${type}`, { method: 'DELETE' });
-    updateImageStatus(type, null);
+  eventImagesFields[type].list.addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('event-image-remove-btn')) return;
+    const filename = e.target.closest('.cc-card').dataset.filename;
+    const res = await fetch(`/api/admin/event-images/${type}/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+    if (res.ok) renderEventImages(type, (await res.json()).images);
   });
 }
 
