@@ -622,8 +622,22 @@ body.hide-names .avatar-name {
   font-family: system-ui, sans-serif;
   font-weight: 700;
   font-size: 0.9rem;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   animation: popup 3.5s ease forwards;
+}
+
+.event-popup-text {
+  white-space: nowrap;
+}
+
+.event-popup-img {
+  max-width: 180px;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 @keyframes popup {

@@ -1228,7 +1228,7 @@ function showEvent(eventType, event, cast) {
     }
   }
 
-  if (cfg.showText) {
+  if (cfg.showText || cfg.image) {
     const popup = document.createElement('div');
     popup.className = 'event-popup';
     popup.style.left = `${cfg.position.x}%`;
@@ -1236,7 +1236,18 @@ function showEvent(eventType, event, cast) {
     popup.style.color = cfg.color;
     popup.style.fontFamily = cfg.fontFamily && cfg.fontFamily !== 'system-ui' ? `'${cfg.fontFamily}', system-ui` : '';
     popup.style.fontSize = `${cfg.fontSize}px`;
-    popup.textContent = buildEventText(eventType, event, cfg);
+    if (cfg.image) {
+      const img = document.createElement('img');
+      img.className = 'event-popup-img';
+      img.src = `/event-images/${cfg.image}`;
+      popup.appendChild(img);
+    }
+    if (cfg.showText) {
+      const textEl = document.createElement('div');
+      textEl.className = 'event-popup-text';
+      textEl.textContent = buildEventText(eventType, event, cfg);
+      popup.appendChild(textEl);
+    }
     eventLayer.appendChild(popup);
     setTimeout(() => popup.remove(), 3600);
   }

@@ -35,9 +35,10 @@ function sanitizeEventConfig(input, fallback) {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),
     },
-    // pas envoyé par le formulaire de réglages classique — géré à part par l'upload de son,
+    // pas envoyé par le formulaire de réglages classique — géré à part par l'upload de son/image,
     // donc on garde la valeur existante tant qu'on ne reçoit pas explicitement une string ou null
     sound: (typeof input?.sound === 'string' || input?.sound === null) ? input.sound : fallback.sound,
+    image: (typeof input?.image === 'string' || input?.image === null) ? input.image : fallback.image,
   };
 }
 

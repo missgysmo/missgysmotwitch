@@ -1062,6 +1062,7 @@ async function loadSettings() {
     eventFields[type].posX.value = s.events[type].position.x;
     eventFields[type].posY.value = s.events[type].position.y;
     updateSoundStatus(type, s.events[type].sound);
+    if (EVENT_IMAGE_TYPES.includes(type)) updateImageStatus(type, s.events[type].image);
     lastEventFields[type].enabled.checked = s.lastEvents[type].enabled;
     lastEventFields[type].text.value = s.lastEvents[type].text;
     lastEventFields[type].color.value = s.lastEvents[type].color;
@@ -2228,6 +2229,49 @@ document.getElementById('graffiti-reset-btn').addEventListener('click', () => {
 function updateSoundStatus(type, sound) {
   eventFields[type].soundStatus.textContent = sound ? `Son actuel : ${sound.replace(/^[a-zA-Z]+-\d+/, 'fichier')}` : 'Aucun son';
   eventFields[type].soundRemove.hidden = !sound;
+}
+
+// Image des alertes : pour l'instant seule l'alerte "don" a l'UI correspondante dans le dashboard
+// (voir panel.html), mais la route /api/admin/event-image/:type est générique à tous les types.
+const EVENT_IMAGE_TYPES = ['donation'];
+const eventImageFields = {};
+for (const type of EVENT_IMAGE_TYPES) {
+  eventImageFields[type] = {
+    file: document.getElementById(`evt-${type}-image-file`),
+    status: document.getElementById(`evt-${type}-image-status`),
+    remove: document.getElementById(`evt-${type}-image-remove`),
+  };
+}
+
+function updateImageStatus(type, image) {
+  eventImageFields[type].status.textContent = image ? `Image actuelle : ${image.replace(/^[a-zA-Z]+-\d+/, 'fichier')}` : 'Aucune image';
+  eventImageFields[type].remove.hidden = !image;
+}
+
+for (const type of EVENT_IMAGE_TYPES) {
+  eventImageFields[type].file.addEventListener('change', async () => {
+    const file = eventImageFields[type].file.files[0];
+    if (!file) return;
+    eventImageFields[type].status.textContent = 'Envoi...';
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch(`/api/admin/event-image/${type}`, { method: 'POST', body: formData });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'échec');
+      updateImageStatus(type, body.image);
+    } catch (err) {
+      eventImageFields[type].status.textContent = `Échec de l'envoi : ${err.message}`;
+      console.error(err);
+    } finally {
+      eventImageFields[type].file.value = '';
+    }
+  });
+
+  eventImageFields[type].remove.addEventListener('click', async () => {
+    await fetch(`/api/admin/event-image/${type}`, { method: 'DELETE' });
+    updateImageStatus(type, null);
+  });
 }
 
 for (const type of EVENT_TYPES) {

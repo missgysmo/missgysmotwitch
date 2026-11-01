@@ -826,6 +826,11 @@
             <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-donation-sound-file" hidden /></label>
             <button type="button" class="sound-remove-btn" data-type="donation" id="evt-donation-sound-remove" hidden>Retirer</button>
           </div>
+          <div class="sound-row" data-image-row="donation">
+            <span class="sound-status" id="evt-donation-image-status">Aucune image</span>
+            <label class="sound-upload-btn">Choisir une image<input type="file" accept="image/*" id="evt-donation-image-file" hidden /></label>
+            <button type="button" class="image-remove-btn" data-type="donation" id="evt-donation-image-remove" hidden>Retirer</button>
+          </div>
           <button type="button" class="test-event-btn" data-type="donation">Tester cette alerte</button>
         </div>
         <p class="hint">Le test affiche le popup sur <code>/overlay/</code> avec un don fictif de 5€ — pas besoin d'un vrai don ni d'être connecté à Streamlabs pour tester le rendu.</p>

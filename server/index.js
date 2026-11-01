@@ -149,11 +149,14 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
   setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
 }));
 
-// --- Sons des alertes (upload par l'admin, stockés sur le volume persistant) ---
+// --- Sons + images des alertes (upload par l'admin, stockés sur le volume persistant) ---
 const SOUNDS_DIR = path.join(store.DATA_DIR, 'sounds');
 fs.mkdirSync(SOUNDS_DIR, { recursive: true });
 app.use('/sounds', express.static(SOUNDS_DIR, { maxAge: '1y' }));
-app.use(createSoundsRouter({ store, requireAdmin, broadcast, soundsDir: SOUNDS_DIR }));
+const EVENT_IMAGES_DIR = path.join(store.DATA_DIR, 'event-images');
+fs.mkdirSync(EVENT_IMAGES_DIR, { recursive: true });
+app.use('/event-images', express.static(EVENT_IMAGES_DIR, { maxAge: '1y' }));
+app.use(createSoundsRouter({ store, requireAdmin, broadcast, soundsDir: SOUNDS_DIR, eventImagesDir: EVENT_IMAGES_DIR }));
 
 // --- Médias des commandes de chat personnalisées (sons et vidéos, upload par l'admin) ---
 const MEDIA_DIR = path.join(store.DATA_DIR, 'media');
