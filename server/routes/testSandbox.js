@@ -11,6 +11,7 @@ const EVENT_TYPE_MAP = {
   subscribe: 'channel.subscribe',
   cheer: 'channel.cheer',
   raid: 'channel.raid',
+  donation: 'streamlabs.donation',
 };
 
 function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, follower, tamagotchi, store, speciesCatalog }) {
@@ -22,6 +23,7 @@ function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, 
     subscribe: { type: 'channel.subscribe', event: { user_name: 'TestSub', user_login: 'testsub' } },
     cheer: { type: 'channel.cheer', event: { user_name: 'TestCheerer', user_login: 'testcheerer', bits: 100 } },
     raid: { type: 'channel.raid', event: { from_broadcaster_user_name: 'TestRaider', from_broadcaster_user_login: 'testraider', viewers: 25 } },
+    donation: { type: 'streamlabs.donation', event: { user_name: 'TestDonateur', amount: 5, currency: '€', message: 'Ceci est un test !' } },
   };
 
   router.post('/api/admin/test-event/:type', requireAdmin, (req, res) => {
@@ -66,7 +68,9 @@ function createTestSandboxRouter({ requireAdmin, broadcast, broadcastToPreview, 
       ? { from_broadcaster_user_name: user, viewers: Number(req.body?.viewers) || 0 }
       : kind === 'cheer'
         ? { user_name: user, bits: Number(req.body?.bits) || 0 }
-        : { user_name: user };
+        : kind === 'donation'
+          ? { user_name: user, amount: Number(req.body?.amount) || 0, currency: typeof req.body?.currency === 'string' ? req.body.currency.slice(0, 5) : '' }
+          : { user_name: user };
 
     store.setLastEvent(kind, { eventType, event, ts: Date.now() });
     broadcast({ type: 'last-event-preview', eventType, event });

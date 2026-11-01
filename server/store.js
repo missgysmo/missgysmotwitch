@@ -10,6 +10,7 @@ const PEOPLE_PATH = path.join(DATA_DIR, 'people.json');
 const TAMAGOTCHI_PATH = path.join(DATA_DIR, 'tamagotchi.json');
 const VIEWER_NOTES_PATH = path.join(DATA_DIR, 'viewerNotes.json');
 const SPOTIFY_TOKENS_PATH = path.join(DATA_DIR, 'spotifyTokens.json');
+const STREAMLABS_TOKEN_PATH = path.join(DATA_DIR, 'streamlabsToken.json');
 const LAST_EVENTS_PATH = path.join(DATA_DIR, 'lastEvents.json');
 const CUSTOM_SPECIES_PATH = path.join(DATA_DIR, 'customSpecies.json');
 const SPECIES_ENABLED_PATH = path.join(DATA_DIR, 'speciesEnabled.json');
@@ -190,6 +191,7 @@ const DEFAULT_SETTINGS = {
     subscribe: { enabled: true, showText: true, text: '⭐ {user} vient de s\'abonner !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'jump', position: { x: 50, y: 14 }, sound: null },
     cheer: { enabled: true, showText: true, text: '💎 {user} a cheer {bits} bits !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'shake', position: { x: 50, y: 14 }, sound: null },
     raid: { enabled: true, showText: true, text: '🚀 Raid de {user} ({viewers} viewers) !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 }, sound: null },
+    donation: { enabled: true, showText: true, text: '🎁 {user} a fait un don de {amount}{currency} !', color: '#ffffff', fontFamily: 'system-ui', fontSize: 16, reaction: 'bounce', position: { x: 50, y: 14 }, sound: null },
   },
   // Affichage permanent (contrairement aux alertes "events" ci-dessus qui disparaissent après
   // quelques secondes) : reste à l'écran et se met à jour au prochain événement du même type.
@@ -199,6 +201,7 @@ const DEFAULT_SETTINGS = {
     subscribe: { enabled: false, text: 'Dernier sub : {user}', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 7 } },
     cheer: { enabled: false, text: 'Derniers bits : {user} ({bits})', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 12 } },
     raid: { enabled: false, text: 'Dernier raid : {user} ({viewers} viewers)', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 17 } },
+    donation: { enabled: false, text: 'Dernier don : {user} ({amount}{currency})', color: '#ffffff', fontFamily: 'system-ui', fontSize: 18, position: { x: 2, y: 22 } },
   },
 };
 
@@ -420,6 +423,16 @@ function setSpotifyTokens(tokens) {
   writeJson(SPOTIFY_TOKENS_PATH, tokens);
 }
 
+function getStreamlabsToken() {
+  const data = readJson(STREAMLABS_TOKEN_PATH, null);
+  return data?.token || null;
+}
+
+function setStreamlabsToken(token) {
+  if (token) writeJson(STREAMLABS_TOKEN_PATH, { token });
+  else fs.rm(STREAMLABS_TOKEN_PATH, { force: true }, () => {});
+}
+
 function mergeEventConfig(defaults, saved) {
   return { ...defaults, ...(saved || {}), position: { ...defaults.position, ...(saved?.position || {}) } };
 }
@@ -512,12 +525,14 @@ function getSettings() {
       subscribe: mergeEventConfig(DEFAULT_SETTINGS.events.subscribe, saved.events?.subscribe),
       cheer: mergeEventConfig(DEFAULT_SETTINGS.events.cheer, saved.events?.cheer),
       raid: mergeEventConfig(DEFAULT_SETTINGS.events.raid, saved.events?.raid),
+      donation: mergeEventConfig(DEFAULT_SETTINGS.events.donation, saved.events?.donation),
     },
     lastEvents: {
       follow: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.follow, saved.lastEvents?.follow),
       subscribe: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.subscribe, saved.lastEvents?.subscribe),
       cheer: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.cheer, saved.lastEvents?.cheer),
       raid: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.raid, saved.lastEvents?.raid),
+      donation: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.donation, saved.lastEvents?.donation),
     },
   };
   return settingsCache;
@@ -537,6 +552,8 @@ module.exports = {
   setTokens,
   getSpotifyTokens,
   setSpotifyTokens,
+  getStreamlabsToken,
+  setStreamlabsToken,
   getSettings,
   setSettings,
   getCanvas,

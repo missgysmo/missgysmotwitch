@@ -28,6 +28,8 @@ const { createHealthRouter } = require('./routes/health');
 const { createTestSandboxRouter } = require('./routes/testSandbox');
 const { createSpotifyRouter } = require('./routes/spotify');
 const { createTwitchAuthRouter } = require('./routes/twitchAuth');
+const { createStreamlabsService } = require('./streamlabsService');
+const { createStreamlabsRouter } = require('./routes/streamlabs');
 const { createFollowListSyncRouter } = require('./routes/followListSync');
 const { createCustomCommandsRouter } = require('./routes/customCommands');
 const { createMessagesRouter } = require('./routes/messages');
@@ -194,7 +196,7 @@ const { router: spotifyRouter, startPolling: startSpotifyPolling, getLastTrack: 
 });
 app.use(spotifyRouter);
 
-const { router: twitchAuthRouter, startEventSub, getRecentActivity } = createTwitchAuthRouter({
+const { router: twitchAuthRouter, startEventSub, getRecentActivity, recordActivity } = createTwitchAuthRouter({
   store, broadcast, follower, tamagotchi, botHealth, logError: logger.logError,
   CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI,
 });
@@ -203,6 +205,11 @@ app.use(twitchAuthRouter);
 app.use(createFollowListSyncRouter({
   store, requireAdmin, broadcast, follower, getRecentActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,
 }));
+
+// Don caritatif (Streamlabs) : même pipeline d'alerte que les events Twitch (voir recordActivity
+// dans twitchAuth.js), juste déclenché par le Socket API de Streamlabs plutôt qu'EventSub.
+const streamlabs = createStreamlabsService({ store, broadcast, follower, recordActivity, logError: logger.logError });
+app.use(createStreamlabsRouter({ store, requireAdmin, streamlabs }));
 
 // --- WebSocket ---
 const server = http.createServer(app);

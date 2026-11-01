@@ -336,6 +336,49 @@ document.getElementById('followlist-resync-btn')?.addEventListener('click', asyn
   }
 });
 
+async function loadStreamlabsStatus() {
+  const el = document.getElementById('streamlabs-status');
+  if (!el) return;
+  try {
+    const res = await fetch('/api/admin/streamlabs/status');
+    const data = await res.json();
+    if (data.connected) el.textContent = 'Statut : ✅ connecté';
+    else if (data.hasToken) el.textContent = 'Statut : ⚠️ token enregistré mais pas connecté (vérifie le token)';
+    else el.textContent = 'Statut : ❌ pas de token enregistré';
+  } catch {
+    el.textContent = 'Statut : erreur de chargement';
+  }
+}
+
+document.getElementById('streamlabs-connect-btn')?.addEventListener('click', async () => {
+  const statusMsgEl = document.getElementById('streamlabs-status-msg');
+  const token = document.getElementById('streamlabs-token').value.trim();
+  statusMsgEl.hidden = false;
+  if (!token) { statusMsgEl.textContent = 'Colle ton token avant de te connecter.'; return; }
+  statusMsgEl.textContent = 'Connexion...';
+  try {
+    const res = await fetch('/api/admin/streamlabs/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'échec');
+    document.getElementById('streamlabs-token').value = '';
+    statusMsgEl.textContent = 'Token enregistré.';
+    setTimeout(loadStreamlabsStatus, 1000);
+  } catch (err) {
+    statusMsgEl.textContent = `Échec : ${err.message}`;
+  }
+});
+
+document.getElementById('streamlabs-disconnect-btn')?.addEventListener('click', async () => {
+  if (!confirm('Déconnecter Streamlabs ?')) return;
+  await fetch('/api/admin/streamlabs/token', { method: 'DELETE' });
+  loadStreamlabsStatus();
+});
+
+loadStreamlabsStatus();
+
 const PEOPLE_KIND_LABELS = { followers: '💜 Follower', subs: '⭐ Sub', cheers: '💎 Bits', raids: '🚀 Raid' };
 
 function renderPeopleManualList(people) {
@@ -763,7 +806,7 @@ document.getElementById('thankyou-download-btn')?.addEventListener('click', () =
   }
 });
 
-const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid'];
+const EVENT_TYPES = ['follow', 'subscribe', 'cheer', 'raid', 'donation'];
 const eventFields = {};
 for (const type of EVENT_TYPES) {
   eventFields[type] = {
@@ -2282,6 +2325,7 @@ document.querySelectorAll('.manual-lastevent-btn').forEach((btn) => {
     const body = { user };
     if (extraEl && type === 'cheer') body.bits = Number(extraEl.value) || 0;
     if (extraEl && type === 'raid') body.viewers = Number(extraEl.value) || 0;
+    if (extraEl && type === 'donation') body.amount = Number(extraEl.value) || 0;
 
     btn.disabled = true;
     const original = btn.textContent;

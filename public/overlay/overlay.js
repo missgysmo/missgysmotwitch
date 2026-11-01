@@ -28,7 +28,7 @@ const messageBoardEls = new Map(); // boardId -> { tickerEl, tickerTrackEl, pane
 // sinon applyLastEventsLayout() planterait en référençant un objet pas encore déclaré), reste
 // à l'écran, se met juste à jour au prochain événement du même type.
 const lastEventEls = {};
-for (const key of ['follow', 'subscribe', 'cheer', 'raid']) {
+for (const key of ['follow', 'subscribe', 'cheer', 'raid', 'donation']) {
   const el = document.createElement('div');
   el.className = 'last-event';
   el.style.display = 'none';
@@ -507,6 +507,7 @@ const ACTIVITY_LABELS = {
   subscribe: (a) => `⭐ ${a.displayName} vient de s'abonner !`,
   cheer: (a) => `💎 ${a.displayName} a cheer ${a.extra} bits !`,
   raid: (a) => `🚀 Raid de ${a.displayName} (${a.extra} viewers) !`,
+  donation: (a) => `🎁 ${a.displayName} a fait un don de ${a.extra} !`,
 };
 
 function renderActivity(recent) {
@@ -927,6 +928,7 @@ const EVENT_KEYS = {
   'channel.subscribe': 'subscribe',
   'channel.cheer': 'cheer',
   'channel.raid': 'raid',
+  'streamlabs.donation': 'donation',
 };
 
 function applyLastEventsLayout() {
@@ -1099,6 +1101,9 @@ function buildEventText(eventType, event, cfg) {
     user: event.user_name || event.from_broadcaster_user_name || 'Quelqu\'un',
     bits: event.bits,
     viewers: event.viewers,
+    amount: event.amount,
+    currency: event.currency,
+    message: event.message,
   };
   return cfg.text.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
 }

@@ -60,6 +60,13 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
       login = event.from_broadcaster_user_login;
       extra = event.viewers;
       store.addPerson('raids', login, displayName, undefined, extra);
+    } else if (type === 'streamlabs.donation') {
+      // Pas de store.addPerson ici : un don Streamlabs n'est pas forcément lié à un compte Twitch
+      // (nom libre saisi sur la page de don), donc pas de pseudo fiable pour la liste followers/subs.
+      kind = 'donation';
+      displayName = event.user_name;
+      login = null;
+      extra = `${event.amount}${event.currency || ''}`;
     } else {
       return;
     }
@@ -127,7 +134,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
     }
   }
 
-  return { router, startEventSub, getRecentActivity: () => recentActivity };
+  return { router, startEventSub, getRecentActivity: () => recentActivity, recordActivity };
 }
 
 module.exports = { createTwitchAuthRouter };
