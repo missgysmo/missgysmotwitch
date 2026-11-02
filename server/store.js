@@ -11,6 +11,7 @@ const TAMAGOTCHI_PATH = path.join(DATA_DIR, 'tamagotchi.json');
 const VIEWER_NOTES_PATH = path.join(DATA_DIR, 'viewerNotes.json');
 const SPOTIFY_TOKENS_PATH = path.join(DATA_DIR, 'spotifyTokens.json');
 const STREAMLABS_TOKEN_PATH = path.join(DATA_DIR, 'streamlabsToken.json');
+const OBS_CONFIG_PATH = path.join(DATA_DIR, 'obsConfig.json');
 const LAST_EVENTS_PATH = path.join(DATA_DIR, 'lastEvents.json');
 const DONATION_TOTAL_PATH = path.join(DATA_DIR, 'donationTotal.json');
 const CUSTOM_SPECIES_PATH = path.join(DATA_DIR, 'customSpecies.json');
@@ -85,6 +86,12 @@ const DEFAULT_SETTINGS = {
     enabled: false,
     sound: null,
     cooldownSeconds: 4,
+  },
+  clipCommand: {
+    enabled: false,
+    command: '!clip',
+    followersAllowed: true,
+    cooldownSeconds: 30,
   },
   activityFeed: {
     enabled: false,
@@ -461,6 +468,15 @@ function setStreamlabsToken(token) {
   else fs.rm(STREAMLABS_TOKEN_PATH, { force: true }, () => {});
 }
 
+function getObsConfig() {
+  return readJson(OBS_CONFIG_PATH, null);
+}
+
+function setObsConfig(config) {
+  if (config) writeJson(OBS_CONFIG_PATH, config);
+  else fs.rm(OBS_CONFIG_PATH, { force: true }, () => {});
+}
+
 function mergeEventConfig(defaults, saved) {
   return { ...defaults, ...(saved || {}), position: { ...defaults.position, ...(saved?.position || {}) } };
 }
@@ -495,6 +511,10 @@ function getSettings() {
     chatSound: {
       ...DEFAULT_SETTINGS.chatSound,
       ...(saved.chatSound || {}),
+    },
+    clipCommand: {
+      ...DEFAULT_SETTINGS.clipCommand,
+      ...(saved.clipCommand || {}),
     },
     activityFeed: {
       ...DEFAULT_SETTINGS.activityFeed,
@@ -587,6 +607,8 @@ module.exports = {
   setSpotifyTokens,
   getStreamlabsToken,
   setStreamlabsToken,
+  getObsConfig,
+  setObsConfig,
   getSettings,
   setSettings,
   getCanvas,

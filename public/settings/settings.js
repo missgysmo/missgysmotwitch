@@ -393,6 +393,71 @@ document.getElementById('streamlabs-disconnect-btn')?.addEventListener('click', 
 
 loadStreamlabsStatus();
 
+async function loadObsStatus() {
+  const el = document.getElementById('obs-status');
+  if (!el) return;
+  try {
+    const res = await fetch('/api/admin/obs/status');
+    const data = await res.json();
+    if (data.connected) el.textContent = 'Statut : ✅ connecté';
+    else if (data.hasConfig) el.textContent = 'Statut : ⚠️ configuré mais pas connecté (vérifie qu\'OBS est ouvert et le serveur WebSocket activé)';
+    else el.textContent = 'Statut : ❌ pas encore configuré';
+    if (data.host) document.getElementById('obs-host').value = data.host;
+    if (data.port) document.getElementById('obs-port').value = data.port;
+  } catch {
+    el.textContent = 'Statut : erreur de chargement';
+  }
+}
+
+document.getElementById('obs-connect-btn')?.addEventListener('click', async () => {
+  const statusMsgEl = document.getElementById('obs-status-msg');
+  const host = document.getElementById('obs-host').value.trim();
+  const port = document.getElementById('obs-port').value;
+  const password = document.getElementById('obs-password').value;
+  statusMsgEl.hidden = false;
+  if (!host || !port) { statusMsgEl.textContent = 'Renseigne au moins l\'adresse et le port.'; return; }
+  statusMsgEl.textContent = 'Connexion...';
+  try {
+    const res = await fetch('/api/admin/obs/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, port: Number(port), password }),
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'échec');
+    document.getElementById('obs-password').value = '';
+    statusMsgEl.textContent = 'Configuration enregistrée.';
+    setTimeout(loadObsStatus, 1000);
+  } catch (err) {
+    statusMsgEl.textContent = `Échec : ${err.message}`;
+  }
+});
+
+document.getElementById('obs-disconnect-btn')?.addEventListener('click', async () => {
+  if (!confirm('Déconnecter OBS ?')) return;
+  await fetch('/api/admin/obs/config', { method: 'DELETE' });
+  loadObsStatus();
+});
+
+document.getElementById('clip-test-btn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('clip-test-btn');
+  const statusEl = document.getElementById('clip-test-status');
+  btn.disabled = true;
+  statusEl.hidden = false;
+  statusEl.textContent = 'Création du clip...';
+  try {
+    const res = await fetch('/api/admin/obs/clip', { method: 'POST' });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = 'Clip créé !';
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+loadObsStatus();
+
 async function loadDonationTotal() {
   const el = document.getElementById('donationtotal-current');
   if (!el) return;
@@ -1233,6 +1298,10 @@ async function loadSettings() {
   ccPlayerFields.posY.value = s.customCommandsPlayer.position.y;
   ccPlayerFields.width.value = s.customCommandsPlayer.position.width;
   ccPlayerFields.height.value = s.customCommandsPlayer.position.height;
+  document.getElementById('clip-enabled').checked = s.clipCommand.enabled;
+  document.getElementById('clip-command').value = s.clipCommand.command;
+  document.getElementById('clip-followers').checked = s.clipCommand.followersAllowed;
+  document.getElementById('clip-cooldown').value = s.clipCommand.cooldownSeconds;
   donationTotalFields.enabled.checked = s.donationTotal.enabled;
   donationTotalFields.text.value = s.donationTotal.text;
   donationTotalFields.currency.value = s.donationTotal.currency;
@@ -1431,6 +1500,12 @@ async function saveSettings() {
         width: Number(ccPlayerFields.width.value),
         height: Number(ccPlayerFields.height.value),
       },
+    },
+    clipCommand: {
+      enabled: document.getElementById('clip-enabled').checked,
+      command: document.getElementById('clip-command').value,
+      followersAllowed: document.getElementById('clip-followers').checked,
+      cooldownSeconds: Number(document.getElementById('clip-cooldown').value),
     },
     donationTotal: {
       enabled: donationTotalFields.enabled.checked,

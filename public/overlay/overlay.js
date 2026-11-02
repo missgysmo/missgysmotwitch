@@ -1236,6 +1236,19 @@ function ensureCastAvatars(cast) {
   }
 }
 
+// Petite confirmation visuelle qu'un clip vient d'être sauvegardé côté OBS (déclenché par !clip ou
+// le bouton "Tester" du dashboard) — pas de configuration dédiée, volontairement minimal.
+function showClipToast() {
+  if (!moduleEnabled('alerts')) return;
+  const toast = document.createElement('div');
+  toast.className = 'event-popup clip-toast';
+  toast.style.left = '50%';
+  toast.style.top = '90%';
+  toast.textContent = '🎬 Clip créé !';
+  eventLayer.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
 function showEvent(eventType, event, cast) {
   if (!moduleEnabled('alerts')) return;
   const key = EVENT_KEYS[eventType];
@@ -1319,6 +1332,7 @@ function connect() {
     if (data.type === 'last-event-preview') updateLastEvent(data.eventType, data.event);
     if (data.type === 'last-event-clear') { const el = lastEventEls[data.kind]; if (el) el.textContent = ''; }
     if (data.type === 'donation-total') { donationTotalAmount = data.total; renderDonationTotal(); }
+    if (data.type === 'clip-created') showClipToast();
     if (data.type === 'chat') showChatBubble(data.login, data.text);
     if (data.type === 'timer') handleTimerMessage(data);
     if (data.type === 'canvas-init') initGraffitiCanvas(data);

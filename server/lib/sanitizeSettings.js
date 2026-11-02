@@ -116,6 +116,17 @@ function sanitizeChatSoundConfig(input, fallback) {
   };
 }
 
+const CLIP_COMMAND_RE = /^!\S{1,20}$/;
+
+function sanitizeClipCommandConfig(input, fallback) {
+  return {
+    enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
+    command: typeof input?.command === 'string' && CLIP_COMMAND_RE.test(input.command.trim()) ? input.command.trim().toLowerCase() : fallback.command,
+    followersAllowed: typeof input?.followersAllowed === 'boolean' ? input.followersAllowed : fallback.followersAllowed,
+    cooldownSeconds: clamp(input?.cooldownSeconds, 5, 600, fallback.cooldownSeconds),
+  };
+}
+
 function sanitizeActivityFeedConfig(input, fallback) {
   return {
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
@@ -315,7 +326,7 @@ function sanitizeSettings(body, current) {
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect,
     nameTag, events, lastEvents, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
     activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer,
-    commandsList, coHosts, donationTotal,
+    commandsList, coHosts, donationTotal, clipCommand,
   } = body;
   const d = current;
 
@@ -370,6 +381,7 @@ function sanitizeSettings(body, current) {
     graffiti: sanitizeGraffitiConfig(graffiti, d.graffiti),
     chatOverlay: sanitizeChatOverlayConfig(chatOverlay, d.chatOverlay),
     chatSound: sanitizeChatSoundConfig(chatSound, d.chatSound),
+    clipCommand: sanitizeClipCommandConfig(clipCommand, d.clipCommand),
     activityFeed: sanitizeActivityFeedConfig(activityFeed, d.activityFeed),
     followList: sanitizeFollowListConfig(followList, d.followList),
     tamagotchi: sanitizeTamagotchiConfig(tamagotchi, d.tamagotchi),

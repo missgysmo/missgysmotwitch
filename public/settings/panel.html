@@ -40,6 +40,7 @@
           <button type="button" class="nav-tab-btn" data-tab="cheer"><span class="nav-icon">💎</span>Cheer</button>
           <button type="button" class="nav-tab-btn" data-tab="raid"><span class="nav-icon">🚀</span>Raid</button>
           <button type="button" class="nav-tab-btn" data-tab="donation"><span class="nav-icon">🎁</span>Don caritatif</button>
+          <button type="button" class="nav-tab-btn" data-tab="clips"><span class="nav-icon">🎬</span>Clips (OBS)</button>
           <button type="button" class="nav-tab-btn" data-tab="lastevents"><span class="nav-icon">📌</span>Derniers événements</button>
         </div>
         <div class="nav-subtabs" data-cat-group="tools" hidden>
@@ -862,6 +863,38 @@
           <button type="button" id="donationtotal-set-btn">Définir</button>
           <button type="button" id="donationtotal-reset-btn">Remettre à zéro</button>
         </div>
+      </fieldset>
+
+      <fieldset data-nav-panel="clips" hidden>
+        <legend>Clips OBS à la demande</legend>
+        <p class="hint">
+          Permet de créer un clip (les dernières secondes du stream) directement depuis OBS, sur commande du tchat
+          ou d'un clic dans ce dashboard. Deux prérequis côté OBS :
+        </p>
+        <ol class="hint">
+          <li>Dans OBS : <b>Outils → Paramètres du serveur WebSocket</b> → active le serveur, note le port et le mot de passe (ou désactive l'authentification).</li>
+          <li>Dans OBS : <b>Paramètres → Sortie → Replay Buffer</b> → active-le ET démarre-le (bouton "Démarrer le Replay Buffer" dans le panneau Contrôles) avant de streamer. Sans ça, "sauvegarder" n'a rien à sauvegarder.</li>
+        </ol>
+
+        <h3>Connexion à OBS</h3>
+        <p id="obs-status" class="hint">Statut : chargement...</p>
+        <label>Adresse IP <input type="text" id="obs-host" placeholder="127.0.0.1" /></label>
+        <label>Port <input type="number" id="obs-port" placeholder="4455" /></label>
+        <label>Mot de passe <input type="password" id="obs-password" placeholder="Laisse vide si l'authentification est désactivée" autocomplete="off" /></label>
+        <button type="button" id="obs-connect-btn">🔌 Connecter</button>
+        <button type="button" id="obs-disconnect-btn">⛔ Déconnecter</button>
+        <p id="obs-status-msg" class="hint" hidden></p>
+
+        <h3>Commande de tchat</h3>
+        <label><input type="checkbox" id="clip-enabled" /> Activer la commande de clip</label>
+        <label>Commande de tchat <input type="text" id="clip-command" maxlength="21" placeholder="!clip" /></label>
+        <label><input type="checkbox" id="clip-followers" /> Autoriser les followers (sinon réservée à toi)</label>
+        <label>Cooldown (secondes) <input type="number" id="clip-cooldown" min="5" max="600" /></label>
+
+        <h3>Tester</h3>
+        <button type="button" id="clip-test-btn">🎬 Créer un clip maintenant</button>
+        <p id="clip-test-status" class="hint" hidden></p>
+        <p class="hint">Déclenche un vrai clip sur OBS (pas de simulation possible) — vérifie qu'il apparaît bien dans ton dossier de replays.</p>
       </fieldset>
 
       <fieldset data-nav-panel="lastevents" hidden>
