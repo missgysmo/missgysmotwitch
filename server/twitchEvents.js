@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const store = require('./store');
 
 const EVENTSUB_WS_URL = 'wss://eventsub.wss.twitch.tv/ws';
-const SCOPES = ['moderator:read:followers', 'channel:read:subscriptions', 'bits:read', 'channel:manage:redemptions'];
+const SCOPES = ['moderator:read:followers', 'channel:read:subscriptions', 'bits:read', 'channel:manage:redemptions', 'clips:edit'];
 
 function getAuthUrl({ clientId, redirectUri, state }) {
   const params = new URLSearchParams({
@@ -98,6 +98,26 @@ async function getAllFollowers({ clientId, clientSecret, broadcasterId }) {
     cursor = body.pagination?.cursor || null;
   } while (cursor);
   return results;
+}
+
+// Clip natif Twitch (scope clips:edit) : pas besoin d'OBS ni de rien côté PC, Twitch génère le clip
+// à partir de son propre buffer vidéo côté serveur. Échoue si la chaîne n'est pas en direct — Twitch
+// ne garde pas de buffer vidéo hors live.
+async function createClip({ clientId, clientSecret, broadcasterId }) {
+  const params = new URLSearchParams({ broadcaster_id: broadcasterId });
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/clips?${params.toString()}`,
+    { method: 'POST', headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
+  if (!res.ok) {
+    const text = await res.text();
+    if (res.status === 404) throw new Error('Impossible de créer un clip : la chaîne doit être en direct.');
+    throw new Error(`createClip failed: ${res.status} ${text}`);
+  }
+  const body = await res.json();
+  const clip = body.data?.[0];
+  if (!clip) throw new Error('Twitch n\'a renvoyé aucun clip.');
+  return { id: clip.id, editUrl: clip.edit_url };
 }
 
 // Idem pour les abonnés actuels — nécessite le token du streamer lui-même (scope channel:read:subscriptions).
@@ -300,5 +320,5 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
 
 module.exports = {
   getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile,
-  getAllFollowers, getAllSubscribers, connectEventSub, createCustomReward, deleteCustomReward, updateRedemptionStatus,
+  getAllFollowers, getAllSubscribers, connectEventSub, createCustomReward, deleteCustomReward, updateRedemptionStatus, createClip,
 };

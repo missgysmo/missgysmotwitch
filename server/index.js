@@ -30,8 +30,8 @@ const { createSpotifyRouter } = require('./routes/spotify');
 const { createTwitchAuthRouter } = require('./routes/twitchAuth');
 const { createStreamlabsService } = require('./streamlabsService');
 const { createStreamlabsRouter } = require('./routes/streamlabs');
-const { createObsService } = require('./obsService');
-const { createObsRouter } = require('./routes/obs');
+const { createClipService } = require('./clipService');
+const { createClipsRouter } = require('./routes/clips');
 const { createFollowListSyncRouter } = require('./routes/followListSync');
 const { createCustomCommandsRouter } = require('./routes/customCommands');
 const { createMessagesRouter } = require('./routes/messages');
@@ -106,7 +106,7 @@ const chatTracker = createChatTracker(CHANNEL, {
 
       tamagotchi.handleChatMessage(login, message, isFollower);
       customCommands.handleChatMessage(login, message, isFollower);
-      obs.handleChatMessage(login, message, isFollower).catch((err) => logger.logError('obs-clip-chat', err));
+      clipService.handleChatMessage(login, message, isFollower).catch((err) => logger.logError('clip-chat', err));
     } catch (err) {
       logger.logError('chatTracker.onMessage', err);
     }
@@ -217,9 +217,9 @@ app.use(createFollowListSyncRouter({
 const streamlabs = createStreamlabsService({ store, broadcast, follower, recordActivity, logError: logger.logError });
 app.use(createStreamlabsRouter({ store, requireAdmin, broadcast, streamlabs }));
 
-// Clips OBS à la demande (!clip dans le tchat, ou bouton "Tester" du dashboard) : voir obsService.js.
-const obs = createObsService({ store, broadcast, logError: logger.logError, isChannelOwner: follower.isChannelOwner });
-app.use(createObsRouter({ store, requireAdmin, obs }));
+// Clips à la demande (!clip dans le tchat, ou bouton "Tester" du dashboard) : voir clipService.js.
+const clipService = createClipService({ store, broadcast, twitchEvents, follower, logError: logger.logError, CLIENT_ID, CLIENT_SECRET });
+app.use(createClipsRouter({ requireAdmin, clipService }));
 
 // --- WebSocket ---
 const server = http.createServer(app);

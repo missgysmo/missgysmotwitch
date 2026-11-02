@@ -866,24 +866,17 @@
       </fieldset>
 
       <fieldset data-nav-panel="clips" hidden>
-        <legend>Clips OBS à la demande</legend>
+        <legend>Clips à la demande</legend>
         <p class="hint">
-          Permet de créer un clip (les dernières secondes du stream) directement depuis OBS, sur commande du tchat
-          ou d'un clic dans ce dashboard. Deux prérequis côté OBS :
+          Crée un clip Twitch (les ~30 dernières secondes) sur commande du tchat ou d'un clic — via la fonction native
+          de Twitch, donc rien à installer ni à lancer de ton côté. Le clip apparaît ensuite dans ton Créateur de
+          Contenu Twitch, comme n'importe quel clip. Ça ne marche que si tu es en direct.
         </p>
-        <ol class="hint">
-          <li>Dans OBS : <b>Outils → Paramètres du serveur WebSocket</b> → active le serveur, note le port et le mot de passe (ou désactive l'authentification).</li>
-          <li>Dans OBS : <b>Paramètres → Sortie → Replay Buffer</b> → active-le ET démarre-le (bouton "Démarrer le Replay Buffer" dans le panneau Contrôles) avant de streamer. Sans ça, "sauvegarder" n'a rien à sauvegarder.</li>
-        </ol>
-
-        <h3>Connexion à OBS</h3>
-        <p id="obs-status" class="hint">Statut : chargement...</p>
-        <label>Adresse IP <input type="text" id="obs-host" placeholder="127.0.0.1" /></label>
-        <label>Port <input type="number" id="obs-port" placeholder="4455" /></label>
-        <label>Mot de passe <input type="password" id="obs-password" placeholder="Laisse vide si l'authentification est désactivée" autocomplete="off" /></label>
-        <button type="button" id="obs-connect-btn">🔌 Connecter</button>
-        <button type="button" id="obs-disconnect-btn">⛔ Déconnecter</button>
-        <p id="obs-status-msg" class="hint" hidden></p>
+        <p class="hint">
+          ⚠️ Si c'est la première fois que tu actives cette fonctionnalité : il faut réautoriser l'app une fois
+          (nouvelle permission nécessaire). Va sur <code>/auth</code> depuis ton navigateur, reconnecte-toi à Twitch,
+          puis redémarre le serveur si on te le demande.
+        </p>
 
         <h3>Commande de tchat</h3>
         <label><input type="checkbox" id="clip-enabled" /> Activer la commande de clip</label>
@@ -894,7 +887,7 @@
         <h3>Tester</h3>
         <button type="button" id="clip-test-btn">🎬 Créer un clip maintenant</button>
         <p id="clip-test-status" class="hint" hidden></p>
-        <p class="hint">Déclenche un vrai clip sur OBS (pas de simulation possible) — vérifie qu'il apparaît bien dans ton dossier de replays.</p>
+        <p class="hint">Déclenche un vrai clip Twitch (pas de simulation possible) — tu dois être en direct pour que ça marche.</p>
       </fieldset>
 
       <fieldset data-nav-panel="lastevents" hidden>

@@ -393,51 +393,6 @@ document.getElementById('streamlabs-disconnect-btn')?.addEventListener('click', 
 
 loadStreamlabsStatus();
 
-async function loadObsStatus() {
-  const el = document.getElementById('obs-status');
-  if (!el) return;
-  try {
-    const res = await fetch('/api/admin/obs/status');
-    const data = await res.json();
-    if (data.connected) el.textContent = 'Statut : ✅ connecté';
-    else if (data.hasConfig) el.textContent = 'Statut : ⚠️ configuré mais pas connecté (vérifie qu\'OBS est ouvert et le serveur WebSocket activé)';
-    else el.textContent = 'Statut : ❌ pas encore configuré';
-    if (data.host) document.getElementById('obs-host').value = data.host;
-    if (data.port) document.getElementById('obs-port').value = data.port;
-  } catch {
-    el.textContent = 'Statut : erreur de chargement';
-  }
-}
-
-document.getElementById('obs-connect-btn')?.addEventListener('click', async () => {
-  const statusMsgEl = document.getElementById('obs-status-msg');
-  const host = document.getElementById('obs-host').value.trim();
-  const port = document.getElementById('obs-port').value;
-  const password = document.getElementById('obs-password').value;
-  statusMsgEl.hidden = false;
-  if (!host || !port) { statusMsgEl.textContent = 'Renseigne au moins l\'adresse et le port.'; return; }
-  statusMsgEl.textContent = 'Connexion...';
-  try {
-    const res = await fetch('/api/admin/obs/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ host, port: Number(port), password }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error || 'échec');
-    document.getElementById('obs-password').value = '';
-    statusMsgEl.textContent = 'Configuration enregistrée.';
-    setTimeout(loadObsStatus, 1000);
-  } catch (err) {
-    statusMsgEl.textContent = `Échec : ${err.message}`;
-  }
-});
-
-document.getElementById('obs-disconnect-btn')?.addEventListener('click', async () => {
-  if (!confirm('Déconnecter OBS ?')) return;
-  await fetch('/api/admin/obs/config', { method: 'DELETE' });
-  loadObsStatus();
-});
-
 document.getElementById('clip-test-btn')?.addEventListener('click', async () => {
   const btn = document.getElementById('clip-test-btn');
   const statusEl = document.getElementById('clip-test-status');
@@ -445,7 +400,7 @@ document.getElementById('clip-test-btn')?.addEventListener('click', async () => 
   statusEl.hidden = false;
   statusEl.textContent = 'Création du clip...';
   try {
-    const res = await fetch('/api/admin/obs/clip', { method: 'POST' });
+    const res = await fetch('/api/admin/clip', { method: 'POST' });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || 'échec');
     statusEl.textContent = 'Clip créé !';
@@ -455,8 +410,6 @@ document.getElementById('clip-test-btn')?.addEventListener('click', async () => 
     btn.disabled = false;
   }
 });
-
-loadObsStatus();
 
 async function loadDonationTotal() {
   const el = document.getElementById('donationtotal-current');
