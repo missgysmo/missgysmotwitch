@@ -1,4 +1,8 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const multer = require('multer');
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 const GRAFFITI_COLORS = {
@@ -21,9 +25,26 @@ function resolveGraffitiColor(arg) {
   return HEX_COLOR.test(hex) ? hex : null;
 }
 
+const TEMPLATE_MAX_BYTES = 4 * 1024 * 1024;
+const SAFE_TEMPLATE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
+const MAX_TEMPLATES = 20;
+
 // Graffiti collectif (page /canvas/, réservée aux followers comme les avatars) + statut de suivi public.
-function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower, speciesCatalog }) {
+function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower, speciesCatalog, templatesDir }) {
   const router = express.Router();
+
+  const templateUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: TEMPLATE_MAX_BYTES },
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.startsWith('image/')) return cb(new Error('Le fichier doit être une image.'));
+      cb(null, true);
+    },
+  });
+
+  function findTemplate(settings, id) {
+    return settings.graffitiTemplates.find((t) => t.id === id);
+  }
 
   // login (lowercase) -> timestamp du dernier pixel/sticker placé
   const graffitiCooldowns = new Map();
@@ -37,7 +58,84 @@ function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast
   router.get('/api/canvas', (req, res) => {
     const settings = store.getSettings();
     const canvas = store.getCanvas();
-    res.json({ ...canvas, cooldownSeconds: settings.graffiti.cooldownSeconds, enabled: settings.graffiti.enabled });
+    const activeTemplate = settings.activeGraffitiTemplateId
+      ? findTemplate(settings, settings.activeGraffitiTemplateId) || null
+      : null;
+    res.json({
+      ...canvas,
+      cooldownSeconds: settings.graffiti.cooldownSeconds,
+      enabled: settings.graffiti.enabled,
+      activeTemplate,
+    });
+  });
+
+  // Modèles de dessin (images de référence que les viewers peuvent reproduire sur le graffiti) :
+  // gérés par la streameuse, partagés par tout le monde sur /canvas (contrairement au "modèle perso"
+  // que chaque viewer peut aussi charger localement, qui lui reste propre et n'est jamais envoyé ici).
+  router.get('/api/admin/graffiti-templates', requireAdmin, (req, res) => {
+    const settings = store.getSettings();
+    res.json({ templates: settings.graffitiTemplates, activeId: settings.activeGraffitiTemplateId });
+  });
+
+  router.post('/api/admin/graffiti-templates', requireAdmin, (req, res) => {
+    templateUpload.single('image')(req, res, (err) => {
+      if (err) {
+        const message = err.code === 'LIMIT_FILE_SIZE' ? `Image trop volumineuse (${TEMPLATE_MAX_BYTES / 1024 / 1024} Mo max)` : err.message;
+        return res.status(400).json({ error: message });
+      }
+      const settings = store.getSettings();
+      if (settings.graffitiTemplates.length >= MAX_TEMPLATES) return res.status(400).json({ error: `Maximum ${MAX_TEMPLATES} modèles.` });
+      if (!req.file) return res.status(400).json({ error: 'image manquante ou format invalide' });
+
+      const label = typeof req.body?.label === 'string' && req.body.label.trim() ? req.body.label.trim().slice(0, 60) : 'Sans titre';
+      const rawExt = path.extname(req.file.originalname).toLowerCase();
+      const ext = SAFE_TEMPLATE_EXT.has(rawExt) ? rawExt : '.png';
+      const id = crypto.randomBytes(8).toString('hex');
+      const filename = `template-${id}${ext}`;
+      fs.writeFileSync(path.join(templatesDir, filename), req.file.buffer);
+
+      settings.graffitiTemplates.push({ id, label, image: filename });
+      store.setSettings(settings);
+      broadcast({ type: 'settings', settings });
+      res.json({ ok: true, templates: settings.graffitiTemplates });
+    });
+  });
+
+  router.delete('/api/admin/graffiti-templates/:id', requireAdmin, (req, res) => {
+    const settings = store.getSettings();
+    const tpl = findTemplate(settings, req.params.id);
+    if (!tpl) return res.status(404).json({ error: 'modèle introuvable' });
+
+    fs.rm(path.join(templatesDir, tpl.image), { force: true }, () => {});
+    settings.graffitiTemplates = settings.graffitiTemplates.filter((t) => t.id !== tpl.id);
+    if (settings.activeGraffitiTemplateId === tpl.id) {
+      settings.activeGraffitiTemplateId = null;
+      broadcast({ type: 'graffiti-template', template: null });
+    }
+    store.setSettings(settings);
+    broadcast({ type: 'settings', settings });
+    res.json({ ok: true, templates: settings.graffitiTemplates });
+  });
+
+  router.post('/api/admin/graffiti-templates/:id/activate', requireAdmin, (req, res) => {
+    const settings = store.getSettings();
+    const tpl = findTemplate(settings, req.params.id);
+    if (!tpl) return res.status(404).json({ error: 'modèle introuvable' });
+
+    settings.activeGraffitiTemplateId = tpl.id;
+    store.setSettings(settings);
+    broadcast({ type: 'settings', settings });
+    broadcast({ type: 'graffiti-template', template: tpl });
+    res.json({ ok: true });
+  });
+
+  router.post('/api/admin/graffiti-templates/active/clear', requireAdmin, (req, res) => {
+    const settings = store.getSettings();
+    settings.activeGraffitiTemplateId = null;
+    store.setSettings(settings);
+    broadcast({ type: 'settings', settings });
+    broadcast({ type: 'graffiti-template', template: null });
+    res.json({ ok: true });
   });
 
   router.get('/api/follow-status/:login', publicApiRateLimit, async (req, res) => {

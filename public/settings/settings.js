@@ -2329,6 +2329,75 @@ document.getElementById('graffiti-reset-btn').addEventListener('click', () => {
   fetch('/api/admin/canvas/reset', { method: 'POST' });
 });
 
+function renderGraffitiTemplates(templates, activeId) {
+  const listEl = document.getElementById('graffiti-templates-list');
+  if (!listEl) return;
+  if (!templates.length) {
+    listEl.innerHTML = '<p class="hint">Aucun modèle pour le moment.</p>';
+    return;
+  }
+  listEl.innerHTML = templates.map((t) => `
+    <div class="cc-card" data-id="${t.id}">
+      <div class="cc-card-head">
+        <img src="/graffiti-templates/${escapeHtmlPanel(t.image)}" alt="" style="height:40px;border-radius:4px" />
+        <span class="cc-card-title">${escapeHtmlPanel(t.label)}</span>
+        <span class="cc-badge ${t.id === activeId ? '' : 'cc-badge-owner'}">${t.id === activeId ? '✅ Actif' : ''}</span>
+        <div class="cc-card-actions">
+          <button type="button" class="graffiti-template-activate-btn" ${t.id === activeId ? 'disabled' : ''}>Activer</button>
+          <button type="button" class="graffiti-template-remove-btn">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadGraffitiTemplates() {
+  const res = await fetch('/api/admin/graffiti-templates');
+  if (!res.ok) return;
+  const data = await res.json();
+  renderGraffitiTemplates(data.templates, data.activeId);
+}
+loadGraffitiTemplates();
+
+document.getElementById('graffiti-template-file')?.addEventListener('change', async () => {
+  const fileEl = document.getElementById('graffiti-template-file');
+  const file = fileEl.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('graffiti-template-status');
+  statusEl.hidden = false;
+  statusEl.textContent = 'Envoi...';
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('label', document.getElementById('graffiti-template-label').value);
+  try {
+    const res = await fetch('/api/admin/graffiti-templates', { method: 'POST', body: formData });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = 'Modèle ajouté.';
+    document.getElementById('graffiti-template-label').value = '';
+    loadGraffitiTemplates();
+  } catch (err) {
+    statusEl.textContent = `Échec de l'envoi : ${err.message}`;
+  } finally {
+    fileEl.value = '';
+  }
+});
+
+document.getElementById('graffiti-templates-list')?.addEventListener('click', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.classList.contains('graffiti-template-activate-btn')) {
+    await fetch(`/api/admin/graffiti-templates/${id}/activate`, { method: 'POST' });
+    loadGraffitiTemplates();
+  } else if (e.target.classList.contains('graffiti-template-remove-btn')) {
+    if (!confirm('Supprimer ce modèle ?')) return;
+    await fetch(`/api/admin/graffiti-templates/${id}`, { method: 'DELETE' });
+    loadGraffitiTemplates();
+  }
+});
+
 function updateSoundStatus(type, sound) {
   eventFields[type].soundStatus.textContent = sound ? `Son actuel : ${sound.replace(/^[a-zA-Z]+-\d+/, 'fichier')}` : 'Aucun son';
   eventFields[type].soundRemove.hidden = !sound;

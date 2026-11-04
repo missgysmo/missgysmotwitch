@@ -32,7 +32,7 @@ let login = null;
 let brush = { type: 'pixel', color: COLORS[0][0] };
 let cooldownUntil = 0;
 let cooldownTimer = null;
-const state = { cols: 60, rows: 34, cells: {} };
+const state = { cols: 60, rows: 34, cells: {}, activeTemplate: null };
 
 function buildPalette() {
   paletteEl.innerHTML = '';
@@ -124,16 +124,38 @@ zoomOutBtn.addEventListener('click', () => {
   applyZoom();
 });
 
+// Le modèle peut venir de deux endroits : celui que la streameuse a choisi pour tout le monde
+// (chargé automatiquement depuis le serveur), ou un fichier perso chargé en local par le viewer
+// (qui prend le dessus tant qu'il est actif, mais ne touche à rien côté serveur ni pour les autres).
+function showTemplate(src) {
+  templateImg.src = src;
+  templateImg.hidden = false;
+  templateOpacityWrap.hidden = false;
+  templateClearBtn.hidden = false;
+  templateImg.style.opacity = templateOpacity.value / 100;
+}
+
+function applySharedTemplate(template) {
+  // N'écrase pas un modèle perso que le viewer a déjà chargé localement.
+  if (localTemplateActive) return;
+  if (template) showTemplate(`/graffiti-templates/${template.image}`);
+  else {
+    templateImg.hidden = true;
+    templateImg.src = '';
+    templateOpacityWrap.hidden = true;
+    templateClearBtn.hidden = true;
+  }
+}
+
+let localTemplateActive = false;
+
 templateInput.addEventListener('change', () => {
   const file = templateInput.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    templateImg.src = reader.result;
-    templateImg.hidden = false;
-    templateOpacityWrap.hidden = false;
-    templateClearBtn.hidden = false;
-    templateImg.style.opacity = templateOpacity.value / 100;
+    localTemplateActive = true;
+    showTemplate(reader.result);
   };
   reader.readAsDataURL(file);
 });
@@ -143,11 +165,9 @@ templateOpacity.addEventListener('input', () => {
 });
 
 templateClearBtn.addEventListener('click', () => {
-  templateImg.hidden = true;
-  templateImg.src = '';
-  templateOpacityWrap.hidden = true;
-  templateClearBtn.hidden = true;
+  localTemplateActive = false;
   templateInput.value = '';
+  applySharedTemplate(state.activeTemplate);
 });
 
 function resizeCanvas() {
@@ -170,11 +190,13 @@ async function loadCanvas() {
   state.cols = data.cols;
   state.rows = data.rows;
   state.cells = data.cells || {};
+  state.activeTemplate = data.activeTemplate || null;
   cooldownInfoEl.textContent = data.enabled
     ? `Cooldown : ${data.cooldownSeconds}s entre deux placements.`
     : 'Le graffiti est désactivé pour le moment.';
   resizeCanvas();
   redraw();
+  applySharedTemplate(state.activeTemplate);
 }
 loadCanvas();
 
@@ -193,6 +215,10 @@ function connectWs() {
     if (data.type === 'canvas-update') {
       state.cells[`${data.x},${data.y}`] = data.cell;
       drawCell(data.x, data.y, data.cell);
+    }
+    if (data.type === 'graffiti-template') {
+      state.activeTemplate = data.template;
+      applySharedTemplate(data.template);
     }
   };
   ws.onclose = () => setTimeout(connectWs, 3000);

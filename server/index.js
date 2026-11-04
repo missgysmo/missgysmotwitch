@@ -181,7 +181,13 @@ app.use(createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesD
 
 app.use(createSettingsRouter({ store, requireAdmin, broadcast }));
 app.use(createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, speciesCatalog }));
-app.use(createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast, follower, speciesCatalog }));
+
+const GRAFFITI_TEMPLATES_DIR = path.join(store.DATA_DIR, 'graffiti-templates');
+fs.mkdirSync(GRAFFITI_TEMPLATES_DIR, { recursive: true });
+app.use('/graffiti-templates', express.static(GRAFFITI_TEMPLATES_DIR, { maxAge: '1y' }));
+app.use(createCanvasRouter({
+  store, requireAdmin, publicApiRateLimit, broadcast, follower, speciesCatalog, templatesDir: GRAFFITI_TEMPLATES_DIR,
+}));
 
 const { router: timersRouter, activeTimers } = createTimersRouter({ store, requireAdmin, broadcast });
 app.use(timersRouter);

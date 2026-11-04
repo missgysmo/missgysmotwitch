@@ -150,6 +150,11 @@ const DEFAULT_SETTINGS = {
   // server/routes/messages.js, jamais via le formulaire de réglages classique (même principe que
   // customCommands) — un tableau de taille variable ne s'y prête pas.
   messageBoards: [],
+  // Modèles de dessin (images de référence) pour le graffiti collectif : gérés par leurs propres
+  // routes (server/routes/canvas.js), jamais via le formulaire de réglages classique — même principe
+  // que customCommands/messageBoards ci-dessus.
+  graffitiTemplates: [],
+  activeGraffitiTemplateId: null,
   // Commandes de chat personnalisées (soundboard) : mutées uniquement via leurs propres routes
   // (server/routes/customCommands.js), jamais via le formulaire de réglages classique — comme ça
   // pas de risque qu'une sauvegarde de réglages sans rapport n'écrase la liste ou les médias uploadés.
@@ -545,6 +550,10 @@ function getSettings() {
       position: { ...DEFAULT_SETTINGS.nowPlaying.position, ...(saved.nowPlaying?.position || {}) },
     },
     messageBoards: Array.isArray(saved.messageBoards) ? saved.messageBoards : DEFAULT_SETTINGS.messageBoards,
+    graffitiTemplates: Array.isArray(saved.graffitiTemplates) ? saved.graffitiTemplates : DEFAULT_SETTINGS.graffitiTemplates,
+    activeGraffitiTemplateId: typeof saved.activeGraffitiTemplateId === 'string' || saved.activeGraffitiTemplateId === null
+      ? (saved.activeGraffitiTemplateId ?? null)
+      : DEFAULT_SETTINGS.activeGraffitiTemplateId,
     coHosts: Array.isArray(saved.coHosts) ? saved.coHosts : DEFAULT_SETTINGS.coHosts,
     customCommands: Array.isArray(saved.customCommands) ? saved.customCommands : DEFAULT_SETTINGS.customCommands,
     customCommandsPlayer: {

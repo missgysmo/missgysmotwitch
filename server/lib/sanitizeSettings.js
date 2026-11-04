@@ -399,6 +399,9 @@ function sanitizeSettings(body, current) {
     // Même principe pour messageBoards (voir server/routes/messages.js) : tableau de taille
     // variable, entièrement géré par ses propres routes, jamais par le formulaire classique.
     messageBoards: d.messageBoards,
+    // Même principe pour les modèles de graffiti (voir server/routes/canvas.js).
+    graffitiTemplates: d.graffitiTemplates,
+    activeGraffitiTemplateId: d.activeGraffitiTemplateId,
   };
 
   return settings;
