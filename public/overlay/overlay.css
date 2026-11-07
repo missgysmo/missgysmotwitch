@@ -477,6 +477,7 @@ body.module-messages-off .messages-panel { display: none !important; }
 }
 
 #commands-list-items.commands-list-items-horizontal {
+  display: inline-flex;
   flex-direction: row;
   gap: 2.5em;
   padding-left: 100%;
