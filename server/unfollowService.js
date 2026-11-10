@@ -4,8 +4,6 @@
 const POLL_MS = 3 * 60 * 1000;
 
 function createUnfollowService({ store, twitchEvents, follower, CLIENT_ID, CLIENT_SECRET, broadcast, getRecentActivity, logError }) {
-  let baselineDone = false;
-
   async function poll() {
     try {
       if (!store.getTokens()) return; // app pas encore autorisée via /auth
@@ -17,10 +15,9 @@ function createUnfollowService({ store, twitchEvents, follower, CLIENT_ID, CLIEN
 
       const known = store.getPeople().followers || [];
 
-      if (!baselineDone) {
-        // Premier cycle : juste une référence, pour ne pas annoncer des unfollows "historiques"
-        // (anciens followers déjà disparus avant même que l'app ne tourne).
-        baselineDone = true;
+      if (!known.length) {
+        // Rien de connu encore (jamais resynchronisé) : pas de référence fiable pour comparer —
+        // on attend que /api/admin/people/resync ait tourné au moins une fois.
         return;
       }
 
