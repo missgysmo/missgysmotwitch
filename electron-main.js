@@ -49,6 +49,12 @@ async function creerFenetre() {
     },
   });
 
+  // Twitch (et d'autres pages d'auth) peuvent refuser de s'afficher correctement si le user-agent
+  // laisse deviner qu'il s'agit d'Electron plutôt qu'un vrai navigateur.
+  win.webContents.setUserAgent(
+    win.webContents.getUserAgent().replace(/\s*Electron\/\S+/, '')
+  );
+
   win.loadURL(`http://localhost:${PORT}/settings/`);
 }
 
