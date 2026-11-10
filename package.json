@@ -2,12 +2,14 @@
   "name": "missgysmotwitch",
   "version": "1.0.0",
   "description": "Overlay OBS d'avatars de viewers pour Twitch",
-  "main": "server/index.js",
+  "main": "electron-main.js",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "desktop": "electron .",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -16,5 +18,30 @@
     "socket.io-client": "^2.5.0",
     "tmi.js": "^1.8.5",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.missgysmo.twitchapp",
+    "productName": "MissGysmo Twitch",
+    "files": [
+      "electron-main.js",
+      "server/**/*",
+      "public/**/*",
+      "package.json",
+      ".env.example"
+    ],
+    "extraMetadata": {
+      "main": "electron-main.js"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "app_icon.ico"
+    },
+    "directories": {
+      "output": "dist"
+    }
   }
 }

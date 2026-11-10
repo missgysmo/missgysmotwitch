@@ -8,3 +8,5 @@ data/avatar-sprites/
 data/message-media/
 data/event-images/
 data/graffiti-templates/
+dist/
+build/
