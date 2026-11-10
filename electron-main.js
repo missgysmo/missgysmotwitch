@@ -1,6 +1,6 @@
 // Point d'entrée de l'application Windows : lance le serveur Express (bot Twitch + dashboard)
 // en arrière-plan, exactement comme `npm start`, puis ouvre une fenêtre native dessus.
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
 const net = require('net');
 
@@ -49,13 +49,21 @@ async function creerFenetre() {
     },
   });
 
-  // Twitch (et d'autres pages d'auth) peuvent refuser de s'afficher correctement si le user-agent
-  // laisse deviner qu'il s'agit d'Electron plutôt qu'un vrai navigateur.
-  win.webContents.setUserAgent(
-    win.webContents.getUserAgent().replace(/\s*Electron\/\S+/, '')
-  );
+  // Twitch (et d'autres pages d'auth externes) peuvent refuser de s'afficher dans la fenêtre
+  // Electron (écran blanc) — on bascule ces navigations vers le vrai navigateur système à la
+  // place. Le serveur local (dans cette même app) gère quand même le retour (/auth/callback),
+  // donc l'autorisation fonctionne normalement une fois revenu sur l'app.
+  const BASE_ORIGIN = `http://localhost:${PORT}`;
+  function versNavigateurExterneSiExterne(event, url) {
+    if (!url.startsWith(BASE_ORIGIN)) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  }
+  win.webContents.on('will-navigate', versNavigateurExterneSiExterne);
+  win.webContents.on('will-redirect', versNavigateurExterneSiExterne);
 
-  win.loadURL(`http://localhost:${PORT}/settings/`);
+  win.loadURL(`${BASE_ORIGIN}/settings/`);
 }
 
 const fs = require('fs');
