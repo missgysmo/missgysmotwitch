@@ -480,6 +480,17 @@ async function loadPeopleManualList() {
   renderPeopleManualList(await res.json());
 }
 
+async function loadTwitchAuthStatus() {
+  const el = document.getElementById('twitch-auth-status');
+  if (!el) return;
+  const res = await fetch('/api/admin/twitch-auth-status');
+  if (!res.ok) return;
+  const { connected } = await res.json();
+  el.innerHTML = connected
+    ? '🟢 Compte Twitch connecté <a href="/auth">Se reconnecter</a>'
+    : '⚪ Compte Twitch non connecté — nécessaire pour les followers/subs/unfollows <a href="/auth">Se connecter à Twitch</a>';
+}
+
 function renderUnfollowsList(list) {
   const el = document.getElementById('unfollows-list');
   if (!el) return;
@@ -2116,6 +2127,7 @@ document.getElementById('cc-list')?.addEventListener('change', async (e) => {
 Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions(), loadViewerNotes()]).then(loadSettings);
 loadPeopleManualList();
 loadUnfollowsList();
+loadTwitchAuthStatus();
 loadHealth();
 
 document.getElementById('logout')?.addEventListener('click', async () => {
