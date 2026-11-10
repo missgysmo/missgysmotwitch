@@ -2130,6 +2130,50 @@ loadUnfollowsList();
 loadTwitchAuthStatus();
 loadHealth();
 
+// Alerte sonore jouée uniquement dans l'app de bureau (ce panel), indépendante des alertes/sons
+// configurés pour l'overlay OBS — un petit carillon synthétisé (pas de fichier audio à charger).
+let carillonCtx = null;
+document.addEventListener('click', () => {
+  if (!carillonCtx) carillonCtx = new (window.AudioContext || window.webkitAudioContext)();
+  else if (carillonCtx.state === 'suspended') carillonCtx.resume();
+}, { once: true });
+
+function jouerCarillonFollow() {
+  try {
+    const ctx = carillonCtx || (carillonCtx = new (window.AudioContext || window.webkitAudioContext)());
+    const notes = [880, 1318.5]; // la5 puis mi6 : petit "ding" ascendant
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.12;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+  } catch (err) {
+    console.error('Alerte sonore follow : échec de lecture', err);
+  }
+}
+
+function connectDesktopAlertSocket() {
+  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${protocol}://${location.host}/ws`);
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.type === 'last-event-preview' && data.eventType === 'channel.follow') {
+      jouerCarillonFollow();
+    }
+  };
+  ws.onclose = () => setTimeout(connectDesktopAlertSocket, 3000);
+  ws.onerror = () => ws.close();
+}
+connectDesktopAlertSocket();
+
 document.getElementById('logout')?.addEventListener('click', async () => {
   await fetch('/api/admin/logout', { method: 'POST' });
   location.reload();
