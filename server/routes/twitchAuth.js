@@ -29,8 +29,8 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
       res.send('Autorisation Twitch réussie. Redémarre le serveur pour activer les events (follow/sub/cheer/raid). Tu peux fermer cet onglet.');
       console.log('[auth] token obtenu et sauvegardé, redémarre le serveur pour activer EventSub.');
     } catch (err) {
-      console.error('[auth] échec échange de code:', err.message);
-      res.status(500).send("Échec de l'autorisation Twitch, voir les logs serveur.");
+      logError('auth-callback', err);
+      res.status(500).send(`Échec de l'autorisation Twitch : ${err.message}`);
     }
   });
 
