@@ -18,6 +18,8 @@ const CUSTOM_SPECIES_PATH = path.join(DATA_DIR, 'customSpecies.json');
 const SPECIES_ENABLED_PATH = path.join(DATA_DIR, 'speciesEnabled.json');
 const SPECIES_REWARDS_PATH = path.join(DATA_DIR, 'speciesRewards.json');
 const UNLOCKED_AVATARS_PATH = path.join(DATA_DIR, 'unlockedAvatars.json');
+const UNFOLLOWS_PATH = path.join(DATA_DIR, 'unfollows.json');
+const MAX_UNFOLLOWS_KEPT = 100;
 
 const DEFAULT_SETTINGS = {
   avatarSize: 64,
@@ -303,6 +305,19 @@ function removePerson(kind, login) {
   people[kind] = list.filter((p) => p.login !== lower);
   writeJson(PEOPLE_PATH, people);
   return people;
+}
+
+// Historique des unfollows détectés (Twitch ne fournit aucun événement officiel "unfollow" —
+// voir unfollowService.js qui les détecte en comparant périodiquement la liste des followers).
+function getUnfollows() {
+  return readJson(UNFOLLOWS_PATH, []);
+}
+
+function addUnfollow(entry) {
+  const list = getUnfollows();
+  list.unshift(entry);
+  writeJson(UNFOLLOWS_PATH, list.slice(0, MAX_UNFOLLOWS_KEPT));
+  return list;
 }
 
 // Dernier follow/sub/cheer/raid connu (pour l'affichage permanent "Dernier follow : {user}") :
@@ -626,6 +641,8 @@ module.exports = {
   getPeople,
   addPerson,
   removePerson,
+  getUnfollows,
+  addUnfollow,
   getLastEvents,
   setLastEvent,
   getDonationTotal,

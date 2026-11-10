@@ -4,7 +4,14 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const net = require('net');
 
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+// En version portable, electron-builder place le dossier contenant le vrai .exe dans
+// PORTABLE_EXECUTABLE_DIR — __dirname pointerait sinon dans l'archive asar en lecture seule.
+const BASE_DIR = process.env.PORTABLE_EXECUTABLE_DIR || __dirname;
+
+require('dotenv').config({ path: path.join(BASE_DIR, '.env') });
+if (!process.env.DATA_DIR) {
+  process.env.DATA_DIR = path.join(BASE_DIR, 'data');
+}
 
 const PORT = process.env.PORT || 3000;
 
@@ -45,8 +52,27 @@ async function creerFenetre() {
   win.loadURL(`http://localhost:${PORT}/settings/`);
 }
 
+const fs = require('fs');
+
+function logCrash(err) {
+  try {
+    fs.appendFileSync(
+      path.join(BASE_DIR, 'crash.log'),
+      `${new Date().toISOString()} : ${err && err.stack ? err.stack : err}\n`
+    );
+  } catch (_) { /* rien de plus à faire si même ça échoue */ }
+}
+
+process.on('uncaughtException', logCrash);
+
 app.whenReady().then(() => {
-  require(path.join(__dirname, 'server', 'index.js'));
+  try {
+    require(path.join(__dirname, 'server', 'index.js'));
+  } catch (err) {
+    logCrash(err);
+    app.quit();
+    return;
+  }
   creerFenetre();
 
   app.on('activate', () => {

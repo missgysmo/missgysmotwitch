@@ -12,6 +12,10 @@ function createFollowListSyncRouter({ store, requireAdmin, broadcast, follower, 
     res.json(store.getPeople());
   });
 
+  router.get('/api/admin/unfollows', requireAdmin, (req, res) => {
+    res.json(store.getUnfollows());
+  });
+
   // Ajout manuel depuis le dashboard, pour les cas où la synchro Twitch (EventSub ou l'API) ne
   // marche pas — ex: bits/raids reçus pendant une coupure, ou entrée oubliée par l'historique.
   router.post('/api/admin/people/manual', requireAdmin, (req, res) => {

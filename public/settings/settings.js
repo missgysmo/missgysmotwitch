@@ -480,6 +480,31 @@ async function loadPeopleManualList() {
   renderPeopleManualList(await res.json());
 }
 
+function renderUnfollowsList(list) {
+  const el = document.getElementById('unfollows-list');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<p class="hint">Aucun unfollow détecté pour l\'instant.</p>';
+    return;
+  }
+  el.innerHTML = list.map((u) => `
+    <div class="cc-card">
+      <div class="cc-card-head">
+        <span class="cc-card-title">💔 ${escapeHtmlPanel(u.displayName || u.login)}</span>
+        <span class="cc-card-command">${new Date(u.detectedAt).toLocaleString('fr-FR')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadUnfollowsList() {
+  const res = await fetch('/api/admin/unfollows');
+  if (!res.ok) return;
+  renderUnfollowsList(await res.json());
+}
+
+document.getElementById('unfollows-refresh-btn')?.addEventListener('click', loadUnfollowsList);
+
 function updatePeopleManualExtraVisibility() {
   const kind = document.getElementById('people-manual-kind').value;
   const needsExtra = kind === 'cheers' || kind === 'raids';
@@ -2090,6 +2115,7 @@ document.getElementById('cc-list')?.addEventListener('change', async (e) => {
 
 Promise.all([loadTestAvatars(), loadTamagotchiSpeciesOptions(), loadViewerNotes()]).then(loadSettings);
 loadPeopleManualList();
+loadUnfollowsList();
 loadHealth();
 
 document.getElementById('logout')?.addEventListener('click', async () => {

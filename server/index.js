@@ -13,6 +13,7 @@ const logger = require('./lib/logger');
 const auth = require('./lib/auth');
 const { overlayClients, broadcast, broadcastToPreview } = require('./lib/broadcast');
 const { createFollowerService } = require('./followerService');
+const { createUnfollowService } = require('./unfollowService');
 const { createTamagotchiService } = require('./tamagotchiService');
 const { createCustomCommandsService } = require('./customCommandsService');
 
@@ -218,6 +219,10 @@ app.use(createFollowListSyncRouter({
   store, requireAdmin, broadcast, follower, getRecentActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,
 }));
 
+const unfollowService = createUnfollowService({
+  store, twitchEvents, follower, CLIENT_ID, CLIENT_SECRET, broadcast, getRecentActivity, logError: logger.logError,
+});
+
 // Don caritatif (Streamlabs) : même pipeline d'alerte que les events Twitch (voir recordActivity
 // dans twitchAuth.js), juste déclenché par le Socket API de Streamlabs plutôt qu'EventSub.
 const streamlabs = createStreamlabsService({ store, broadcast, follower, recordActivity, logError: logger.logError });
@@ -258,4 +263,5 @@ server.listen(PORT, () => {
   chatTracker.connect().catch((err) => console.error('[twitchChat] échec connexion:', err.message));
   startEventSub();
   startSpotifyPolling();
+  unfollowService.start();
 });
