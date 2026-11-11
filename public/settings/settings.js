@@ -457,6 +457,7 @@ function renderPeopleManualList(people) {
       rows.push({ kind, ...p });
     }
   }
+  rows.sort((a, b) => (b.since || 0) - (a.since || 0));
   const countsHtml = `
     <p class="hint">💜 <strong>${(people.followers || []).length}</strong> followers · ⭐ <strong>${(people.subs || []).length}</strong> subs</p>
   `;
@@ -469,6 +470,7 @@ function renderPeopleManualList(people) {
       <div class="cc-card-head">
         <span class="cc-card-title">${PEOPLE_KIND_LABELS[p.kind]}</span>
         <span class="cc-card-command">${escapeHtmlPanel(p.displayName)}${p.extra ? ` (${p.extra})` : ''}</span>
+        <span class="hint">${p.since ? new Date(p.since).toLocaleDateString('fr-FR') : ''}</span>
         <div class="cc-card-actions">
           <button type="button" class="people-manual-remove-btn">Supprimer</button>
         </div>
