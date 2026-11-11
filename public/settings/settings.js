@@ -457,11 +457,14 @@ function renderPeopleManualList(people) {
       rows.push({ kind, ...p });
     }
   }
+  const countsHtml = `
+    <p class="hint">💜 <strong>${(people.followers || []).length}</strong> followers · ⭐ <strong>${(people.subs || []).length}</strong> subs</p>
+  `;
   if (!rows.length) {
-    el.innerHTML = '<p class="hint">Aucune entrée.</p>';
+    el.innerHTML = `${countsHtml}<p class="hint">Aucune entrée.</p>`;
     return;
   }
-  el.innerHTML = rows.map((p) => `
+  el.innerHTML = countsHtml + rows.map((p) => `
     <div class="cc-card" data-kind="${p.kind}" data-login="${escapeHtmlPanel(p.login)}">
       <div class="cc-card-head">
         <span class="cc-card-title">${PEOPLE_KIND_LABELS[p.kind]}</span>
