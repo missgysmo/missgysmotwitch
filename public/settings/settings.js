@@ -765,6 +765,7 @@ document.getElementById('health-clear-btn')?.addEventListener('click', async () 
 const OBS_MODULES = [
   { id: 'avatars', label: '🐾 Avatars des viewers' },
   { id: 'alerts', label: '🎉 Alertes (follow/sub/cheer/raid)' },
+  { id: 'donation', label: '🎁 Alerte + total des dons' },
   { id: 'chat', label: '💬 Chat sur l\'overlay' },
   { id: 'chatsound', label: '🔔 Alerte sonore du tchat' },
   { id: 'canvas', label: '🎨 Graffiti collectif' },

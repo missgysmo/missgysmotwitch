@@ -79,6 +79,7 @@ if (!moduleEnabled('nowplaying')) document.body.classList.add('module-nowplaying
 if (!moduleEnabled('customcommands')) document.body.classList.add('module-customcommands-off');
 if (!moduleEnabled('lastevents')) document.body.classList.add('module-lastevents-off');
 if (!moduleEnabled('alerts')) document.body.classList.add('module-alerts-off');
+if (!moduleEnabled('donation')) document.body.classList.add('module-donation-off');
 if (!moduleEnabled('messages')) document.body.classList.add('module-messages-off');
 if (!moduleEnabled('commandslist')) document.body.classList.add('module-commandslist-off');
 
@@ -746,7 +747,7 @@ function renderDonationTotal() {
 
 function applyDonationTotalLayout() {
   const c = settings.donationTotal;
-  donationTotalEl.style.display = c.enabled ? 'block' : 'none';
+  donationTotalEl.style.display = (c.enabled && moduleEnabled('donation')) ? 'block' : 'none';
   donationTotalEl.style.left = `${c.position.x}%`;
   donationTotalEl.style.top = `${c.position.y}%`;
   donationTotalEl.style.color = c.color;
@@ -1250,7 +1251,10 @@ function showClipToast() {
 }
 
 function showEvent(eventType, event, cast) {
-  if (!moduleEnabled('alerts')) return;
+  // L'alerte de don a sa propre source OBS indépendante ("donation"), séparée du module
+  // "alerts" qui couvre follow/sub/cheer/raid — pour pouvoir l'afficher seule, ailleurs.
+  const requiredModule = eventType === 'streamlabs.donation' ? 'donation' : 'alerts';
+  if (!moduleEnabled(requiredModule)) return;
   const key = EVENT_KEYS[eventType];
   const cfg = settings.events?.[key];
   if (!cfg || !cfg.enabled) return;
