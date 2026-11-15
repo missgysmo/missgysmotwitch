@@ -39,7 +39,7 @@ function sanitizeEventConfig(input, fallback) {
     rotation: clamp(input?.rotation, -180, 180, fallback.rotation ?? 0),
     textAnimation: POPUP_ANIMATIONS.includes(input?.textAnimation) ? input.textAnimation : (fallback.textAnimation ?? 'none'),
     imageAnimation: POPUP_ANIMATIONS.includes(input?.imageAnimation) ? input.imageAnimation : (fallback.imageAnimation ?? 'none'),
-    imageSize: clamp(input?.imageSize, 40, 500, fallback.imageSize ?? 180),
+    imageSize: clamp(input?.imageSize, 40, 800, fallback.imageSize ?? 180),
     showBackground: typeof input?.showBackground === 'boolean' ? input.showBackground : (fallback.showBackground ?? true),
     duration: clamp(input?.duration, 2, 15, fallback.duration ?? 3.6),
     // pas envoyé par le formulaire de réglages classique — géré à part par l'upload de son/image,

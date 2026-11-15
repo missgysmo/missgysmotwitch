@@ -1302,7 +1302,17 @@ function showEvent(eventType, event, cast) {
       const img = document.createElement('img');
       img.className = 'event-popup-img';
       if (cfg.imageAnimation && cfg.imageAnimation !== 'none') img.classList.add(`popup-anim-${cfg.imageAnimation}`);
-      img.style.maxWidth = img.style.maxHeight = `${cfg.imageSize ?? 180}px`;
+      // Le plus grand côté de l'image prend exactement la taille réglée (agrandit aussi les petites
+      // images, pas seulement les réduire), en gardant ses proportions.
+      const targetSize = cfg.imageSize ?? 180;
+      img.style.maxWidth = img.style.maxHeight = 'none';
+      img.style.width = `${targetSize}px`;
+      img.onload = () => {
+        if (img.naturalHeight > img.naturalWidth) {
+          img.style.width = 'auto';
+          img.style.height = `${targetSize}px`;
+        }
+      };
       img.src = `/event-images/${chosenImage}`;
       popup.appendChild(img);
     }
