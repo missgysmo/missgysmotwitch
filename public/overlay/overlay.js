@@ -1294,20 +1294,27 @@ function showEvent(eventType, event, cast) {
     popup.style.color = cfg.color;
     popup.style.fontFamily = cfg.fontFamily && cfg.fontFamily !== 'system-ui' ? `'${cfg.fontFamily}', system-ui` : '';
     popup.style.fontSize = `${cfg.fontSize}px`;
+    const durationMs = (cfg.duration ?? 3.6) * 1000;
+    popup.style.setProperty('--popup-rot', `${cfg.rotation ?? 0}deg`);
+    popup.style.setProperty('--popup-duration', `${durationMs - 100}ms`);
+    if (cfg.showBackground === false) popup.classList.add('no-bg');
     if (chosenImage) {
       const img = document.createElement('img');
       img.className = 'event-popup-img';
+      if (cfg.imageAnimation && cfg.imageAnimation !== 'none') img.classList.add(`popup-anim-${cfg.imageAnimation}`);
+      img.style.maxWidth = img.style.maxHeight = `${cfg.imageSize ?? 180}px`;
       img.src = `/event-images/${chosenImage}`;
       popup.appendChild(img);
     }
     if (cfg.showText) {
       const textEl = document.createElement('div');
       textEl.className = 'event-popup-text';
+      if (cfg.textAnimation && cfg.textAnimation !== 'none') textEl.classList.add(`popup-anim-${cfg.textAnimation}`);
       textEl.textContent = buildEventText(eventType, event, cfg);
       popup.appendChild(textEl);
     }
     eventLayer.appendChild(popup);
-    setTimeout(() => popup.remove(), 3600);
+    setTimeout(() => popup.remove(), durationMs);
   }
 }
 

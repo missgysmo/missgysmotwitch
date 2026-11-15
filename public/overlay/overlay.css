@@ -627,8 +627,36 @@ body.hide-names .avatar-name {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  animation: popup 3.5s ease forwards;
+  animation: popup var(--popup-duration, 3.5s) ease forwards;
 }
+
+.event-popup.no-bg {
+  background: transparent;
+  text-shadow: 0 2px 4px rgba(0,0,0,.8), 0 0 10px rgba(0,0,0,.5);
+}
+
+/* Animations au choix (texte et image séparément), réglées dans le dashboard */
+.popup-anim-spin { animation: popupSpin 1.2s linear infinite; }
+.popup-anim-blink { animation: popupBlink 0.6s steps(1) infinite; }
+.popup-anim-pulse { animation: popupPulse 0.8s ease-in-out infinite; }
+.popup-anim-shake { animation: popupShake 0.3s ease-in-out infinite; }
+.popup-anim-swing { animation: popupSwing 1s ease-in-out infinite; transform-origin: top center; }
+.popup-anim-bounce { animation: popupBounce 0.6s ease-in-out infinite; }
+.popup-anim-float { animation: popupFloat 2s ease-in-out infinite; }
+.popup-anim-rainbow { animation: popupRainbow 1.5s linear infinite; }
+
+@keyframes popupSpin { to { transform: rotate(360deg); } }
+@keyframes popupBlink { 0% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes popupPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+@keyframes popupShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-5px) rotate(-4deg); }
+  75% { transform: translateX(5px) rotate(4deg); }
+}
+@keyframes popupSwing { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+@keyframes popupBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+@keyframes popupFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes popupRainbow { to { filter: hue-rotate(360deg); } }
 
 .event-popup-text {
   white-space: nowrap;
@@ -642,10 +670,10 @@ body.hide-names .avatar-name {
 }
 
 @keyframes popup {
-  0% { opacity: 0; transform: translate(-50%, -50%) translateY(20px) scale(0.8); }
-  15% { opacity: 1; transform: translate(-50%, -50%) translateY(0) scale(1); }
-  80% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -50%) translateY(-20px) scale(0.9); }
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--popup-rot, 0deg)) translateY(20px) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -50%) rotate(var(--popup-rot, 0deg)) translateY(0) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -50%) rotate(var(--popup-rot, 0deg)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--popup-rot, 0deg)) translateY(-20px) scale(0.9); }
 }
 
 .last-event {

@@ -931,6 +931,15 @@ for (const type of EVENT_TYPES) {
     posXOut: document.getElementById(`evt-${type}-posx-out`),
     posY: document.getElementById(`evt-${type}-posy`),
     posYOut: document.getElementById(`evt-${type}-posy-out`),
+    rotation: document.getElementById(`evt-${type}-rotation`),
+    rotationOut: document.getElementById(`evt-${type}-rotation-out`),
+    textAnim: document.getElementById(`evt-${type}-textanim`),
+    imageAnim: document.getElementById(`evt-${type}-imageanim`),
+    imageSize: document.getElementById(`evt-${type}-imagesize`),
+    imageSizeOut: document.getElementById(`evt-${type}-imagesize-out`),
+    duration: document.getElementById(`evt-${type}-duration`),
+    durationOut: document.getElementById(`evt-${type}-duration-out`),
+    showBg: document.getElementById(`evt-${type}-showbg`),
     soundFile: document.getElementById(`evt-${type}-sound-file`),
     soundStatus: document.getElementById(`evt-${type}-sound-status`),
     soundRemove: document.getElementById(`evt-${type}-sound-remove`),
@@ -999,6 +1008,9 @@ function updateOutputs() {
     eventFields[type].sizeOut.textContent = `${eventFields[type].size.value}px`;
     eventFields[type].posXOut.textContent = `${eventFields[type].posX.value}%`;
     eventFields[type].posYOut.textContent = `${eventFields[type].posY.value}%`;
+    eventFields[type].rotationOut.textContent = `${eventFields[type].rotation.value}°`;
+    eventFields[type].imageSizeOut.textContent = `${eventFields[type].imageSize.value}px`;
+    eventFields[type].durationOut.textContent = `${eventFields[type].duration.value}s`;
   }
   for (const type of TIMER_TYPES) {
     timerFields[type].sizeOut.textContent = `${timerFields[type].size.value}px`;
@@ -1086,6 +1098,9 @@ for (const type of EVENT_TYPES) {
   eventFields[type].size.addEventListener('input', updateOutputs);
   eventFields[type].posX.addEventListener('input', updateOutputs);
   eventFields[type].posY.addEventListener('input', updateOutputs);
+  eventFields[type].rotation.addEventListener('input', updateOutputs);
+  eventFields[type].imageSize.addEventListener('input', updateOutputs);
+  eventFields[type].duration.addEventListener('input', updateOutputs);
 }
 for (const type of TIMER_TYPES) {
   timerFields[type].size.addEventListener('input', updateOutputs);
@@ -1176,6 +1191,12 @@ async function loadSettings() {
     eventFields[type].reaction.value = s.events[type].reaction;
     eventFields[type].posX.value = s.events[type].position.x;
     eventFields[type].posY.value = s.events[type].position.y;
+    eventFields[type].rotation.value = s.events[type].rotation ?? 0;
+    eventFields[type].textAnim.value = s.events[type].textAnimation ?? 'none';
+    eventFields[type].imageAnim.value = s.events[type].imageAnimation ?? 'none';
+    eventFields[type].imageSize.value = s.events[type].imageSize ?? 180;
+    eventFields[type].duration.value = s.events[type].duration ?? 3.6;
+    eventFields[type].showBg.checked = s.events[type].showBackground ?? true;
     updateSoundStatus(type, s.events[type].sound);
     if (EVENT_IMAGE_TYPES.includes(type)) renderEventImages(type, s.events[type].images || []);
     lastEventFields[type].enabled.checked = s.lastEvents[type].enabled;
@@ -1363,6 +1384,12 @@ async function saveSettings() {
       fontSize: Number(eventFields[type].size.value),
       reaction: eventFields[type].reaction.value,
       position: { x: Number(eventFields[type].posX.value), y: Number(eventFields[type].posY.value) },
+      rotation: Number(eventFields[type].rotation.value),
+      textAnimation: eventFields[type].textAnim.value,
+      imageAnimation: eventFields[type].imageAnim.value,
+      imageSize: Number(eventFields[type].imageSize.value),
+      duration: Number(eventFields[type].duration.value),
+      showBackground: eventFields[type].showBg.checked,
     }])),
     lastEvents: Object.fromEntries(EVENT_TYPES.map((type) => [type, {
       enabled: lastEventFields[type].enabled.checked,

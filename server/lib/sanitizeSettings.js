@@ -8,6 +8,7 @@ const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 const EVENT_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'rain', 'bounce'];
 const TAMAGOTCHI_REACTIONS = ['none', 'pulse', 'jump', 'shake', 'spin', 'bounce', 'awaken'];
 const EVENT_FONTS = ['system-ui', 'Bangers', 'Permanent Marker', 'Pacifico', 'Press Start 2P', 'Russo One', 'Caveat', 'Creepster'];
+const POPUP_ANIMATIONS = ['none', 'spin', 'blink', 'pulse', 'shake', 'swing', 'bounce', 'float', 'rainbow'];
 const TWITCH_LOGIN_RE = /^[a-zA-Z0-9_]{1,25}$/;
 const MAX_COHOSTS = 5;
 
@@ -35,6 +36,12 @@ function sanitizeEventConfig(input, fallback) {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),
     },
+    rotation: clamp(input?.rotation, -180, 180, fallback.rotation ?? 0),
+    textAnimation: POPUP_ANIMATIONS.includes(input?.textAnimation) ? input.textAnimation : (fallback.textAnimation ?? 'none'),
+    imageAnimation: POPUP_ANIMATIONS.includes(input?.imageAnimation) ? input.imageAnimation : (fallback.imageAnimation ?? 'none'),
+    imageSize: clamp(input?.imageSize, 40, 500, fallback.imageSize ?? 180),
+    showBackground: typeof input?.showBackground === 'boolean' ? input.showBackground : (fallback.showBackground ?? true),
+    duration: clamp(input?.duration, 2, 15, fallback.duration ?? 3.6),
     // pas envoyé par le formulaire de réglages classique — géré à part par l'upload de son/image,
     // donc on garde la valeur existante tant qu'on ne reçoit pas explicitement une string ou null
     sound: (typeof input?.sound === 'string' || input?.sound === null) ? input.sound : fallback.sound,
