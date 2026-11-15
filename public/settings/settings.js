@@ -2491,10 +2491,9 @@ function updateSoundStatus(type, sound) {
   eventFields[type].soundRemove.hidden = !sound;
 }
 
-// Galerie d'images des alertes : pour l'instant seule l'alerte "don" a l'UI correspondante dans le
-// dashboard (voir panel.html), mais la route /api/admin/event-images/:type est générique à tous les
-// types. Une image est tirée au hasard dans la liste à chaque alerte (voir showEvent() côté overlay).
-const EVENT_IMAGE_TYPES = ['donation'];
+// Galerie d'images des alertes (follow/sub/cheer/raid/don) : une image est tirée au hasard dans la
+// liste à chaque alerte (voir showEvent() côté overlay).
+const EVENT_IMAGE_TYPES = ['follow', 'subscribe', 'cheer', 'raid', 'donation'];
 const eventImagesFields = {};
 for (const type of EVENT_IMAGE_TYPES) {
   eventImagesFields[type] = {

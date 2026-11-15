@@ -645,6 +645,10 @@
             <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-follow-sound-file" hidden /></label>
             <button type="button" class="sound-remove-btn" data-type="follow" id="evt-follow-sound-remove" hidden>Retirer</button>
           </div>
+          <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
+          <div id="evt-follow-images-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-follow-images-file" hidden /></label>
+          <p id="evt-follow-images-status" class="hint" hidden></p>
           <button type="button" class="test-event-btn" data-type="follow">Tester cette alerte</button>
         </div>
       </fieldset>
@@ -691,6 +695,10 @@
             <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-subscribe-sound-file" hidden /></label>
             <button type="button" class="sound-remove-btn" data-type="subscribe" id="evt-subscribe-sound-remove" hidden>Retirer</button>
           </div>
+          <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
+          <div id="evt-subscribe-images-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-subscribe-images-file" hidden /></label>
+          <p id="evt-subscribe-images-status" class="hint" hidden></p>
           <button type="button" class="test-event-btn" data-type="subscribe">Tester cette alerte</button>
         </div>
       </fieldset>
@@ -737,6 +745,10 @@
             <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-cheer-sound-file" hidden /></label>
             <button type="button" class="sound-remove-btn" data-type="cheer" id="evt-cheer-sound-remove" hidden>Retirer</button>
           </div>
+          <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
+          <div id="evt-cheer-images-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-cheer-images-file" hidden /></label>
+          <p id="evt-cheer-images-status" class="hint" hidden></p>
           <button type="button" class="test-event-btn" data-type="cheer">Tester cette alerte</button>
         </div>
       </fieldset>
@@ -783,6 +795,10 @@
             <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-raid-sound-file" hidden /></label>
             <button type="button" class="sound-remove-btn" data-type="raid" id="evt-raid-sound-remove" hidden>Retirer</button>
           </div>
+          <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
+          <div id="evt-raid-images-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-raid-images-file" hidden /></label>
+          <p id="evt-raid-images-status" class="hint" hidden></p>
           <button type="button" class="test-event-btn" data-type="raid">Tester cette alerte</button>
         </div>
         <p class="hint">Le test affiche le popup sur <code>/overlay/</code> (ouvre-le dans un autre onglet ou regarde OBS). Un avatar au hasard parmi ceux affichés fera la réaction choisie — s'il n'y a aucun avatar actif, seul le popup de texte s'affiche.</p>
