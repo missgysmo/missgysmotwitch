@@ -1,6 +1,6 @@
 // Shoutout ("!so @pseudo") : message dans le tchat + shoutout officiel Twitch + fiche sur l'overlay
 // (même fiche visuelle que pour les raids, réglée dans l'onglet "Fiche raid"). Réservé au streamer
-// et, si activé, aux modérateurs. Peut aussi se déclencher automatiquement à chaque raid reçu.
+// et, si activé, aux modérateurs et/ou aux VIP. Peut aussi se déclencher automatiquement à chaque raid reçu.
 //
 // Scopes Twitch nécessaires : user:write:chat (message) et moderator:manage:shoutouts (officiel).
 // Les deux envois sont indépendants : si l'un échoue (ex. shoutout officiel hors live, ou
@@ -68,7 +68,9 @@ function createShoutoutService({ store, broadcast, twitchEvents, follower, logEr
     if (!cfg.enabled) return;
     const [cmd, target] = message.trim().split(/\s+/);
     if (!cmd || cmd.toLowerCase() !== cfg.command || !target) return;
-    const allowed = follower.isChannelOwner(login) || meta.isBroadcaster || (cfg.modsAllowed && meta.isMod);
+    const allowed = follower.isChannelOwner(login) || meta.isBroadcaster
+      || (cfg.modsAllowed && meta.isMod)
+      || (cfg.vipsAllowed && meta.isVip);
     if (!allowed) return;
     if (Date.now() - lastShoutoutAt < cfg.cooldownSeconds * 1000) return;
     lastShoutoutAt = Date.now();

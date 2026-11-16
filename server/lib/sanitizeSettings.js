@@ -140,6 +140,7 @@ function sanitizeShoutoutConfig(input, fallback) {
     enabled: bool('enabled'),
     command: typeof input?.command === 'string' && CLIP_COMMAND_RE.test(input.command.trim()) ? input.command.trim().toLowerCase() : fallback.command,
     modsAllowed: bool('modsAllowed'),
+    vipsAllowed: bool('vipsAllowed'),
     cooldownSeconds: clamp(input?.cooldownSeconds, 0, 600, fallback.cooldownSeconds),
     sendChatMessage: bool('sendChatMessage'),
     message: typeof input?.message === 'string' && input.message.trim() ? input.message.trim().slice(0, 400) : fallback.message,

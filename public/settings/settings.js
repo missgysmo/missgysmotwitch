@@ -1345,6 +1345,7 @@ async function loadSettings() {
   document.getElementById('so-enabled').checked = s.shoutout.enabled;
   document.getElementById('so-command').value = s.shoutout.command;
   document.getElementById('so-mods').checked = s.shoutout.modsAllowed;
+  document.getElementById('so-vips').checked = s.shoutout.vipsAllowed;
   document.getElementById('so-cooldown').value = s.shoutout.cooldownSeconds;
   document.getElementById('so-chat').checked = s.shoutout.sendChatMessage;
   document.getElementById('so-message').value = s.shoutout.message;
@@ -1566,6 +1567,7 @@ async function saveSettings() {
       enabled: document.getElementById('so-enabled').checked,
       command: document.getElementById('so-command').value,
       modsAllowed: document.getElementById('so-mods').checked,
+      vipsAllowed: document.getElementById('so-vips').checked,
       cooldownSeconds: Number(document.getElementById('so-cooldown').value),
       sendChatMessage: document.getElementById('so-chat').checked,
       message: document.getElementById('so-message').value,

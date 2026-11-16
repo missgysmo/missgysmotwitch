@@ -99,6 +99,7 @@ const DEFAULT_SETTINGS = {
     enabled: false,
     command: '!so',
     modsAllowed: true,
+    vipsAllowed: true,
     cooldownSeconds: 10,
     sendChatMessage: true,
     message: '📣 Allez faire un tour chez {name} ! Dernier jeu : {game} 👉 {url}',
