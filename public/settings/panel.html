@@ -1109,8 +1109,22 @@
         <label><input type="checkbox" id="so-official" /> Shoutout officiel Twitch (bouton « Suivre » affiché aux viewers)</label>
         <p class="hint">Twitch limite le shoutout officiel : seulement en direct, 1 toutes les 2 minutes, et 1 par chaîne par heure. Le message du tchat, lui, part toujours.</p>
         <label><input type="checkbox" id="so-card" /> Afficher la fiche sur l'overlay</label>
-        <p class="hint">Même fiche que pour les raids : position, taille, couleurs et durée se règlent dans Outils → Fiche raid.</p>
         <label><input type="checkbox" id="so-autoraid" /> Shoutout automatique à chaque raid reçu</label>
+
+        <h3>Fiche sur l'overlay</h3>
+        <p class="hint">
+          Fiche avec l'avatar, le nom, le dernier jeu et le lien de la chaîne. Pour l'avoir dans sa propre source OBS :
+          Outils → Liens OBS, coche seulement « 📣 Fiche shoutout ».
+        </p>
+        <label>Durée d'affichage (secondes) <input type="number" id="socard-duration" min="3" max="60" step="1" /></label>
+        <label>Taille du texte <input type="range" id="socard-fontsize" min="8" max="40" step="1" /><output id="socard-fontsize-out"></output></label>
+        <label>Couleur du texte <input type="color" id="socard-textcolor" /></label>
+        <label>Couleur de fond <input type="color" id="socard-bgcolor" /></label>
+        <label>Opacité du fond (%) <input type="range" id="socard-bgopacity" min="0" max="100" step="1" /><output id="socard-bgopacity-out"></output></label>
+        <label>Position horizontale <input type="range" id="socard-posx" min="0" max="100" step="1" /><output id="socard-posx-out"></output></label>
+        <label>Position verticale <input type="range" id="socard-posy" min="0" max="100" step="1" /><output id="socard-posy-out"></output></label>
+        <button type="button" id="socard-test-btn">Tester la fiche (aperçu seulement)</button>
+        <p class="hint">S'affiche uniquement sur l'aperçu sandbox (<code>/overlay/?preview=1</code>), jamais sur le vrai stream.</p>
 
         <h3>Tester</h3>
         <label>Pseudo <input type="text" id="so-test-login" maxlength="26" placeholder="pseudo_twitch" /></label>

@@ -225,6 +225,20 @@ chatSoundFields.soundRemove.addEventListener('click', async () => {
   updateChatSoundStatus(null);
 });
 
+const soCardFields = {
+  duration: document.getElementById('socard-duration'),
+  fontSize: document.getElementById('socard-fontsize'),
+  fontSizeOut: document.getElementById('socard-fontsize-out'),
+  textColor: document.getElementById('socard-textcolor'),
+  bgColor: document.getElementById('socard-bgcolor'),
+  bgOpacity: document.getElementById('socard-bgopacity'),
+  bgOpacityOut: document.getElementById('socard-bgopacity-out'),
+  posX: document.getElementById('socard-posx'),
+  posXOut: document.getElementById('socard-posx-out'),
+  posY: document.getElementById('socard-posy'),
+  posYOut: document.getElementById('socard-posy-out'),
+};
+
 const raidCardFields = {
   enabled: document.getElementById('raidcard-enabled'),
   duration: document.getElementById('raidcard-duration'),
@@ -326,6 +340,10 @@ async function loadSpotifyStatus() {
   }
 }
 loadSpotifyStatus();
+
+document.getElementById('socard-test-btn')?.addEventListener('click', async () => {
+  await fetch('/api/admin/test-shoutout-card', { method: 'POST' });
+});
 
 document.getElementById('raidcard-test-btn')?.addEventListener('click', async () => {
   await fetch('/api/admin/test-raid-card', { method: 'POST' });
@@ -797,7 +815,8 @@ const OBS_MODULES = [
   { id: 'activity', label: '📣 Activité récente' },
   { id: 'people', label: '📜 Liste followers/subs' },
   { id: 'tamagotchi', label: '🐾 Mascotte' },
-  { id: 'raidcard', label: '🎴 Fiche raid + shoutout' },
+  { id: 'raidcard', label: '🎴 Fiche raid' },
+  { id: 'shoutout', label: '📣 Fiche shoutout' },
   { id: 'nowplaying', label: '🎵 Musique en cours' },
   { id: 'customcommands', label: '🎬 Commandes de tchat (vidéo)' },
   { id: 'commandslist', label: '📋 Liste des commandes' },
@@ -1072,6 +1091,10 @@ function updateOutputs() {
   raidCardFields.bgOpacityOut.textContent = `${raidCardFields.bgOpacity.value}%`;
   raidCardFields.posXOut.textContent = `${raidCardFields.posX.value}%`;
   raidCardFields.posYOut.textContent = `${raidCardFields.posY.value}%`;
+  soCardFields.fontSizeOut.textContent = `${soCardFields.fontSize.value}px`;
+  soCardFields.bgOpacityOut.textContent = `${soCardFields.bgOpacity.value}%`;
+  soCardFields.posXOut.textContent = `${soCardFields.posX.value}%`;
+  soCardFields.posYOut.textContent = `${soCardFields.posY.value}%`;
   nowPlayingFields.fontSizeOut.textContent = `${nowPlayingFields.fontSize.value}px`;
   nowPlayingFields.bgOpacityOut.textContent = `${nowPlayingFields.bgOpacity.value}%`;
   nowPlayingFields.posXOut.textContent = `${nowPlayingFields.posX.value}%`;
@@ -1162,6 +1185,7 @@ raidCardFields.fontSize.addEventListener('input', updateOutputs);
 raidCardFields.bgOpacity.addEventListener('input', updateOutputs);
 raidCardFields.posX.addEventListener('input', updateOutputs);
 raidCardFields.posY.addEventListener('input', updateOutputs);
+for (const key of ['fontSize', 'bgOpacity', 'posX', 'posY']) soCardFields[key].addEventListener('input', updateOutputs);
 nowPlayingFields.fontSize.addEventListener('input', updateOutputs);
 nowPlayingFields.bgOpacity.addEventListener('input', updateOutputs);
 nowPlayingFields.posX.addEventListener('input', updateOutputs);
@@ -1352,6 +1376,13 @@ async function loadSettings() {
   document.getElementById('so-official').checked = s.shoutout.officialShoutout;
   document.getElementById('so-card').checked = s.shoutout.showCard;
   document.getElementById('so-autoraid').checked = s.shoutout.autoOnRaid;
+  soCardFields.duration.value = s.shoutout.card.durationSeconds;
+  soCardFields.fontSize.value = s.shoutout.card.fontSize;
+  soCardFields.textColor.value = s.shoutout.card.textColor;
+  soCardFields.bgColor.value = s.shoutout.card.bgColor;
+  soCardFields.bgOpacity.value = s.shoutout.card.bgOpacity;
+  soCardFields.posX.value = s.shoutout.card.position.x;
+  soCardFields.posY.value = s.shoutout.card.position.y;
   donationTotalFields.enabled.checked = s.donationTotal.enabled;
   donationTotalFields.text.value = s.donationTotal.text;
   donationTotalFields.currency.value = s.donationTotal.currency;
@@ -1574,6 +1605,14 @@ async function saveSettings() {
       officialShoutout: document.getElementById('so-official').checked,
       showCard: document.getElementById('so-card').checked,
       autoOnRaid: document.getElementById('so-autoraid').checked,
+      card: {
+        durationSeconds: Number(soCardFields.duration.value),
+        fontSize: Number(soCardFields.fontSize.value),
+        textColor: soCardFields.textColor.value,
+        bgColor: soCardFields.bgColor.value,
+        bgOpacity: Number(soCardFields.bgOpacity.value),
+        position: { x: Number(soCardFields.posX.value), y: Number(soCardFields.posY.value) },
+      },
     },
     donationTotal: {
       enabled: donationTotalFields.enabled.checked,
@@ -2300,6 +2339,8 @@ function updatePreviewMarker() {
         EVENT_MARKER_LABELS[type],
         EVENT_MARKER_COLORS[type],
       );
+    } else if (type === 'shoutout') {
+      addPreviewMarker(Number(soCardFields.posX.value), Number(soCardFields.posY.value), 'Fiche shoutout', '#a970ff');
     } else if (type === 'lastevents') {
       for (const evtType of EVENT_TYPES) {
         addPreviewMarker(

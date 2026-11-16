@@ -147,6 +147,8 @@ function sanitizeShoutoutConfig(input, fallback) {
     officialShoutout: bool('officialShoutout'),
     showCard: bool('showCard'),
     autoOnRaid: bool('autoOnRaid'),
+    // même forme que la fiche raid (sans "enabled", déjà couvert par showCard ci-dessus)
+    card: (({ enabled, ...rest }) => rest)(sanitizeRaidCardConfig(input?.card, { enabled: true, ...fallback.card })),
   };
 }
 

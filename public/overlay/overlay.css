@@ -33,6 +33,7 @@ body.module-activity-off #activity-feed { display: none !important; }
 body.module-people-off #follow-list { display: none !important; }
 body.module-tamagotchi-off #tamagotchi { display: none !important; }
 body.module-raidcard-off #raid-card { display: none !important; }
+body.module-shoutout-off #shoutout-card { display: none !important; }
 body.module-nowplaying-off #now-playing { display: none !important; }
 body.module-customcommands-off #custom-command-player { display: none !important; }
 body.module-commandslist-off #commands-list-panel,
@@ -332,8 +333,8 @@ body.module-messages-off .messages-panel { display: none !important; }
   30%, 70% { transform: rotate(-9deg) translateX(-3px); }
 }
 
-/* Fiche mémoire raid : avatar + dernier jeu/titre du canal qui raid */
-#raid-card {
+/* Fiche mémoire raid (canal qui raid) et fiche shoutout (canal mis en avant) : même mise en page */
+#raid-card, #shoutout-card {
   position: fixed;
   transform: translate(-50%, -50%) scale(0.9);
   display: flex;
@@ -348,7 +349,7 @@ body.module-messages-off .messages-panel { display: none !important; }
   max-width: 420px;
 }
 
-#raid-card.visible {
+#raid-card.visible, #shoutout-card.visible {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }

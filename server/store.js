@@ -106,6 +106,11 @@ const DEFAULT_SETTINGS = {
     officialShoutout: true,
     showCard: true,
     autoOnRaid: false,
+    // Fiche shoutout sur l'overlay : indépendante de la fiche raid (sa propre source OBS, son style)
+    card: {
+      durationSeconds: 12, fontSize: 16, textColor: '#ffffff', bgColor: '#6441a5', bgOpacity: 85,
+      position: { x: 50, y: 30 },
+    },
   },
   activityFeed: {
     enabled: false,
@@ -551,6 +556,11 @@ function getSettings() {
     shoutout: {
       ...DEFAULT_SETTINGS.shoutout,
       ...(saved.shoutout || {}),
+      card: {
+        ...DEFAULT_SETTINGS.shoutout.card,
+        ...(saved.shoutout?.card || {}),
+        position: { ...DEFAULT_SETTINGS.shoutout.card.position, ...(saved.shoutout?.card?.position || {}) },
+      },
     },
     activityFeed: {
       ...DEFAULT_SETTINGS.activityFeed,

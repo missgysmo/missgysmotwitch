@@ -214,7 +214,7 @@ app.use(spotifyRouter);
 
 // Shoutout (!so @pseudo, bouton du dashboard, ou automatique à chaque raid) : voir shoutoutService.js.
 const shoutoutService = createShoutoutService({ store, broadcast, twitchEvents, follower, logError: logger.logError, CLIENT_ID, CLIENT_SECRET });
-app.use(createShoutoutRouter({ requireAdmin, shoutoutService }));
+app.use(createShoutoutRouter({ requireAdmin, shoutoutService, broadcastToPreview }));
 
 const { router: twitchAuthRouter, startEventSub, getRecentActivity, recordActivity } = createTwitchAuthRouter({
   store, broadcast, follower, tamagotchi, botHealth, logError: logger.logError,

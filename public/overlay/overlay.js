@@ -14,6 +14,7 @@ const tamagotchiEl = document.getElementById('tamagotchi');
 const tamagotchiImgEl = document.getElementById('tamagotchi-img');
 const tamagotchiBarEl = document.getElementById('tamagotchi-bar-fill');
 const raidCardEl = document.getElementById('raid-card');
+const shoutoutCardEl = document.getElementById('shoutout-card');
 const nowPlayingEl = document.getElementById('now-playing');
 const nowPlayingArtEl = document.getElementById('now-playing-art');
 const nowPlayingTitleEl = document.getElementById('now-playing-title');
@@ -75,6 +76,7 @@ if (!moduleEnabled('activity')) document.body.classList.add('module-activity-off
 if (!moduleEnabled('people')) document.body.classList.add('module-people-off');
 if (!moduleEnabled('tamagotchi')) document.body.classList.add('module-tamagotchi-off');
 if (!moduleEnabled('raidcard')) document.body.classList.add('module-raidcard-off');
+if (!moduleEnabled('shoutout')) document.body.classList.add('module-shoutout-off');
 if (!moduleEnabled('nowplaying')) document.body.classList.add('module-nowplaying-off');
 if (!moduleEnabled('customcommands')) document.body.classList.add('module-customcommands-off');
 if (!moduleEnabled('lastevents')) document.body.classList.add('module-lastevents-off');
@@ -253,6 +255,7 @@ function applySettings(newSettings) {
   applyFollowListLayout();
   applyTamagotchiLayout();
   applyRaidCardLayout();
+  applyShoutoutCardLayout();
   applyNowPlayingLayout();
   applyCustomCommandsPlayerLayout();
   applyCommandsListLayout();
@@ -680,26 +683,51 @@ function applyRaidCardLayout() {
   raidCardEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${r.bgOpacity / 100})`;
 }
 
-// Sert aussi pour le shoutout (isShoutout) : même fiche, mais affichée selon le réglage du
-// shoutout (pas celui des raids), avec le lien de la chaîne à la place du nombre de viewers.
-function showRaidCard(data, isShoutout = false) {
+function showRaidCard(data) {
   const r = settings.raidCard;
-  if (!isShoutout && !r.enabled) return;
-  const footer = isShoutout
-    ? `<div class="raid-card-viewers">twitch.tv/${escapeHtml(data.login)}</div>`
-    : `<div class="raid-card-viewers">${data.viewers ?? '?'} viewers</div>`;
+  if (!r.enabled) return;
   raidCardEl.innerHTML = `
     <img class="raid-card-avatar" src="${escapeHtml(data.avatar || '')}" alt="" />
     <div class="raid-card-info">
-      <div class="raid-card-name">${isShoutout ? '📣' : '🚀'} ${escapeHtml(data.displayName || data.login)}</div>
+      <div class="raid-card-name">🚀 ${escapeHtml(data.displayName || data.login)}</div>
       ${data.game ? `<div class="raid-card-game">${escapeHtml(data.game)}</div>` : ''}
       ${data.title ? `<div class="raid-card-title">${escapeHtml(data.title)}</div>` : ''}
-      ${footer}
+      <div class="raid-card-viewers">${data.viewers ?? '?'} viewers</div>
     </div>
   `;
   raidCardEl.classList.add('visible');
   clearTimeout(raidCardHideTimer);
   raidCardHideTimer = setTimeout(() => raidCardEl.classList.remove('visible'), r.durationSeconds * 1000);
+}
+
+// Fiche shoutout : sa propre source OBS (module "shoutout") et ses propres réglages (settings.shoutout.card)
+let shoutoutCardHideTimer = null;
+function applyShoutoutCardLayout() {
+  const c = settings.shoutout?.card;
+  if (!c) return;
+  shoutoutCardEl.style.left = `${c.position.x}%`;
+  shoutoutCardEl.style.top = `${c.position.y}%`;
+  shoutoutCardEl.style.fontSize = `${c.fontSize}px`;
+  shoutoutCardEl.style.color = c.textColor;
+  const rgb = hexToRgb(c.bgColor);
+  shoutoutCardEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${c.bgOpacity / 100})`;
+}
+
+function showShoutoutCard(data) {
+  const c = settings.shoutout?.card;
+  if (!c) return;
+  shoutoutCardEl.innerHTML = `
+    <img class="raid-card-avatar" src="${escapeHtml(data.avatar || '')}" alt="" />
+    <div class="raid-card-info">
+      <div class="raid-card-name">📣 ${escapeHtml(data.displayName || data.login)}</div>
+      ${data.game ? `<div class="raid-card-game">${escapeHtml(data.game)}</div>` : ''}
+      ${data.title ? `<div class="raid-card-title">${escapeHtml(data.title)}</div>` : ''}
+      <div class="raid-card-viewers">twitch.tv/${escapeHtml(data.login)}</div>
+    </div>
+  `;
+  shoutoutCardEl.classList.add('visible');
+  clearTimeout(shoutoutCardHideTimer);
+  shoutoutCardHideTimer = setTimeout(() => shoutoutCardEl.classList.remove('visible'), c.durationSeconds * 1000);
 }
 
 function applyNowPlayingLayout() {
@@ -1376,7 +1404,7 @@ function connect() {
     if (data.type === 'tamagotchi') renderTamagotchiMood(data.mood);
     if (data.type === 'tamagotchi-reaction') playTamagotchiReaction(data.reaction);
     if (data.type === 'raid-card') showRaidCard(data);
-    if (data.type === 'shoutout-card') showRaidCard(data, true);
+    if (data.type === 'shoutout-card') showShoutoutCard(data);
     if (data.type === 'now-playing') renderNowPlaying(data.track);
     if (data.type === 'custom-command') playCustomCommand(data);
   };
