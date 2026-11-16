@@ -33,6 +33,8 @@ const { createStreamlabsService } = require('./streamlabsService');
 const { createStreamlabsRouter } = require('./routes/streamlabs');
 const { createClipService } = require('./clipService');
 const { createClipsRouter } = require('./routes/clips');
+const { createShoutoutService } = require('./shoutoutService');
+const { createShoutoutRouter } = require('./routes/shoutout');
 const { createFollowListSyncRouter } = require('./routes/followListSync');
 const { createCustomCommandsRouter } = require('./routes/customCommands');
 const { createMessagesRouter } = require('./routes/messages');
@@ -108,6 +110,7 @@ const chatTracker = createChatTracker(CHANNEL, {
       tamagotchi.handleChatMessage(login, message, isFollower);
       customCommands.handleChatMessage(login, message, isFollower);
       clipService.handleChatMessage(login, message, isFollower).catch((err) => logger.logError('clip-chat', err));
+      shoutoutService.handleChatMessage(login, message, meta).catch((err) => logger.logError('shoutout-chat', err));
     } catch (err) {
       logger.logError('chatTracker.onMessage', err);
     }
@@ -209,8 +212,13 @@ const { router: spotifyRouter, startPolling: startSpotifyPolling, getLastTrack: 
 });
 app.use(spotifyRouter);
 
+// Shoutout (!so @pseudo, bouton du dashboard, ou automatique à chaque raid) : voir shoutoutService.js.
+const shoutoutService = createShoutoutService({ store, broadcast, twitchEvents, follower, logError: logger.logError, CLIENT_ID, CLIENT_SECRET });
+app.use(createShoutoutRouter({ requireAdmin, shoutoutService }));
+
 const { router: twitchAuthRouter, startEventSub, getRecentActivity, recordActivity } = createTwitchAuthRouter({
   store, broadcast, follower, tamagotchi, botHealth, logError: logger.logError,
+  onRaid: (login) => shoutoutService.handleRaid(login),
   CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI,
 });
 app.use(twitchAuthRouter);

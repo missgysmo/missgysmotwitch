@@ -680,16 +680,21 @@ function applyRaidCardLayout() {
   raidCardEl.style.background = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${r.bgOpacity / 100})`;
 }
 
-function showRaidCard(data) {
+// Sert aussi pour le shoutout (isShoutout) : même fiche, mais affichée selon le réglage du
+// shoutout (pas celui des raids), avec le lien de la chaîne à la place du nombre de viewers.
+function showRaidCard(data, isShoutout = false) {
   const r = settings.raidCard;
-  if (!r.enabled) return;
+  if (!isShoutout && !r.enabled) return;
+  const footer = isShoutout
+    ? `<div class="raid-card-viewers">twitch.tv/${escapeHtml(data.login)}</div>`
+    : `<div class="raid-card-viewers">${data.viewers ?? '?'} viewers</div>`;
   raidCardEl.innerHTML = `
     <img class="raid-card-avatar" src="${escapeHtml(data.avatar || '')}" alt="" />
     <div class="raid-card-info">
-      <div class="raid-card-name">🚀 ${escapeHtml(data.displayName || data.login)}</div>
+      <div class="raid-card-name">${isShoutout ? '📣' : '🚀'} ${escapeHtml(data.displayName || data.login)}</div>
       ${data.game ? `<div class="raid-card-game">${escapeHtml(data.game)}</div>` : ''}
       ${data.title ? `<div class="raid-card-title">${escapeHtml(data.title)}</div>` : ''}
-      <div class="raid-card-viewers">${data.viewers ?? '?'} viewers</div>
+      ${footer}
     </div>
   `;
   raidCardEl.classList.add('visible');
@@ -1371,6 +1376,7 @@ function connect() {
     if (data.type === 'tamagotchi') renderTamagotchiMood(data.mood);
     if (data.type === 'tamagotchi-reaction') playTamagotchiReaction(data.reaction);
     if (data.type === 'raid-card') showRaidCard(data);
+    if (data.type === 'shoutout-card') showRaidCard(data, true);
     if (data.type === 'now-playing') renderNowPlaying(data.track);
     if (data.type === 'custom-command') playCustomCommand(data);
   };

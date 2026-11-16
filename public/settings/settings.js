@@ -411,6 +411,30 @@ document.getElementById('clip-test-btn')?.addEventListener('click', async () => 
   }
 });
 
+document.getElementById('so-test-btn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('so-test-btn');
+  const statusEl = document.getElementById('so-test-status');
+  const login = document.getElementById('so-test-login').value.trim();
+  statusEl.hidden = false;
+  if (!login) { statusEl.textContent = 'Écris un pseudo Twitch.'; return; }
+  btn.disabled = true;
+  statusEl.textContent = 'Shoutout en cours...';
+  try {
+    const res = await fetch('/api/admin/shoutout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = `${body.target} — tchat : ${body.chat} · officiel : ${body.official} · fiche : ${body.card}`;
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 async function loadDonationTotal() {
   const el = document.getElementById('donationtotal-current');
   if (!el) return;
@@ -1318,6 +1342,15 @@ async function loadSettings() {
   document.getElementById('clip-command').value = s.clipCommand.command;
   document.getElementById('clip-followers').checked = s.clipCommand.followersAllowed;
   document.getElementById('clip-cooldown').value = s.clipCommand.cooldownSeconds;
+  document.getElementById('so-enabled').checked = s.shoutout.enabled;
+  document.getElementById('so-command').value = s.shoutout.command;
+  document.getElementById('so-mods').checked = s.shoutout.modsAllowed;
+  document.getElementById('so-cooldown').value = s.shoutout.cooldownSeconds;
+  document.getElementById('so-chat').checked = s.shoutout.sendChatMessage;
+  document.getElementById('so-message').value = s.shoutout.message;
+  document.getElementById('so-official').checked = s.shoutout.officialShoutout;
+  document.getElementById('so-card').checked = s.shoutout.showCard;
+  document.getElementById('so-autoraid').checked = s.shoutout.autoOnRaid;
   donationTotalFields.enabled.checked = s.donationTotal.enabled;
   donationTotalFields.text.value = s.donationTotal.text;
   donationTotalFields.currency.value = s.donationTotal.currency;
@@ -1528,6 +1561,17 @@ async function saveSettings() {
       command: document.getElementById('clip-command').value,
       followersAllowed: document.getElementById('clip-followers').checked,
       cooldownSeconds: Number(document.getElementById('clip-cooldown').value),
+    },
+    shoutout: {
+      enabled: document.getElementById('so-enabled').checked,
+      command: document.getElementById('so-command').value,
+      modsAllowed: document.getElementById('so-mods').checked,
+      cooldownSeconds: Number(document.getElementById('so-cooldown').value),
+      sendChatMessage: document.getElementById('so-chat').checked,
+      message: document.getElementById('so-message').value,
+      officialShoutout: document.getElementById('so-official').checked,
+      showCard: document.getElementById('so-card').checked,
+      autoOnRaid: document.getElementById('so-autoraid').checked,
     },
     donationTotal: {
       enabled: donationTotalFields.enabled.checked,

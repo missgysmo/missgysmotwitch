@@ -95,6 +95,17 @@ const DEFAULT_SETTINGS = {
     followersAllowed: true,
     cooldownSeconds: 30,
   },
+  shoutout: {
+    enabled: false,
+    command: '!so',
+    modsAllowed: true,
+    cooldownSeconds: 10,
+    sendChatMessage: true,
+    message: '📣 Allez faire un tour chez {name} ! Dernier jeu : {game} 👉 {url}',
+    officialShoutout: true,
+    showCard: true,
+    autoOnRaid: false,
+  },
   activityFeed: {
     enabled: false,
     fontSize: 15,
@@ -535,6 +546,10 @@ function getSettings() {
     clipCommand: {
       ...DEFAULT_SETTINGS.clipCommand,
       ...(saved.clipCommand || {}),
+    },
+    shoutout: {
+      ...DEFAULT_SETTINGS.shoutout,
+      ...(saved.shoutout || {}),
     },
     activityFeed: {
       ...DEFAULT_SETTINGS.activityFeed,

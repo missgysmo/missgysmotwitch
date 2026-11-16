@@ -26,6 +26,8 @@ function createChatTracker(channel, { onChange, getInactivityMs, onMessage, onMe
         id: tags.id || null,
         displayName: tags['display-name'] || login,
         color: tags.color || null,
+        isMod: Boolean(tags.mod),
+        isBroadcaster: Boolean(tags.badges?.broadcaster),
       });
     }
   });

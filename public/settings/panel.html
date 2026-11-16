@@ -41,6 +41,7 @@
           <button type="button" class="nav-tab-btn" data-tab="raid"><span class="nav-icon">🚀</span>Raid</button>
           <button type="button" class="nav-tab-btn" data-tab="donation"><span class="nav-icon">🎁</span>Don caritatif</button>
           <button type="button" class="nav-tab-btn" data-tab="clips"><span class="nav-icon">🎬</span>Clips (OBS)</button>
+          <button type="button" class="nav-tab-btn" data-tab="shoutout"><span class="nav-icon">📣</span>Shoutout</button>
           <button type="button" class="nav-tab-btn" data-tab="lastevents"><span class="nav-icon">📌</span>Derniers événements</button>
         </div>
         <div class="nav-subtabs" data-cat-group="tools" hidden>
@@ -1080,6 +1081,40 @@
         <button type="button" id="clip-test-btn">🎬 Créer un clip maintenant</button>
         <p id="clip-test-status" class="hint" hidden></p>
         <p class="hint">Déclenche un vrai clip Twitch (pas de simulation possible) — tu dois être en direct pour que ça marche.</p>
+      </fieldset>
+
+      <fieldset data-nav-panel="shoutout" hidden>
+        <legend>Shoutout</legend>
+        <p class="hint">
+          Tape <code>!so pseudo</code> (ou <code>!so @pseudo</code>) dans le tchat pour mettre en avant une autre chaîne :
+          message dans le tchat, shoutout officiel Twitch, et fiche avec son avatar et son dernier jeu sur l'overlay.
+        </p>
+        <p class="hint">
+          ⚠️ Première utilisation : il faut réautoriser l'app une fois (nouvelles permissions pour écrire dans le tchat et
+          faire des shoutouts). Va sur <code>/auth</code>, reconnecte-toi à Twitch, puis redémarre le serveur.
+        </p>
+
+        <h3>Commande de tchat</h3>
+        <label><input type="checkbox" id="so-enabled" /> Activer la commande de shoutout</label>
+        <label>Commande <input type="text" id="so-command" maxlength="21" placeholder="!so" /></label>
+        <label><input type="checkbox" id="so-mods" /> Autoriser les modérateurs (sinon réservée à toi)</label>
+        <label>Cooldown (secondes) <input type="number" id="so-cooldown" min="0" max="600" /></label>
+
+        <h3>Ce qui se passe</h3>
+        <label><input type="checkbox" id="so-chat" /> Envoyer un message dans le tchat</label>
+        <label>Message <input type="text" id="so-message" maxlength="400" /></label>
+        <p class="hint">Variables : <code>{name}</code> (pseudo), <code>{url}</code> (lien de la chaîne), <code>{game}</code> (dernier jeu), <code>{title}</code> (titre du dernier live).</p>
+        <label><input type="checkbox" id="so-official" /> Shoutout officiel Twitch (bouton « Suivre » affiché aux viewers)</label>
+        <p class="hint">Twitch limite le shoutout officiel : seulement en direct, 1 toutes les 2 minutes, et 1 par chaîne par heure. Le message du tchat, lui, part toujours.</p>
+        <label><input type="checkbox" id="so-card" /> Afficher la fiche sur l'overlay</label>
+        <p class="hint">Même fiche que pour les raids : position, taille, couleurs et durée se règlent dans Outils → Fiche raid.</p>
+        <label><input type="checkbox" id="so-autoraid" /> Shoutout automatique à chaque raid reçu</label>
+
+        <h3>Tester</h3>
+        <label>Pseudo <input type="text" id="so-test-login" maxlength="26" placeholder="pseudo_twitch" /></label>
+        <button type="button" id="so-test-btn">📣 Faire le shoutout</button>
+        <p id="so-test-status" class="hint" hidden></p>
+        <p class="hint">Fait un vrai shoutout (le message part vraiment dans ton tchat). Enregistre tes réglages avant de tester.</p>
       </fieldset>
 
       <fieldset data-nav-panel="lastevents" hidden>

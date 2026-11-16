@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const store = require('./store');
 
 const EVENTSUB_WS_URL = 'wss://eventsub.wss.twitch.tv/ws';
-const SCOPES = ['moderator:read:followers', 'channel:read:subscriptions', 'bits:read', 'channel:manage:redemptions', 'clips:edit'];
+const SCOPES = ['moderator:read:followers', 'channel:read:subscriptions', 'bits:read', 'channel:manage:redemptions', 'clips:edit', 'user:write:chat', 'moderator:manage:shoutouts'];
 
 function getAuthUrl({ clientId, redirectUri, state }) {
   const params = new URLSearchParams({
@@ -174,12 +174,49 @@ async function getChannelInfo({ clientId, clientSecret, login }) {
   const channel = channelBody.data?.[0] || {};
 
   return {
+    id: user.id,
     login: user.login,
     displayName: user.display_name,
     avatar: user.profile_image_url,
     game: channel.game_name || null,
     title: channel.title || null,
   };
+}
+
+// Message dans le tchat, envoyé avec le compte du streamer (scope user:write:chat).
+async function sendChatMessage({ clientId, clientSecret, broadcasterId, message }) {
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    'https://api.twitch.tv/helix/chat/messages',
+    {
+      method: 'POST',
+      headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ broadcaster_id: broadcasterId, sender_id: broadcasterId, message: message.slice(0, 500) }),
+    },
+  ));
+  if (res.status === 401 || res.status === 403) {
+    throw new Error('Permission manquante — repasse par /auth pour réautoriser l\'app.');
+  }
+  if (!res.ok) throw new Error(`sendChatMessage failed: ${res.status} ${await res.text()}`);
+  const body = await res.json();
+  const result = body.data?.[0];
+  if (result && !result.is_sent) throw new Error(`Message refusé par Twitch : ${result.drop_reason?.message || 'raison inconnue'}`);
+}
+
+// Shoutout officiel Twitch (scope moderator:manage:shoutouts). Twitch impose : être en live, un
+// shoutout max toutes les 2 minutes, et pas deux fois la même chaîne en moins d'une heure.
+async function sendShoutout({ clientId, clientSecret, broadcasterId, targetId }) {
+  const params = new URLSearchParams({ from_broadcaster_id: broadcasterId, to_broadcaster_id: targetId, moderator_id: broadcasterId });
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/chat/shoutouts?${params.toString()}`,
+    { method: 'POST', headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
+  if (res.ok) return;
+  const text = await res.text();
+  if (res.status === 401 || res.status === 403) throw new Error('Permission manquante — repasse par /auth pour réautoriser l\'app.');
+  if (res.status === 429) throw new Error('Limite Twitch atteinte (1 shoutout toutes les 2 min, et 1 par chaîne par heure).');
+  if (res.status === 400 && /live/i.test(text)) throw new Error('Il faut être en direct pour un shoutout officiel.');
+  if (res.status === 400 && /yourself|same/i.test(text)) throw new Error('Impossible de se faire un shoutout à soi-même.');
+  throw new Error(`sendShoutout failed: ${res.status} ${text}`);
 }
 
 // Crée une récompense à points de chaîne (pour débloquer un avatar saisonnier). Nécessite le
@@ -321,4 +358,5 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
 module.exports = {
   getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile,
   getAllFollowers, getAllSubscribers, connectEventSub, createCustomReward, deleteCustomReward, updateRedemptionStatus, createClip,
+  sendChatMessage, sendShoutout,
 };

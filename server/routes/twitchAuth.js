@@ -8,7 +8,7 @@ const RECENT_ACTIVITY_MAX = 40;
 // startEventSub() réutilise follower.ensureBroadcasterId() au lieu de refaire son propre lookup —
 // avant cette extraction, une variable locale masquait par erreur le cache partagé du broadcasterId,
 // causant un appel Twitch redondant à chaque tout premier check de follower après le démarrage.
-function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHealth, logError, CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI }) {
+function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHealth, logError, onRaid, CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI }) {
   const router = express.Router();
   const recentActivity = []; // { kind, displayName, login, extra, ts } — remis à zéro à chaque redémarrage
 
@@ -89,6 +89,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
       twitchEvents.getChannelInfo({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, login })
         .then((info) => broadcast({ type: 'raid-card', ...info, viewers: extra }))
         .catch((err) => logError('raid-card', err));
+      if (onRaid) onRaid(login);
     }
   }
 

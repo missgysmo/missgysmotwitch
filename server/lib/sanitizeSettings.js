@@ -134,6 +134,21 @@ function sanitizeClipCommandConfig(input, fallback) {
   };
 }
 
+function sanitizeShoutoutConfig(input, fallback) {
+  const bool = (k) => (typeof input?.[k] === 'boolean' ? input[k] : fallback[k]);
+  return {
+    enabled: bool('enabled'),
+    command: typeof input?.command === 'string' && CLIP_COMMAND_RE.test(input.command.trim()) ? input.command.trim().toLowerCase() : fallback.command,
+    modsAllowed: bool('modsAllowed'),
+    cooldownSeconds: clamp(input?.cooldownSeconds, 0, 600, fallback.cooldownSeconds),
+    sendChatMessage: bool('sendChatMessage'),
+    message: typeof input?.message === 'string' && input.message.trim() ? input.message.trim().slice(0, 400) : fallback.message,
+    officialShoutout: bool('officialShoutout'),
+    showCard: bool('showCard'),
+    autoOnRaid: bool('autoOnRaid'),
+  };
+}
+
 function sanitizeActivityFeedConfig(input, fallback) {
   return {
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
@@ -333,7 +348,7 @@ function sanitizeSettings(body, current) {
     movementPattern, corridorPosition, mirrorOnDirection, inactivityMinutes, transitionEffect,
     nameTag, events, lastEvents, spriteFlip, ownerNameColor, ownerSize, timers, graffiti, chatOverlay, chatSound,
     activityFeed, followList, tamagotchi, raidCard, nowPlaying, socialLinks, socialPlatforms, customCommandsPlayer,
-    commandsList, coHosts, donationTotal, clipCommand,
+    commandsList, coHosts, donationTotal, clipCommand, shoutout,
   } = body;
   const d = current;
 
@@ -389,6 +404,7 @@ function sanitizeSettings(body, current) {
     chatOverlay: sanitizeChatOverlayConfig(chatOverlay, d.chatOverlay),
     chatSound: sanitizeChatSoundConfig(chatSound, d.chatSound),
     clipCommand: sanitizeClipCommandConfig(clipCommand, d.clipCommand),
+    shoutout: sanitizeShoutoutConfig(shoutout, d.shoutout),
     activityFeed: sanitizeActivityFeedConfig(activityFeed, d.activityFeed),
     followList: sanitizeFollowListConfig(followList, d.followList),
     tamagotchi: sanitizeTamagotchiConfig(tamagotchi, d.tamagotchi),
