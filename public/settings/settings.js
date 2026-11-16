@@ -797,7 +797,7 @@ const OBS_MODULES = [
   { id: 'activity', label: '📣 Activité récente' },
   { id: 'people', label: '📜 Liste followers/subs' },
   { id: 'tamagotchi', label: '🐾 Mascotte' },
-  { id: 'raidcard', label: '🎴 Fiche raid' },
+  { id: 'raidcard', label: '🎴 Fiche raid + shoutout' },
   { id: 'nowplaying', label: '🎵 Musique en cours' },
   { id: 'customcommands', label: '🎬 Commandes de tchat (vidéo)' },
   { id: 'commandslist', label: '📋 Liste des commandes' },
