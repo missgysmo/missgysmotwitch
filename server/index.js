@@ -108,8 +108,8 @@ const chatTracker = createChatTracker(CHANNEL, {
       }
 
       tamagotchi.handleChatMessage(login, message, isFollower);
-      customCommands.handleChatMessage(login, message, isFollower);
-      clipService.handleChatMessage(login, message, isFollower).catch((err) => logger.logError('clip-chat', err));
+      customCommands.handleChatMessage(login, message, meta).catch((err) => logger.logError('custom-command', err));
+      clipService.handleChatMessage(login, message, meta).catch((err) => logger.logError('clip-chat', err));
       shoutoutService.handleChatMessage(login, message, meta).catch((err) => logger.logError('shoutout-chat', err));
     } catch (err) {
       logger.logError('chatTracker.onMessage', err);
@@ -134,7 +134,7 @@ const follower = createFollowerService({
   getTestAvatars: () => testSandbox.getTestAvatars(),
 });
 const tamagotchi = createTamagotchiService({ store, broadcast });
-const customCommands = createCustomCommandsService({ store, broadcast, isChannelOwner: (login) => follower.isChannelOwner(login) });
+const customCommands = createCustomCommandsService({ store, broadcast, follower });
 
 // --- Express app ---
 const app = express();

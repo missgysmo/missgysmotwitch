@@ -43,6 +43,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
       displayName = event.user_name;
       login = event.user_login;
       store.addPerson('followers', login, displayName);
+      follower.markFollower(login);
     } else if (type === 'channel.subscribe') {
       kind = 'subscribe';
       displayName = event.user_name;

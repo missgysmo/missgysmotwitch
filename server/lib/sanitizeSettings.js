@@ -241,6 +241,7 @@ function sanitizeNowPlayingConfig(input, fallback) {
 
 function sanitizeCustomCommandsPlayerConfig(input, fallback) {
   return {
+    normalizeVolume: typeof input?.normalizeVolume === 'boolean' ? input.normalizeVolume : (fallback.normalizeVolume ?? true),
     position: {
       x: clamp(input?.position?.x, 0, 100, fallback.position.x),
       y: clamp(input?.position?.y, 0, 100, fallback.position.y),

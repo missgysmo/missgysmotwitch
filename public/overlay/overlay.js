@@ -760,6 +760,7 @@ function renderNowPlaying(track) {
 // (visible de tout le monde, dans un cadre positionnable). Le serveur ne diffuse ce message que
 // si la commande est activée, la permission (follower/streamer) respectée et le cooldown passé.
 function applyCustomCommandsPlayerLayout() {
+  preloadCustomCommandSounds();
   const c = settings.customCommandsPlayer;
   customCommandPlayerEl.style.left = `${c.position.x}%`;
   customCommandPlayerEl.style.top = `${c.position.y}%`;
@@ -822,11 +823,133 @@ function renderCommandsList() {
   commandsListItemsEl.innerHTML = items.join('') + items.join('');
 }
 
-function playCustomCommand(data) {
+// --- Volume des commandes : égalisation automatique + réglage par commande ---
+// Chaque fichier est décodé une fois pour mesurer son volume moyen (sur les passages non silencieux),
+// puis joué avec le gain qui l'amène au niveau cible. Un compresseur en sortie évite que les sons
+// très bas, une fois remontés, ne saturent sur leurs pics.
+const CC_TARGET_RMS = 0.12; // ≈ -18 dBFS, niveau habituel d'un son "normal"
+const CC_MIN_GAIN = 0.1;
+const CC_MAX_GAIN = 4;
+const CC_CACHE_MAX = 40;
+let ccAudioCtx = null;
+let ccOutputNode = null;
+let ccVideoGainNode = null;
+const ccLoudness = new Map(); // media -> Promise<{ gain, buffer|null }>
+
+function ccAudio() {
+  if (!ccAudioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    ccAudioCtx = new Ctx();
+    ccOutputNode = ccAudioCtx.createDynamicsCompressor();
+    ccOutputNode.threshold.value = -6;
+    ccOutputNode.knee.value = 6;
+    ccOutputNode.ratio.value = 12;
+    ccOutputNode.attack.value = 0.003;
+    ccOutputNode.release.value = 0.2;
+    ccOutputNode.connect(ccAudioCtx.destination);
+  }
+  if (ccAudioCtx.state === 'suspended') ccAudioCtx.resume().catch(() => {});
+  return ccAudioCtx;
+}
+
+function measureNormalizeGain(buffer) {
+  const win = Math.max(1, Math.floor(buffer.sampleRate * 0.05));
+  const channels = [];
+  for (let c = 0; c < buffer.numberOfChannels; c++) channels.push(buffer.getChannelData(c));
+  let loudEnergy = 0;
+  let loudWindows = 0;
+  for (let start = 0; start < buffer.length; start += win) {
+    const end = Math.min(start + win, buffer.length);
+    let sum = 0;
+    let n = 0;
+    for (const data of channels) {
+      for (let i = start; i < end; i += 2) { sum += data[i] * data[i]; n++; }
+    }
+    const rms = Math.sqrt(sum / Math.max(1, n));
+    if (rms > 0.01) { loudEnergy += rms * rms; loudWindows++; } // ignore les silences
+  }
+  if (!loudWindows) return 1;
+  const rms = Math.sqrt(loudEnergy / loudWindows);
+  return Math.min(CC_MAX_GAIN, Math.max(CC_MIN_GAIN, CC_TARGET_RMS / rms));
+}
+
+// keepBuffer : on garde le son décodé pour le rejouer directement (sons seuls) ; pour les vidéos
+// on ne garde que le gain mesuré (la vidéo est jouée par la balise <video>).
+function ccAnalyze(media, keepBuffer) {
+  if (ccLoudness.has(media)) return ccLoudness.get(media);
+  const ctx = ccAudio();
+  if (!ctx) return Promise.resolve({ gain: 1, buffer: null });
+  const promise = fetch(`/media/${media}`)
+    .then((res) => res.arrayBuffer())
+    .then((bytes) => ctx.decodeAudioData(bytes))
+    .then((buffer) => ({ gain: measureNormalizeGain(buffer), buffer: keepBuffer ? buffer : null }))
+    .catch((err) => {
+      console.warn('[commande] mesure du volume impossible:', media, err.message || err);
+      return { gain: 1, buffer: null };
+    });
+  ccLoudness.set(media, promise);
+  if (ccLoudness.size > CC_CACHE_MAX) ccLoudness.delete(ccLoudness.keys().next().value);
+  return promise;
+}
+
+// Prépare les sons à l'avance (dès le chargement des réglages) pour que la première lecture ne
+// prenne pas de retard le temps du décodage. Les vidéos, plus lourdes, sont mesurées à la demande.
+function preloadCustomCommandSounds() {
+  if (!moduleEnabled('customcommands')) return;
+  for (const cmd of settings.customCommands || []) {
+    if (cmd.enabled && cmd.media && cmd.type === 'sound') ccAnalyze(cmd.media, true);
+  }
+}
+
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
+}
+
+async function playCustomCommand(data) {
   if (!moduleEnabled('customcommands') || !data.media) return;
+  const normalize = settings.customCommandsPlayer?.normalizeVolume !== false;
+  const userVolume = (data.volume ?? 100) / 100;
+
   if (data.mediaType === 'sound') {
-    new Audio(`/media/${data.media}`).play().catch((err) => console.error('[commande] lecture impossible:', err.message));
+    const ctx = ccAudio();
+    const info = ctx ? await ccAnalyze(data.media, true) : null;
+    if (ctx && info?.buffer) {
+      const source = ctx.createBufferSource();
+      source.buffer = info.buffer;
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = (normalize ? info.gain : 1) * userVolume;
+      source.connect(gainNode).connect(ccOutputNode);
+      source.start();
+      return;
+    }
+    // repli (navigateur sans Web Audio ou fichier non décodable) : volume simple, plafonné à 100 %
+    const audio = new Audio(`/media/${data.media}`);
+    audio.volume = Math.min(1, userVolume);
+    audio.play().catch((err) => console.error('[commande] lecture impossible:', err.message));
   } else if (data.mediaType === 'video') {
+    // Mesure du volume de la vidéo : on n'attend pas plus de 1,5 s (la mesure reste en cache
+    // pour les fois suivantes, même si elle arrive trop tard pour cette lecture-ci).
+    const info = normalize ? await withTimeout(ccAnalyze(data.media, false), 1500, { gain: 1 }) : { gain: 1 };
+    const gain = (normalize ? info.gain : 1) * userVolume;
+    const ctx = ccAudio();
+    // Branchement de la vidéo sur Web Audio (permet d'aller au-delà de 100 %), seulement si le
+    // contexte audio tourne : sinon la vidéo serait muette. Sinon, simple volume plafonné à 100 %.
+    if (ctx && ctx.state === 'running' && !ccVideoGainNode) {
+      try {
+        ccVideoGainNode = ctx.createGain();
+        ctx.createMediaElementSource(customCommandVideoEl).connect(ccVideoGainNode).connect(ccOutputNode);
+      } catch (err) {
+        console.warn('[commande] Web Audio indisponible pour la vidéo:', err.message);
+        ccVideoGainNode = null;
+      }
+    }
+    if (ccVideoGainNode) {
+      customCommandVideoEl.volume = 1;
+      ccVideoGainNode.gain.value = gain;
+    } else {
+      customCommandVideoEl.volume = Math.min(1, gain);
+    }
     customCommandVideoEl.src = `/media/${data.media}`;
     customCommandPlayerEl.classList.add('visible');
     customCommandVideoEl.currentTime = 0;

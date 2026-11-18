@@ -20,6 +20,8 @@ function sanitizeCommandFields(input, fallback) {
     followersAllowed: typeof input?.followersAllowed === 'boolean' ? input.followersAllowed : fallback.followersAllowed,
     type: ['sound', 'video'].includes(input?.type) ? input.type : fallback.type,
     cooldownSeconds: clamp(input?.cooldownSeconds, 0, 300, fallback.cooldownSeconds),
+    // en % (100 = normal), appliqué par-dessus l'égalisation automatique du volume côté overlay
+    volume: clamp(input?.volume, 0, 200, fallback.volume ?? 100),
   };
 }
 
@@ -57,7 +59,7 @@ function createCustomCommandsRouter({ store, requireAdmin, broadcast, broadcastT
     if (!COMMAND_RE.test(command)) return res.status(400).json({ error: 'Commande invalide (doit commencer par ! et faire moins de 21 caractères).' });
     if (commandWordTaken(settings, command, null)) return res.status(400).json({ error: 'Cette commande existe déjà.' });
 
-    const fallback = { label: command, command, enabled: false, followersAllowed: true, type: 'sound', cooldownSeconds: 10 };
+    const fallback = { label: command, command, enabled: false, followersAllowed: true, type: 'sound', cooldownSeconds: 10, volume: 100 };
     const fields = sanitizeCommandFields({ ...req.body, command }, fallback);
     const newCommand = { id: crypto.randomBytes(8).toString('hex'), media: null, ...fields };
 
@@ -154,7 +156,9 @@ function createCustomCommandsRouter({ store, requireAdmin, broadcast, broadcastT
     if (!cmd) return res.status(404).json({ error: 'commande introuvable' });
     if (!cmd.media) return res.status(400).json({ error: 'Ajoute un média avant de tester.' });
 
-    broadcastToPreview({ type: 'custom-command', id: cmd.id, mediaType: cmd.type, media: cmd.media, label: cmd.label });
+    broadcastToPreview({
+      type: 'custom-command', id: cmd.id, mediaType: cmd.type, media: cmd.media, label: cmd.label, volume: cmd.volume ?? 100,
+    });
     res.json({ ok: true });
   });
 

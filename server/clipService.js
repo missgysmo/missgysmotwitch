@@ -2,6 +2,8 @@
 // pas de logiciel à lancer — Twitch génère le clip côté serveur à partir de son propre buffer vidéo.
 // Remplace une première tentative basée sur OBS WebSocket, abandonnée car elle demandait un tunnel
 // (ngrok) pour que le serveur (hébergé sur Railway) atteigne OBS sur le PC de la streameuse.
+const { firstWord } = require('./lib/chatCommand');
+
 function createClipService({ store, broadcast, twitchEvents, follower, logError, CLIENT_ID, CLIENT_SECRET }) {
   let lastClipAt = 0;
 
@@ -17,10 +19,11 @@ function createClipService({ store, broadcast, twitchEvents, follower, logError,
 
   // Déclenché depuis le tchat (ex: "!clip"), avec un cooldown global (pas par viewer) pour ne pas
   // enchaîner des créations de clip en rafale si plusieurs viewers tapent la commande.
-  async function handleChatMessage(login, message, isFollower) {
+  async function handleChatMessage(login, message, meta = {}) {
     const cfg = store.getSettings().clipCommand;
-    if (!cfg.enabled || message.trim().toLowerCase() !== cfg.command) return;
-    const allowed = follower.isChannelOwner(login) || (cfg.followersAllowed && isFollower);
+    if (!cfg.enabled || firstWord(message) !== cfg.command) return;
+    const allowed = follower.isChannelOwner(login) || meta.isBroadcaster
+      || (cfg.followersAllowed && (meta.isVip || meta.isMod || await follower.isFollowerFresh(login)));
     if (!allowed) return;
     if (Date.now() - lastClipAt < cfg.cooldownSeconds * 1000) return;
     lastClipAt = Date.now();

@@ -42,7 +42,9 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
       return follows;
     } catch (err) {
       console.error(`[followers] échec vérification pour ${login}:`, err.message);
-      followerCache.set(key, { follows: false, checkedAt: Date.now() });
+      // Erreur passagère (Twitch lent, token en cours de rafraîchissement...) : on réessaie dans
+      // 1 minute au lieu de considérer la personne comme non-follower pendant 5 minutes.
+      followerCache.set(key, { follows: false, checkedAt: Date.now() - FOLLOWER_TTL_MS + 60 * 1000 });
       return false;
     }
   }
@@ -64,6 +66,27 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
       followerChecksInFlight.set(key, promise);
     }
     return cached ? cached.follows : false;
+  }
+
+  // Version qui attend la réponse de Twitch si le statut n'est pas encore connu ou est périmé
+  // (pour les commandes de tchat : mieux vaut ~300 ms de délai que refuser un vrai follower).
+  async function isFollowerFresh(login) {
+    if (isChannelOwner(login) || isCoHost(login)) return true;
+    const key = login.toLowerCase();
+    const cached = followerCache.get(key);
+    if (cached && Date.now() - cached.checkedAt <= FOLLOWER_TTL_MS) return cached.follows;
+    const inFlight = followerChecksInFlight.get(key);
+    if (inFlight) {
+      await inFlight.catch(() => {});
+      return followerCache.get(key)?.follows ?? false;
+    }
+    return checkAndCacheFollower(login);
+  }
+
+  // Appelé à la réception d'un follow (EventSub) : la personne peut utiliser les commandes tout de
+  // suite, sans attendre l'expiration d'un "non-follower" encore en cache.
+  function markFollower(login) {
+    if (login) followerCache.set(login.toLowerCase(), { follows: true, checkedAt: Date.now() });
   }
 
   function getSkin(login) {
@@ -122,6 +145,8 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
     checkAndCacheFollower,
     isFollowerCached,
     isFollowerRightNow,
+    isFollowerFresh,
+    markFollower,
     getSkin,
     buildState,
     buildCast,

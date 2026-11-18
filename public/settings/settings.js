@@ -312,6 +312,7 @@ const donationTotalFields = {
 };
 
 const ccPlayerFields = {
+  normalize: document.getElementById('cc-normalize'),
   posX: document.getElementById('cc-player-posx'),
   posXOut: document.getElementById('cc-player-posx-out'),
   posY: document.getElementById('cc-player-posy'),
@@ -1405,6 +1406,7 @@ async function loadSettings() {
   cmdListFields.posY.value = s.commandsList.position.y;
   cmdListFields.width.value = s.commandsList.position.width;
   cmdListFields.height.value = s.commandsList.position.height;
+  ccPlayerFields.normalize.checked = s.customCommandsPlayer.normalizeVolume !== false;
   renderCustomCommands(s.customCommands);
   renderCommandsListPreview(s.customCommands);
   for (const key of SOCIAL_PLATFORM_KEYS) {
@@ -1581,6 +1583,7 @@ async function saveSettings() {
       },
     },
     customCommandsPlayer: {
+      normalizeVolume: ccPlayerFields.normalize.checked,
       position: {
         x: Number(ccPlayerFields.posX.value),
         y: Number(ccPlayerFields.posY.value),
@@ -2113,7 +2116,7 @@ function renderCustomCommands(commands) {
         <span class="cc-card-title">${escapeHtmlPanel(cmd.label)}</span>
         <span class="cc-card-command">${escapeHtmlPanel(cmd.command)}</span>
         <span class="cc-badge ${cmd.type === 'video' ? 'cc-badge-video' : 'cc-badge-sound'}">${cmd.type === 'video' ? '🎬 Vidéo + son' : '🔔 Son seul'}</span>
-        <span class="cc-badge ${cmd.followersAllowed ? '' : 'cc-badge-owner'}">${cmd.followersAllowed ? '👥 Followers + toi' : '👑 Toi uniquement'}</span>
+        <span class="cc-badge ${cmd.followersAllowed ? '' : 'cc-badge-owner'}">${cmd.followersAllowed ? '👥 Followers, VIP, modos + toi' : '👑 Toi uniquement'}</span>
         <div class="cc-card-actions">
           <button type="button" class="cc-test-btn" ${cmd.media ? '' : 'disabled'}>Tester</button>
           <button type="button" class="cc-delete-btn">Supprimer</button>
@@ -2121,8 +2124,9 @@ function renderCustomCommands(commands) {
       </div>
       <div class="cc-card-body">
         <label><input type="checkbox" class="cc-enabled" ${cmd.enabled ? 'checked' : ''} /> Activée</label>
-        <label><input type="checkbox" class="cc-followers" ${cmd.followersAllowed ? 'checked' : ''} /> Followers autorisés</label>
+        <label><input type="checkbox" class="cc-followers" ${cmd.followersAllowed ? 'checked' : ''} /> Followers, VIP et modos autorisés</label>
         <label>Cooldown (s) <input type="number" class="cc-cooldown" min="0" max="300" value="${cmd.cooldownSeconds}" style="width:70px" /></label>
+        <label>Volume <input type="range" class="cc-volume" min="0" max="200" step="5" value="${cmd.volume ?? 100}" /><output class="cc-volume-out">${cmd.volume ?? 100}%</output></label>
       </div>
       <div class="cc-card-media-row">
         <span class="cc-status-text">${ccMediaLabel(cmd)}</span>
@@ -2203,6 +2207,13 @@ document.getElementById('cc-list')?.addEventListener('click', async (e) => {
   }
 });
 
+// Affiche le % en direct pendant qu'on bouge le curseur (l'enregistrement se fait au relâchement)
+document.getElementById('cc-list')?.addEventListener('input', (e) => {
+  if (!e.target.classList.contains('cc-volume')) return;
+  const out = e.target.closest('label').querySelector('.cc-volume-out');
+  if (out) out.textContent = `${e.target.value}%`;
+});
+
 document.getElementById('cc-list')?.addEventListener('change', async (e) => {
   const card = e.target.closest('.cc-card');
   if (!card) return;
@@ -2223,6 +2234,12 @@ document.getElementById('cc-list')?.addEventListener('change', async (e) => {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cooldownSeconds: Number(e.target.value) }),
+    });
+  } else if (e.target.classList.contains('cc-volume')) {
+    await fetch(`/api/admin/custom-commands/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ volume: Number(e.target.value) }),
     });
   } else if (e.target.classList.contains('cc-media-file')) {
     const file = e.target.files[0];

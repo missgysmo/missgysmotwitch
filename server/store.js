@@ -181,6 +181,8 @@ const DEFAULT_SETTINGS = {
   // Position/taille du lecteur vidéo pour les commandes "audio + vidéo" (visibles de tout le monde)
   customCommandsPlayer: {
     position: { x: 20, y: 15, width: 60, height: 60 },
+    // met tous les sons/vidéos des commandes au même volume perçu (mesuré côté overlay)
+    normalizeVolume: true,
   },
   commandsList: {
     enabled: false,

@@ -5,6 +5,8 @@
 // Scopes Twitch nécessaires : user:write:chat (message) et moderator:manage:shoutouts (officiel).
 // Les deux envois sont indépendants : si l'un échoue (ex. shoutout officiel hors live, ou
 // limite Twitch d'un shoutout toutes les 2 min), l'autre part quand même.
+const { firstWord, argsAfterCommand } = require('./lib/chatCommand');
+
 const LOGIN_RE = /^[a-zA-Z0-9_]{1,25}$/;
 
 function fillTemplate(template, info) {
@@ -66,8 +68,8 @@ function createShoutoutService({ store, broadcast, twitchEvents, follower, logEr
   async function handleChatMessage(login, message, meta = {}) {
     const cfg = store.getSettings().shoutout;
     if (!cfg.enabled) return;
-    const [cmd, target] = message.trim().split(/\s+/);
-    if (!cmd || cmd.toLowerCase() !== cfg.command || !target) return;
+    const [target] = argsAfterCommand(message);
+    if (firstWord(message) !== cfg.command || !target) return;
     const allowed = follower.isChannelOwner(login) || meta.isBroadcaster
       || (cfg.modsAllowed && meta.isMod)
       || (cfg.vipsAllowed && meta.isVip);
