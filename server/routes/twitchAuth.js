@@ -8,7 +8,7 @@ const RECENT_ACTIVITY_MAX = 40;
 // startEventSub() réutilise follower.ensureBroadcasterId() au lieu de refaire son propre lookup —
 // avant cette extraction, une variable locale masquait par erreur le cache partagé du broadcasterId,
 // causant un appel Twitch redondant à chaque tout premier check de follower après le démarrage.
-function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHealth, logError, onRaid, CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI }) {
+function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHealth, logError, speciesCatalog, onRaid, CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI }) {
   const router = express.Router();
   const recentActivity = []; // { kind, displayName, login, extra, ts } — remis à zéro à chaque redémarrage
 
@@ -97,14 +97,77 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
   // Débloque un avatar saisonnier quand le viewer échange la récompense à points correspondante.
   // Ignore silencieusement les redemptions d'autres récompenses (le streamer peut en avoir
   // d'autres, sans rapport avec les avatars) — ne touche que celles qu'on a nous-même créées.
-  function handleRewardRedemption(event) {
+  //
+  // Le viewer a déjà l'avatar → échange remboursé (CANCELED) + message dans le tchat.
+  // Sinon → avatar débloqué, échange validé (FULFILLED) + message de confirmation.
+  // Un échange déjà "fulfilled" à l'arrivée (ancienne récompense encore en validation automatique)
+  // ne peut plus être remboursé : on prévient juste le viewer.
+  const customizeUrl = process.env.PUBLIC_URL
+    ? `${process.env.PUBLIC_URL.replace(/\/+$/, '')}/customize/`
+    : (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/customize/` : null);
+
+  async function handleRewardRedemption(event) {
     const rewards = store.getSpeciesRewards();
     const entry = Object.entries(rewards).find(([, r]) => r.rewardId === event.reward.id);
     if (!entry) return;
     const [speciesId] = entry;
     const login = event.user_login;
-    store.unlockAvatarForUser(login, speciesId);
-    console.log(`[avatars] ${login} a débloqué l'avatar "${speciesId}" contre des points.`);
+    const name = event.user_name || login;
+    const label = speciesCatalog?.getById(speciesId)?.label || speciesId;
+    const pending = event.status === 'unfulfilled';
+    const alreadyOwned = store.getUnlockedAvatars(login).includes(speciesId);
+
+    let message;
+    if (alreadyOwned) {
+      let refunded = false;
+      if (pending) {
+        refunded = await setRedemptionStatus(event, 'CANCELED');
+      }
+      message = refunded
+        ? `@${name} tu as déjà l'avatar ${label}, tes ${event.reward.cost} points t'ont été remboursés.`
+        : `@${name} tu avais déjà l'avatar ${label}.`;
+      console.log(`[avatars] ${login} a réclamé "${speciesId}" déjà débloqué (${refunded ? 'remboursé' : 'non remboursé'}).`);
+    } else {
+      store.unlockAvatarForUser(login, speciesId);
+      if (pending) await setRedemptionStatus(event, 'FULFILLED');
+      message = `@${name} a débloqué l'avatar ${label} ! 🎉 ${customizeUrl ? `Choisis-le ici : ${customizeUrl}` : 'Tu peux le choisir sur la page de personnalisation.'}`;
+      console.log(`[avatars] ${login} a débloqué l'avatar "${speciesId}" contre des points.`);
+    }
+
+    try {
+      const broadcasterId = await follower.ensureBroadcasterId();
+      await twitchEvents.sendChatMessage({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, broadcasterId, message });
+    } catch (err) {
+      logError('avatar-reward-chat', err);
+    }
+  }
+
+  async function setRedemptionStatus(event, status) {
+    try {
+      await twitchEvents.updateRedemptionStatus({
+        clientId: CLIENT_ID, clientSecret: CLIENT_SECRET,
+        broadcasterId: event.broadcaster_user_id, rewardId: event.reward.id, redemptionId: event.id, status,
+      });
+      return true;
+    } catch (err) {
+      logError('avatar-reward-status', err);
+      return false;
+    }
+  }
+
+  // Les récompenses créées avant le remboursement automatique étaient en validation automatique
+  // (impossible à rembourser) : on les repasse en "en attente" au démarrage. Sans effet si déjà fait.
+  async function migrateAvatarRewards(broadcasterId) {
+    for (const [speciesId, reward] of Object.entries(store.getSpeciesRewards())) {
+      try {
+        await twitchEvents.updateCustomReward({
+          clientId: CLIENT_ID, clientSecret: CLIENT_SECRET, broadcasterId, rewardId: reward.rewardId,
+          fields: { should_redemptions_skip_request_queue: false },
+        });
+      } catch (err) {
+        console.error(`[avatars] impossible de mettre à jour la récompense de "${speciesId}":`, err.message);
+      }
+    }
   }
 
   async function startEventSub() {
@@ -122,7 +185,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
         onEvent: (type, event) => {
           console.log(`[twitchEvents] event reçu: ${type}`);
           if (type === 'channel.channel_points_custom_reward_redemption.add') {
-            handleRewardRedemption(event);
+            handleRewardRedemption(event).catch((err) => logError('avatar-reward', err));
             return;
           }
           broadcast({ type: 'event', eventType: type, event, cast: follower.buildCast() });
@@ -133,6 +196,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
           if (!connected) logError('twitchEvents', new Error("Déconnecté d'EventSub"));
         },
       });
+      migrateAvatarRewards(broadcasterId);
     } catch (err) {
       console.error('[twitchEvents] échec démarrage EventSub:', err.message);
     }

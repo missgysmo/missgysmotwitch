@@ -227,14 +227,29 @@ async function createCustomReward({ clientId, clientSecret, broadcasterId, title
     {
       method: 'POST',
       headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      // skip_request_queue: true — déblocage immédiat et automatique, pas besoin que le
-      // streamer valide chaque échange depuis son tableau de bord Twitch.
-      body: JSON.stringify({ title, cost, is_enabled: true, should_redemptions_skip_request_queue: true }),
+      // skip_request_queue: false — l'échange arrive "en attente" et c'est le bot qui le valide
+      // (FULFILLED) ou le rembourse (CANCELED) aussitôt, selon que le viewer avait déjà l'avatar.
+      // Twitch ne permet de rembourser que les échanges encore en attente.
+      body: JSON.stringify({ title, cost, is_enabled: true, should_redemptions_skip_request_queue: false }),
     },
   ));
   if (!res.ok) throw new Error(`createCustomReward failed: ${res.status} ${await res.text()}`);
   const body = await res.json();
   return body.data[0];
+}
+
+// Modifie une récompense existante (uniquement celles créées par cette app, contrainte Twitch).
+async function updateCustomReward({ clientId, clientSecret, broadcasterId, rewardId, fields }) {
+  const params = new URLSearchParams({ broadcaster_id: broadcasterId, id: rewardId });
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/channel_points/custom_rewards?${params.toString()}`,
+    {
+      method: 'PATCH',
+      headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    },
+  ));
+  if (!res.ok) throw new Error(`updateCustomReward failed: ${res.status} ${await res.text()}`);
 }
 
 async function deleteCustomReward({ clientId, clientSecret, broadcasterId, rewardId }) {
@@ -357,6 +372,6 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
 
 module.exports = {
   getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile,
-  getAllFollowers, getAllSubscribers, connectEventSub, createCustomReward, deleteCustomReward, updateRedemptionStatus, createClip,
+  getAllFollowers, getAllSubscribers, connectEventSub, createCustomReward, updateCustomReward, deleteCustomReward, updateRedemptionStatus, createClip,
   sendChatMessage, sendShoutout,
 };

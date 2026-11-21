@@ -217,7 +217,7 @@ const shoutoutService = createShoutoutService({ store, broadcast, twitchEvents, 
 app.use(createShoutoutRouter({ requireAdmin, shoutoutService, broadcastToPreview }));
 
 const { router: twitchAuthRouter, startEventSub, getRecentActivity, recordActivity } = createTwitchAuthRouter({
-  store, broadcast, follower, tamagotchi, botHealth, logError: logger.logError,
+  store, broadcast, follower, tamagotchi, botHealth, logError: logger.logError, speciesCatalog,
   onRaid: (login) => shoutoutService.handleRaid(login),
   CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI,
 });
