@@ -516,11 +516,12 @@ body.module-messages-off .messages-panel { display: none !important; }
   transition: left var(--avatar-transition, 4s) linear, top var(--avatar-transition, 4s) linear, opacity var(--avatar-transition, 4s) ease;
 }
 
+/* Même hauteur pour tous les personnages (le vide transparent autour du sprite est retiré en JS,
+   voir trimmedSpriteSrc) ; les sprites très larges sont plafonnés à 2× la taille. */
 .avatar {
-  max-width: var(--avatar-size, 64px);
-  max-height: var(--avatar-size, 64px);
+  height: var(--avatar-size, 64px);
   width: auto;
-  height: auto;
+  max-width: calc(var(--avatar-size, 64px) * 2);
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));

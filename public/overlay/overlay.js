@@ -118,6 +118,57 @@ fetch('/api/species/sprites').then((r) => r.json()).then((list) => {
   }
 }).catch(() => {});
 
+// Version du sprite sans le vide transparent qui l'entoure : sans ça, un personnage avec beaucoup
+// de marge dans son image paraît plus petit que les autres à taille égale. Calculée une fois par
+// image (canvas), puis réutilisée ; en attendant (ou en cas d'échec), l'image d'origine est utilisée.
+const trimmedSprites = new Map(); // src -> dataURL | Promise | null
+function trimmedSpriteSrc(src, onReady) {
+  const cached = trimmedSprites.get(src);
+  if (typeof cached === 'string') return cached;
+  if (cached === undefined) {
+    trimmedSprites.set(src, new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          let minX = width, minY = height, maxX = -1, maxY = -1;
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              if (data[(y * width + x) * 4 + 3] > 10) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+              }
+            }
+          }
+          if (maxX < 0) { trimmedSprites.set(src, null); return resolve(null); }
+          const out = document.createElement('canvas');
+          out.width = maxX - minX + 1;
+          out.height = maxY - minY + 1;
+          out.getContext('2d').drawImage(canvas, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+          const url = out.toDataURL('image/png');
+          trimmedSprites.set(src, url);
+          resolve(url);
+        } catch {
+          trimmedSprites.set(src, null);
+          resolve(null);
+        }
+      };
+      img.onerror = () => { trimmedSprites.set(src, null); resolve(null); };
+      img.src = src;
+    }));
+  }
+  const pending = trimmedSprites.get(src);
+  if (pending instanceof Promise && onReady) pending.then((url) => { if (url) onReady(url); });
+  return src;
+}
+
 function spriteSrcFor(species) {
   if (SPECIES_FILES[species]) return `/overlay/sprites/${SPECIES_FILES[species]}`;
   if (CUSTOM_SPECIES_SRC[species]) return CUSTOM_SPECIES_SRC[species];
@@ -241,12 +292,12 @@ function applySettings(newSettings) {
   document.body.classList.toggle('hide-names', !settings.nameTag.show);
   const ownerEntry = [...avatars.values()].find((e) => e.el.dataset.species === 'mon-avatar');
   if (ownerEntry) {
-    const size = `${scaledOwnerSize()}px`;
+    const size = scaledOwnerSize();
     const ownerImg = ownerEntry.el.querySelector('.avatar');
-    ownerImg.style.maxWidth = size;
-    ownerImg.style.maxHeight = size;
+    ownerImg.style.maxWidth = `${size * 2}px`;
+    ownerImg.style.maxHeight = '';
     ownerImg.style.width = 'auto';
-    ownerImg.style.height = 'auto';
+    ownerImg.style.height = `${size}px`;
     ownerEntry.el.querySelector('.avatar-name').style.color = settings.ownerNameColor;
   }
   applyGraffitiLayout();
@@ -377,15 +428,18 @@ function applySkin(el, skin) {
   const img = el.querySelector('.avatar');
   const name = el.querySelector('.avatar-name');
   const src = spriteSrcFor(skin.species);
-  if (!img.src.endsWith(src)) img.src = src;
+  if (img.dataset.rawSrc !== src) {
+    img.dataset.rawSrc = src;
+    img.src = trimmedSpriteSrc(src, (url) => { if (img.dataset.rawSrc === src) img.src = url; });
+  }
   el.dataset.species = skin.species;
 
   if (skin.species === 'mon-avatar') {
-    const size = `${scaledOwnerSize()}px`;
-    img.style.maxWidth = size;
-    img.style.maxHeight = size;
+    const size = scaledOwnerSize();
+    img.style.maxWidth = `${size * 2}px`;
+    img.style.maxHeight = '';
     img.style.width = 'auto';
-    img.style.height = 'auto';
+    img.style.height = `${size}px`;
     img.style.filter = 'none';
     name.style.color = settings.ownerNameColor;
   } else {
