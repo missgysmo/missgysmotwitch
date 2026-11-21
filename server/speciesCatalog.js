@@ -8,12 +8,14 @@ function createSpeciesCatalog({ store }) {
   function getAll() {
     const enabledMap = store.getSpeciesEnabled();
     const rewards = store.getSpeciesRewards();
+    const collections = store.getSpeciesCollections();
     const custom = store.getCustomSpecies().map((s) => ({ ...s, custom: true }));
     return [...baseSpecies.SPECIES, ...custom].map((s) => ({
       ...s,
       enabled: enabledMap[s.id] !== false,
       src: s.custom ? `/avatar-sprites/${s.file}` : `/overlay/sprites/${s.file}`,
       reward: rewards[s.id] || null,
+      collection: collections[s.id] || null,
     }));
   }
 

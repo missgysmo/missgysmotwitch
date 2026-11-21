@@ -60,6 +60,28 @@ button:hover { background: #7d2ff0; }
   margin: 0;
 }
 
+.species-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+.species-tabs:empty { display: none; }
+.species-tab {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #3a3a45;
+  border-radius: 999px;
+  background: #17171d;
+  color: #a9a9b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.species-tab:hover { background: #2a2035; color: #f1f1f5; }
+.species-tab.active { background: #9147ff; border-color: #9147ff; color: white; }
+.species-tab .tab-count { font-weight: 400; opacity: 0.75; margin-left: 0.2rem; }
+.empty-hint { font-size: 0.82rem; color: #a9a9b8; margin: 0.25rem 0; }
+.owned-badge { font-size: 0.6rem; color: #8be38b; font-weight: 700; }
+
 .species-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));

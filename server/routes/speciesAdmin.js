@@ -63,9 +63,13 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
     const match = speciesCatalog.getById(req.params.id);
     if (!match) return res.status(404).json({ error: 'avatar introuvable' });
     if (match.reserved) return res.status(400).json({ error: "cet avatar ne peut pas être désactivé" });
-    if (typeof req.body?.enabled !== 'boolean') return res.status(400).json({ error: 'enabled manquant' });
+    const { enabled, collection } = req.body || {};
+    if (typeof enabled !== 'boolean' && typeof collection !== 'string') {
+      return res.status(400).json({ error: 'enabled ou collection manquant' });
+    }
 
-    store.setSpeciesEnabled(match.id, req.body.enabled);
+    if (typeof enabled === 'boolean') store.setSpeciesEnabled(match.id, enabled);
+    if (typeof collection === 'string') store.setSpeciesCollection(match.id, collection.trim().slice(0, 30));
     res.json(speciesCatalog.getById(match.id));
   });
 
@@ -84,6 +88,7 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
       store.removeSpeciesReward(match.id);
     }
     store.removeCustomSpecies(match.id);
+    store.setSpeciesCollection(match.id, '');
     fs.rm(path.join(spritesDir, match.file), { force: true }, () => {});
     res.json({ ok: true });
   });

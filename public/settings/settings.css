@@ -952,3 +952,15 @@ button:hover { background: #7d2ff0; }
   font-size: 0.9rem;
 }
 #status { min-height: 1.2em; font-size: 0.85rem; margin: 0; color: #9a9aa8; }
+
+/* Onglets de collections du catalogue d'avatars */
+.collection-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 12px;
+}
+.collection-tabs .nav-tab-btn .collection-count {
+  font-weight: 400;
+  opacity: 0.75;
+}

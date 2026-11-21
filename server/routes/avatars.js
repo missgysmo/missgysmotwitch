@@ -8,13 +8,13 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, s
     const login = typeof req.query.login === 'string' ? req.query.login.trim().toLowerCase() : '';
     if (!login) {
       // Pas de viewer précis : uniquement les avatars gratuits (jamais un verrouillé par erreur).
-      return res.json(speciesCatalog.getSelectable().map((s) => ({ id: s.id, label: s.label, src: s.src })));
+      return res.json(speciesCatalog.getSelectable().map((s) => ({ id: s.id, label: s.label, src: s.src, collection: s.collection })));
     }
     const unlocked = new Set(store.getUnlockedAvatars(login));
     const list = speciesCatalog.getAll()
       .filter((s) => !s.reserved && s.enabled)
       .map((s) => ({
-        id: s.id, label: s.label, src: s.src,
+        id: s.id, label: s.label, src: s.src, collection: s.collection,
         locked: !!s.reward, cost: s.reward?.cost || null, unlocked: !s.reward || unlocked.has(s.id),
       }));
     res.json(list);

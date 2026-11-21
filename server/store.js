@@ -18,6 +18,7 @@ const CUSTOM_SPECIES_PATH = path.join(DATA_DIR, 'customSpecies.json');
 const SPECIES_ENABLED_PATH = path.join(DATA_DIR, 'speciesEnabled.json');
 const SPECIES_REWARDS_PATH = path.join(DATA_DIR, 'speciesRewards.json');
 const UNLOCKED_AVATARS_PATH = path.join(DATA_DIR, 'unlockedAvatars.json');
+const SPECIES_COLLECTIONS_PATH = path.join(DATA_DIR, 'speciesCollections.json');
 const UNFOLLOWS_PATH = path.join(DATA_DIR, 'unfollows.json');
 const MAX_UNFOLLOWS_KEPT = 100;
 
@@ -425,6 +426,20 @@ function removeSpeciesReward(id) {
   return map;
 }
 
+// Collection de chaque avatar (onglets du catalogue et de la page /customize/) : id -> nom.
+// Absent de la map = pas de collection (rangé dans "Autres").
+function getSpeciesCollections() {
+  return readJson(SPECIES_COLLECTIONS_PATH, {});
+}
+
+function setSpeciesCollection(id, name) {
+  const map = getSpeciesCollections();
+  if (name) map[id] = name;
+  else delete map[id];
+  writeJson(SPECIES_COLLECTIONS_PATH, map);
+  return map;
+}
+
 // Avatars débloqués par viewer (définitif, une fois échangé contre des points) : login -> [speciesId, ...]
 function getUnlockedAvatars(login) {
   const map = readJson(UNLOCKED_AVATARS_PATH, {});
@@ -684,6 +699,8 @@ module.exports = {
   getSpeciesRewards,
   setSpeciesReward,
   removeSpeciesReward,
+  getSpeciesCollections,
+  setSpeciesCollection,
   getUnlockedAvatars,
   unlockAvatarForUser,
   getTamagotchiState,

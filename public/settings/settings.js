@@ -1670,15 +1670,65 @@ form.addEventListener('submit', (e) => {
 });
 
 // --- Catalogue d'avatars (ajout/activation, routes dédiées — pas settings.json) ---
+// Onglets : "Tous", une entrée par collection (ordre alphabétique), puis "Autres" pour les avatars
+// sans collection. L'onglet choisi est gardé quand la liste se recharge (après un verrouillage, etc.).
+const CATALOG_TAB_ALL = '__all__';
+const CATALOG_TAB_NONE = '__none__';
+let catalogSpecies = [];
+let catalogTab = CATALOG_TAB_ALL;
+
 async function loadSpeciesCatalog() {
   const res = await fetch('/api/admin/species');
   const list = await res.json();
-  renderSpeciesCatalog(list.filter((s) => !s.reserved));
+  catalogSpecies = list.filter((s) => !s.reserved);
+  renderSpeciesCatalog();
 }
 
-function renderSpeciesCatalog(list) {
+function catalogCollections() {
+  return [...new Set(catalogSpecies.map((s) => s.collection).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+function renderCatalogTabs() {
+  const tabsEl = document.getElementById('species-collection-tabs');
+  const datalist = document.getElementById('species-collections-datalist');
+  if (!tabsEl) return;
+  const collections = catalogCollections();
+  const sansCollection = catalogSpecies.filter((s) => !s.collection).length;
+  if (catalogTab !== CATALOG_TAB_ALL && catalogTab !== CATALOG_TAB_NONE && !collections.includes(catalogTab)) {
+    catalogTab = CATALOG_TAB_ALL;
+  }
+  if (catalogTab === CATALOG_TAB_NONE && !sansCollection) catalogTab = CATALOG_TAB_ALL;
+
+  const tabs = [
+    { key: CATALOG_TAB_ALL, label: 'Tous', count: catalogSpecies.length },
+    ...collections.map((c) => ({ key: c, label: c, count: catalogSpecies.filter((s) => s.collection === c).length })),
+  ];
+  if (sansCollection && collections.length) tabs.push({ key: CATALOG_TAB_NONE, label: 'Autres', count: sansCollection });
+
+  tabsEl.innerHTML = tabs.map((t) => `
+    <button type="button" class="nav-tab-btn${t.key === catalogTab ? ' active' : ''}" data-collection-tab="${escapeHtmlPanel(t.key)}">
+      ${escapeHtmlPanel(t.label)} <span class="collection-count">${t.count}</span>
+    </button>`).join('');
+  if (datalist) datalist.innerHTML = collections.map((c) => `<option value="${escapeHtmlPanel(c)}"></option>`).join('');
+}
+
+document.getElementById('species-collection-tabs')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-collection-tab]');
+  if (!btn) return;
+  catalogTab = btn.dataset.collectionTab;
+  renderSpeciesCatalog();
+});
+
+function renderSpeciesCatalog() {
+  renderCatalogTabs();
   const listEl = document.getElementById('species-catalog-list');
   if (!listEl) return;
+  const list = catalogSpecies.filter((s) => {
+    if (catalogTab === CATALOG_TAB_ALL) return true;
+    if (catalogTab === CATALOG_TAB_NONE) return !s.collection;
+    return s.collection === catalogTab;
+  });
   if (!list.length) {
     listEl.innerHTML = '<p class="hint">Aucun avatar.</p>';
     return;
@@ -1696,6 +1746,10 @@ function renderSpeciesCatalog(list) {
       </div>
       <div class="cc-card-body">
         <label><input type="checkbox" class="species-enabled" ${s.enabled ? 'checked' : ''} /> Sélectionnable par les followers</label>
+        <label>Collection
+          <input type="text" class="species-collection" list="species-collections-datalist" maxlength="30"
+                 placeholder="Aucune" value="${escapeHtmlPanel(s.collection || '')}" style="width:160px" />
+        </label>
       </div>
       <div class="cc-card-body">
         ${s.reward
@@ -1820,6 +1874,18 @@ document.getElementById('species-catalog-list')?.addEventListener('change', asyn
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: e.target.checked }),
     });
+  } else if (e.target.classList.contains('species-collection')) {
+    const res = await fetch(`/api/admin/species/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collection: e.target.value }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      const entry = catalogSpecies.find((s) => s.id === id);
+      if (entry) entry.collection = updated.collection;
+      renderSpeciesCatalog();
+    }
   }
 });
 
