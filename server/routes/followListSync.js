@@ -29,7 +29,13 @@ function createFollowListSyncRouter({ store, requireAdmin, broadcast, follower, 
     if (!cleanLogin) return res.status(400).json({ error: 'pseudo manquant' });
     const cleanExtra = Number.isFinite(Number(extra)) && extra !== '' ? Number(extra) : undefined;
 
-    store.addPerson(kind, cleanLogin, typeof displayName === 'string' ? displayName.trim() : cleanLogin, undefined, cleanExtra);
+    const name = typeof displayName === 'string' ? displayName.trim() : cleanLogin;
+    if (kind === 'subs' && cleanExtra) {
+      // Re-sub manqué : même rendu qu'un re-sub reçu de Twitch (en tête de liste, "N mois").
+      store.addPerson('subs', cleanLogin, name, undefined, `${cleanExtra} mois`, { bump: true });
+    } else {
+      store.addPerson(kind, cleanLogin, name, undefined, kind === 'subs' ? undefined : cleanExtra);
+    }
     const people = store.getPeople();
     broadcast({ type: 'activity', recent: getRecentActivity(), people });
     res.json({ ok: true, people });

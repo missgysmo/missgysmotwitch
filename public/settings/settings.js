@@ -566,8 +566,12 @@ document.getElementById('unfollows-refresh-btn')?.addEventListener('click', load
 
 function updatePeopleManualExtraVisibility() {
   const kind = document.getElementById('people-manual-kind').value;
-  const needsExtra = kind === 'cheers' || kind === 'raids';
-  document.getElementById('people-manual-extra-label').style.display = needsExtra ? '' : 'none';
+  const needsExtra = kind === 'cheers' || kind === 'raids' || kind === 'subs';
+  const label = document.getElementById('people-manual-extra-label');
+  label.style.display = needsExtra ? '' : 'none';
+  label.firstChild.textContent = kind === 'subs'
+    ? 'Mois de sub (re-sub, facultatif) '
+    : 'Montant (bits ou nombre de viewers du raid) ';
 }
 document.getElementById('people-manual-kind')?.addEventListener('change', updatePeopleManualExtraVisibility);
 updatePeopleManualExtraVisibility();

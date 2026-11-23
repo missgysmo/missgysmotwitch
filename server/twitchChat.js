@@ -1,6 +1,6 @@
 const tmi = require('tmi.js');
 
-function createChatTracker(channel, { onChange, getInactivityMs, onMessage, onMessageDeleted, onClearChat, onStatusChange } = {}) {
+function createChatTracker(channel, { onChange, getInactivityMs, onMessage, onMessageDeleted, onClearChat, onStatusChange, onResub } = {}) {
   const inactivityMs = getInactivityMs || (() => 10 * 60 * 1000);
   const active = new Map(); // login -> lastSeen timestamp
   let connected = false;
@@ -34,6 +34,18 @@ function createChatTracker(channel, { onChange, getInactivityMs, onMessage, onMe
   });
 
   // Suppression d'un message précis par un modérateur/le streamer
+  // Annonce de re-sub dans le tchat (le viewer a partagé son re-sub) : sert de secours à EventSub.
+  client.on('resub', (_channel, username, _months, message, userstate) => {
+    const login = (userstate?.login || username || '').toLowerCase();
+    if (!login || !onResub) return;
+    onResub({
+      login,
+      displayName: userstate['display-name'] || username || login,
+      months: Number(userstate['msg-param-cumulative-months']) || null,
+      message: message || '',
+    });
+  });
+
   client.on('messagedeleted', (_channel, _username, _deletedMessage, userstate) => {
     const id = userstate?.['target-msg-id'];
     if (id && onMessageDeleted) onMessageDeleted(id);

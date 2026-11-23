@@ -74,8 +74,12 @@ const publicApiRateLimit = auth.createRateLimiter({ windowMs: 60 * 1000, max: 30
 // --- Services partagés (état + logique métier, indépendants des routes qui les utilisent) ---
 const botHealth = { startedAt: Date.now(), eventSubConnected: false };
 
+// Branché plus bas, une fois le routeur Twitch (qui gère les events) créé.
+let chatResubHandler = null;
+
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(follower.buildState()),
+  onResub: (info) => { if (chatResubHandler) chatResubHandler(info); },
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
   onStatusChange: (connected) => {
     if (!connected) logger.logError('twitchChat', new Error('Déconnecté du chat Twitch'));
@@ -216,12 +220,13 @@ app.use(spotifyRouter);
 const shoutoutService = createShoutoutService({ store, broadcast, twitchEvents, follower, logError: logger.logError, CLIENT_ID, CLIENT_SECRET });
 app.use(createShoutoutRouter({ requireAdmin, shoutoutService, broadcastToPreview }));
 
-const { router: twitchAuthRouter, startEventSub, getRecentActivity, recordActivity } = createTwitchAuthRouter({
+const { router: twitchAuthRouter, startEventSub, getRecentActivity, recordActivity, handleChatResub } = createTwitchAuthRouter({
   store, broadcast, follower, tamagotchi, botHealth, logError: logger.logError, speciesCatalog,
   onRaid: (login) => shoutoutService.handleRaid(login),
   CHANNEL, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI,
 });
 app.use(twitchAuthRouter);
+chatResubHandler = handleChatResub;
 
 app.use(createFollowListSyncRouter({
   store, requireAdmin, broadcast, follower, getRecentActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,

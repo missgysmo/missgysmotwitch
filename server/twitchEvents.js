@@ -294,7 +294,10 @@ async function subscribe({ clientId, clientSecret, type, version, condition, ses
     },
   ));
   if (!res.ok) {
-    console.error(`[twitchEvents] échec abonnement ${type}: ${res.status} ${await res.text()}`);
+    const message = `échec abonnement ${type}: ${res.status} ${await res.text()}`;
+    console.error(`[twitchEvents] ${message}`);
+    // Chargé ici (et pas en haut du fichier) pour éviter une dépendance circulaire au démarrage.
+    require('./lib/logger').logError('eventsub-abonnement', new Error(message));
   }
 }
 

@@ -176,6 +176,30 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
     }
   }
 
+  // --- Re-subs : EventSub (channel.subscription.message) + secours par l'annonce dans le tchat ---
+  // Les deux arrivent normalement pour le même re-sub : on n'en traite qu'un par viewer et par
+  // fenêtre de 10 minutes. Le tchat attend 20 s pour laisser la priorité à EventSub.
+  const RESUB_DEDUP_MS = 10 * 60 * 1000;
+  const recentResubs = new Map(); // login -> timestamp du re-sub déjà traité
+  function alreadyHandledResub(login) {
+    const ts = recentResubs.get(login);
+    return ts && Date.now() - ts < RESUB_DEDUP_MS;
+  }
+
+  function handleChatResub({ login, displayName, months, message }) {
+    setTimeout(() => {
+      if (alreadyHandledResub(login)) return;
+      recentResubs.set(login, Date.now());
+      console.log(`[twitchChat] re-sub de ${login} capté par le tchat (EventSub ne l'a pas envoyé)`);
+      const event = {
+        user_login: login, user_name: displayName, cumulative_months: months,
+        is_gift: false, is_resub: true, message_text: message, source: 'chat',
+      };
+      broadcast({ type: 'event', eventType: 'channel.subscribe', event, cast: follower.buildCast() });
+      recordActivity('channel.subscribe', event);
+    }, 20 * 1000);
+  }
+
   async function startEventSub() {
     const tokens = store.getTokens();
     if (!tokens) {
@@ -197,6 +221,11 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
           const event = isResub
             ? { ...rawEvent, is_gift: false, is_resub: true, message_text: rawEvent.message?.text || '' }
             : rawEvent;
+          if (isResub) {
+            const login = (rawEvent.user_login || '').toLowerCase();
+            if (alreadyHandledResub(login)) return; // déjà affiché via le tchat
+            recentResubs.set(login, Date.now());
+          }
           if (type === 'channel.channel_points_custom_reward_redemption.add') {
             handleRewardRedemption(event).catch((err) => logError('avatar-reward', err));
             return;
@@ -215,7 +244,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
     }
   }
 
-  return { router, startEventSub, getRecentActivity: () => recentActivity, recordActivity };
+  return { router, startEventSub, getRecentActivity: () => recentActivity, recordActivity, handleChatResub };
 }
 
 module.exports = { createTwitchAuthRouter };
