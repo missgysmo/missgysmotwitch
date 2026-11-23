@@ -968,3 +968,18 @@ button:hover { background: #7d2ff0; }
 /* Liste followers/subs : subs à part, groupés par nombre de mois */
 .people-group-title { margin: 18px 0 6px; font-size: 0.95rem; }
 .people-subgroup-title { margin: 10px 0 4px; font-size: 0.78rem; font-weight: 600; color: #ffd633; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Allées et venues */
+.attendance-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.attendance-filters label { flex: 1 1 220px; }
+.attendance-table-wrap { max-height: 480px; overflow: auto; margin: 0.75rem 0; border: 1px solid #2a2a35; border-radius: 8px; }
+.attendance-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.attendance-table th, .attendance-table td { padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid #2a2a35; white-space: nowrap; }
+.attendance-table th { position: sticky; top: 0; background: #1c1c24; cursor: pointer; user-select: none; }
+.attendance-table th.sorted { color: #ffd633; }
+.attendance-table th.sorted::after { content: ' ' attr(data-dir); }
+.attendance-row { cursor: pointer; }
+.attendance-row:hover, .attendance-row.open { background: #1c1c24; }
+.attendance-detail td { white-space: normal; background: #14141a; line-height: 1.6; }
+.attendance-detail button { margin: 0.5rem 0.5rem 0 0; }
+#attendance-ignored, #attendance-twitchat-url { width: 100%; box-sizing: border-box; font-family: monospace; }

@@ -51,6 +51,7 @@
           <button type="button" class="nav-tab-btn" data-tab="chatsound"><span class="nav-icon">🔔</span>Son du tchat</button>
           <button type="button" class="nav-tab-btn" data-tab="activity"><span class="nav-icon">📣</span>Activité récente</button>
           <button type="button" class="nav-tab-btn" data-tab="followlist"><span class="nav-icon">📜</span>Liste followers/subs</button>
+          <button type="button" class="nav-tab-btn" data-tab="attendance"><span class="nav-icon">🚪</span>Allées et venues</button>
           <button type="button" class="nav-tab-btn" data-tab="tamagotchi"><span class="nav-icon">🐾</span>Mascotte</button>
           <button type="button" class="nav-tab-btn" data-tab="raidcard"><span class="nav-icon">🎴</span>Fiche raid</button>
           <button type="button" class="nav-tab-btn" data-tab="nowplaying"><span class="nav-icon">🎵</span>Musique en cours</button>
@@ -1367,6 +1368,43 @@
           <canvas id="thankyou-canvas" width="800" height="450"></canvas>
           <button type="button" id="thankyou-download-btn">Télécharger en PNG</button>
         </div>
+      </fieldset>
+
+      <fieldset data-nav-panel="attendance" hidden>
+        <legend>Allées et venues des viewers</legend>
+        <p id="attendance-status" class="hint"></p>
+        <p class="hint">Compté pendant tes lives uniquement, à partir des arrivées/départs du salon envoyés par Twitch (les mêmes que dans Twitchat) et des messages. Twitch les envoie par paquets avec quelques minutes de retard, et plus du tout au-delà de 1000 personnes dans le tchat.</p>
+        <div class="attendance-filters">
+          <label>Stream <select id="attendance-stream"></select></label>
+          <label>Rechercher <input type="text" id="attendance-search" placeholder="pseudo..." /></label>
+        </div>
+        <div class="attendance-table-wrap">
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th data-sort="name">Viewer</th>
+                <th data-sort="streams">Streams</th>
+                <th data-sort="joins">Arrivées</th>
+                <th data-sort="parts">Départs</th>
+                <th data-sort="messages">Messages</th>
+                <th data-sort="presence">Présence</th>
+                <th data-sort="last">Dernier passage</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-body"></tbody>
+          </table>
+        </div>
+        <p class="hint">Clique sur un viewer pour voir le détail stream par stream. 🟢 = dans le salon en ce moment.</p>
+
+        <h3>Comptes ignorés (bots)</h3>
+        <p class="hint">Un pseudo par ligne. Leurs passages déjà comptés sont effacés à l'enregistrement.</p>
+        <textarea id="attendance-ignored" rows="5"></textarea>
+        <button type="button" id="attendance-ignored-save">💾 Enregistrer la liste</button>
+
+        <h3>Recevoir les arrivées/départs depuis Twitchat (facultatif)</h3>
+        <p class="hint">Dans Twitchat, crée un déclencheur sur l'arrivée d'un viewer avec une action « requête HTTP » (GET) vers l'adresse ci-dessous, puis un second sur le départ avec <code>event=part</code>. Remplace <code>PSEUDO</code> par la variable du pseudo proposée par Twitchat. Garde cette adresse secrète : elle contient ta clé.</p>
+        <input type="text" id="attendance-twitchat-url" readonly />
+        <button type="button" id="attendance-twitchat-copy">📋 Copier l'adresse</button>
       </fieldset>
 
       <fieldset data-nav-panel="viewernotes" hidden>

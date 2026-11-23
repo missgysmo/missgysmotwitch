@@ -2898,3 +2898,134 @@ document.querySelectorAll('.manual-lastevent-btn').forEach((btn) => {
     }
   });
 });
+
+
+// ---------- Allées et venues ----------
+let attendanceState = null;
+let attendanceSort = { key: 'streams', dir: -1 };
+let attendanceOpen = null;
+
+const fmtDuration = (ms) => {
+  const min = Math.round(ms / 60000);
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
+};
+const fmtDateTime = (ts) => (ts ? new Date(ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—');
+const streamLabel = (s) => `${new Date(s.startedAt).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })} ${new Date(s.startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${s.title ? ` — ${s.title}` : ''}${s.endedAt ? '' : ' (en cours)'}`;
+
+async function loadAttendance() {
+  try {
+    const res = await fetch('/api/admin/attendance');
+    if (!res.ok) return;
+    attendanceState = await res.json();
+    renderAttendance();
+  } catch { /* hors ligne, on réessaie au prochain tour */ }
+}
+
+function attendanceRows() {
+  const { viewers } = attendanceState;
+  const streamFilter = document.getElementById('attendance-stream').value;
+  const query = document.getElementById('attendance-search').value.trim().toLowerCase();
+  return viewers.map((v) => {
+    const entries = Object.entries(v.perStream).filter(([sid]) => !streamFilter || sid === streamFilter).map(([, e]) => e);
+    if (!entries.length) return null;
+    const sum = (k) => entries.reduce((n, e) => n + (e[k] || 0), 0);
+    return {
+      v, name: v.displayName || v.login, streams: entries.length, joins: sum('joins'), parts: sum('parts'),
+      messages: sum('messages'), presence: sum('presenceMs'), last: Math.max(...entries.map((e) => e.lastAt || 0)),
+    };
+  }).filter((r) => r && (!query || r.v.login.includes(query) || r.name.toLowerCase().includes(query)));
+}
+
+function renderAttendance() {
+  if (!attendanceState) return;
+  const { live, streams, ignored, twitchatKey } = attendanceState;
+  const current = streams.find((s) => !s.endedAt);
+  document.getElementById('attendance-status').textContent = live && current
+    ? `🔴 En live depuis ${new Date(current.startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — ${attendanceState.viewers.filter((v) => v.here).length} viewer(s) dans le salon. ${streams.length} stream(s) enregistré(s).`
+    : `⚫ Hors live — le comptage reprend au prochain live. ${streams.length} stream(s) enregistré(s).`;
+
+  const sel = document.getElementById('attendance-stream');
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">Tous les streams</option>${streams.map((s) => `<option value="${escapeHtmlPanel(s.id)}">${escapeHtmlPanel(streamLabel(s))}</option>`).join('')}`;
+  if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
+
+  const ta = document.getElementById('attendance-ignored');
+  if (document.activeElement !== ta) ta.value = ignored.join('\n');
+  document.getElementById('attendance-twitchat-url').value = `${location.origin}/api/attendance/twitchat?key=${twitchatKey}&event=join&user=PSEUDO`;
+
+  const rows = attendanceRows();
+  const { key, dir } = attendanceSort;
+  rows.sort((a, b) => (key === 'name' ? a.name.localeCompare(b.name) * -dir : (a[key] - b[key]) * dir) || a.name.localeCompare(b.name));
+  document.querySelectorAll('.attendance-table th').forEach((th) => {
+    th.classList.toggle('sorted', th.dataset.sort === key);
+    th.dataset.dir = th.dataset.sort === key ? (dir < 0 ? '▼' : '▲') : '';
+  });
+
+  const streamById = Object.fromEntries(streams.map((s) => [s.id, s]));
+  const body = document.getElementById('attendance-body');
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="7" class="hint">Aucun passage enregistré pour le moment.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map((r) => {
+    const open = attendanceOpen === r.v.login;
+    const detail = open ? `<tr class="attendance-detail"><td colspan="7">${Object.entries(r.v.perStream)
+      .sort(([a], [b]) => (streamById[b]?.startedAt || 0) - (streamById[a]?.startedAt || 0))
+      .map(([sid, e]) => `<div>${escapeHtmlPanel(streamById[sid] ? streamLabel(streamById[sid]) : sid)} : <b>${e.joins}</b> arrivée(s), <b>${e.parts}</b> départ(s), ${e.messages} message(s), ${fmtDuration(e.presenceMs)} de présence</div>`).join('')}
+      <button type="button" class="attendance-remove" data-login="${escapeHtmlPanel(r.v.login)}">Effacer ce viewer</button>
+      <button type="button" class="attendance-ignore" data-login="${escapeHtmlPanel(r.v.login)}">Ignorer (bot)</button></td></tr>` : '';
+    return `<tr class="attendance-row${open ? ' open' : ''}" data-login="${escapeHtmlPanel(r.v.login)}">
+      <td>${r.v.here ? '🟢 ' : ''}${escapeHtmlPanel(r.name)}</td><td>${r.streams}</td><td>${r.joins}</td><td>${r.parts}</td>
+      <td>${r.messages}</td><td>${fmtDuration(r.presence)}</td><td>${fmtDateTime(r.last)}</td></tr>${detail}`;
+  }).join('');
+}
+
+document.querySelectorAll('.attendance-table th').forEach((th) => th.addEventListener('click', () => {
+  const key = th.dataset.sort;
+  attendanceSort = { key, dir: attendanceSort.key === key ? -attendanceSort.dir : (key === 'name' ? 1 : -1) };
+  renderAttendance();
+}));
+document.getElementById('attendance-stream')?.addEventListener('change', renderAttendance);
+document.getElementById('attendance-search')?.addEventListener('input', renderAttendance);
+document.getElementById('attendance-body')?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (btn) {
+    const login = btn.dataset.login;
+    if (btn.classList.contains('attendance-remove')) {
+      if (!confirm(`Effacer tous les passages de ${login} ?`)) return;
+      const res = await fetch(`/api/admin/attendance/viewer/${encodeURIComponent(login)}`, { method: 'DELETE' });
+      if (res.ok) { attendanceState = await res.json(); renderAttendance(); }
+    } else if (btn.classList.contains('attendance-ignore')) {
+      const res = await fetch('/api/admin/attendance/ignored', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ list: [...attendanceState.ignored, login] }),
+      });
+      if (res.ok) { attendanceState = await res.json(); renderAttendance(); }
+    }
+    return;
+  }
+  const row = e.target.closest('.attendance-row');
+  if (!row) return;
+  attendanceOpen = attendanceOpen === row.dataset.login ? null : row.dataset.login;
+  renderAttendance();
+});
+document.getElementById('attendance-ignored-save')?.addEventListener('click', async () => {
+  const list = document.getElementById('attendance-ignored').value.split(/[\s,;]+/).filter(Boolean);
+  const res = await fetch('/api/admin/attendance/ignored', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ list }),
+  });
+  if (res.ok) { attendanceState = await res.json(); renderAttendance(); }
+});
+document.getElementById('attendance-twitchat-copy')?.addEventListener('click', () => {
+  const input = document.getElementById('attendance-twitchat-url');
+  navigator.clipboard?.writeText(input.value).catch(() => { input.select(); document.execCommand('copy'); });
+});
+
+// Rafraîchi toutes les 30 s tant que l'onglet est affiché
+document.querySelector('.nav-tab-btn[data-tab="attendance"]')?.addEventListener('click', loadAttendance);
+setInterval(() => {
+  const panel = document.querySelector('[data-nav-panel="attendance"]');
+  if (panel && !panel.hidden && !document.hidden) loadAttendance();
+}, 30 * 1000);
+loadAttendance();

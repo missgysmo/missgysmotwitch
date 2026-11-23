@@ -36,6 +36,8 @@ const { createClipsRouter } = require('./routes/clips');
 const { createShoutoutService } = require('./shoutoutService');
 const { createShoutoutRouter } = require('./routes/shoutout');
 const { createFollowListSyncRouter } = require('./routes/followListSync');
+const { createAttendanceService } = require('./attendanceService');
+const { createAttendanceRouter } = require('./routes/attendance');
 const { createCustomCommandsRouter } = require('./routes/customCommands');
 const { createMessagesRouter } = require('./routes/messages');
 const { createSpeciesAdminRouter } = require('./routes/speciesAdmin');
@@ -76,15 +78,20 @@ const botHealth = { startedAt: Date.now(), eventSubConnected: false };
 
 // Branché plus bas, une fois le routeur Twitch (qui gère les events) créé.
 let chatResubHandler = null;
+let attendance = null; // allées et venues des viewers, créé plus bas
 
 const chatTracker = createChatTracker(CHANNEL, {
   onChange: () => broadcast(follower.buildState()),
   onResub: (info) => { if (chatResubHandler) chatResubHandler(info); },
+  onJoin: (login) => attendance?.handleJoin(login),
+  onPart: (login) => attendance?.handlePart(login),
   getInactivityMs: () => store.getSettings().inactivityMinutes * 60 * 1000,
   onStatusChange: (connected) => {
+    if (connected) attendance?.handleConnected(); else attendance?.handleDisconnected();
     if (!connected) logger.logError('twitchChat', new Error('Déconnecté du chat Twitch'));
   },
   onMessage: (login, message, meta) => {
+    attendance?.handleMessage(login, meta.displayName);
     try {
       const isFollower = follower.isFollowerRightNow(login);
       // bulle au-dessus de l'avatar : seuls les followers (ou le streamer) en ont un affiché
@@ -232,6 +239,11 @@ app.use(createFollowListSyncRouter({
   store, requireAdmin, broadcast, follower, getRecentActivity, recordActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,
 }));
 
+attendance = createAttendanceService({
+  store, twitchEvents, follower, CHANNEL, CLIENT_ID, CLIENT_SECRET, logError: logger.logError,
+});
+app.use(createAttendanceRouter({ requireAdmin, attendance }));
+
 const unfollowService = createUnfollowService({
   store, twitchEvents, follower, CLIENT_ID, CLIENT_SECRET, broadcast, getRecentActivity, logError: logger.logError,
 });
@@ -277,4 +289,5 @@ server.listen(PORT, () => {
   startEventSub();
   startSpotifyPolling();
   unfollowService.start();
+  attendance.start();
 });

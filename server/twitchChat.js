@@ -1,6 +1,6 @@
 const tmi = require('tmi.js');
 
-function createChatTracker(channel, { onChange, getInactivityMs, onMessage, onMessageDeleted, onClearChat, onStatusChange, onResub } = {}) {
+function createChatTracker(channel, { onChange, getInactivityMs, onMessage, onMessageDeleted, onClearChat, onStatusChange, onResub, onJoin, onPart } = {}) {
   const inactivityMs = getInactivityMs || (() => 10 * 60 * 1000);
   const active = new Map(); // login -> lastSeen timestamp
   let connected = false;
@@ -44,6 +44,18 @@ function createChatTracker(channel, { onChange, getInactivityMs, onMessage, onMe
       months: Number(userstate['msg-param-cumulative-months']) || null,
       message: message || '',
     });
+  });
+
+  // Arrivées / départs du salon (envoyés par paquets par Twitch, absents au-delà de 1000 chatters)
+  client.on('join', (_channel, username, self) => {
+    if (!self && onJoin) onJoin(username.toLowerCase());
+  });
+  client.on('part', (_channel, username, self) => {
+    if (!self && onPart) onPart(username.toLowerCase());
+  });
+  // Liste des personnes déjà présentes, envoyée à la connexion du bot
+  client.on('names', (_channel, usernames) => {
+    if (onJoin) for (const u of usernames || []) onJoin(String(u).toLowerCase());
   });
 
   client.on('messagedeleted', (_channel, _username, _deletedMessage, userstate) => {

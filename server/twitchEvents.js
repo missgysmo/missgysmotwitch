@@ -376,7 +376,19 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
   connectSocket();
 }
 
+// Stream en cours de la chaîne (null si hors ligne)
+async function getStream({ clientId, clientSecret, broadcasterId }) {
+  const res = await withFreshToken({ clientId, clientSecret }, (accessToken) => fetch(
+    `https://api.twitch.tv/helix/streams?user_id=${encodeURIComponent(broadcasterId)}`,
+    { headers: { 'Client-Id': clientId, Authorization: `Bearer ${accessToken}` } },
+  ));
+  if (!res.ok) throw new Error(`getStream failed: ${res.status} ${await res.text()}`);
+  const body = await res.json();
+  return body.data?.[0] || null;
+}
+
 module.exports = {
+  getStream,
   getAuthUrl, exchangeCode, refreshAccessToken, getUserId, checkFollower, getChannelInfo, getUserProfile,
   getAllFollowers, getAllSubscribers, connectEventSub, createCustomReward, updateCustomReward, deleteCustomReward, updateRedemptionStatus, createClip,
   sendChatMessage, sendShoutout,

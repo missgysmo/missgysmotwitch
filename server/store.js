@@ -20,6 +20,7 @@ const SPECIES_REWARDS_PATH = path.join(DATA_DIR, 'speciesRewards.json');
 const UNLOCKED_AVATARS_PATH = path.join(DATA_DIR, 'unlockedAvatars.json');
 const SPECIES_COLLECTIONS_PATH = path.join(DATA_DIR, 'speciesCollections.json');
 const UNFOLLOWS_PATH = path.join(DATA_DIR, 'unfollows.json');
+const ATTENDANCE_PATH = path.join(DATA_DIR, 'attendance.json');
 const MAX_UNFOLLOWS_KEPT = 100;
 
 const DEFAULT_SETTINGS = {
@@ -334,6 +335,15 @@ function removePerson(kind, login) {
 
 // Historique des unfollows détectés (Twitch ne fournit aucun événement officiel "unfollow" —
 // voir unfollowService.js qui les détecte en comparant périodiquement la liste des followers).
+// Allées et venues des viewers par stream (voir attendanceService.js)
+function getAttendance() {
+  return readJson(ATTENDANCE_PATH, {});
+}
+
+function setAttendance(data) {
+  writeJson(ATTENDANCE_PATH, data);
+}
+
 function getUnfollows() {
   return readJson(UNFOLLOWS_PATH, []);
 }
@@ -688,6 +698,8 @@ module.exports = {
   resetCanvas,
   getPeople,
   addPerson,
+  getAttendance,
+  setAttendance,
   removePerson,
   getUnfollows,
   addUnfollow,
