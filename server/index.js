@@ -229,7 +229,7 @@ app.use(twitchAuthRouter);
 chatResubHandler = handleChatResub;
 
 app.use(createFollowListSyncRouter({
-  store, requireAdmin, broadcast, follower, getRecentActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,
+  store, requireAdmin, broadcast, follower, getRecentActivity, recordActivity, logError: logger.logError, CLIENT_ID, CLIENT_SECRET,
 }));
 
 const unfollowService = createUnfollowService({

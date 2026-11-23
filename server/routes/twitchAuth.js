@@ -36,7 +36,9 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
 
   // Alimente le fil "activité récente" (session en cours) + la liste persistante des followers/subs,
   // boost/réaction de la mascotte, et fiche mémoire pour les raids — puis diffuse aux overlays.
-  function recordActivity(type, event) {
+  // manual: ajout à la main depuis le dashboard → met à jour les listes et "derniers événements",
+  // sans réaction de la mascotte ni shoutout de raid (l'événement est déjà passé).
+  function recordActivity(type, event, { manual = false } = {}) {
     let kind, displayName, login, extra = null;
     if (type === 'channel.follow') {
       kind = 'follow';
@@ -90,6 +92,7 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
     store.setLastEvent(kind, { eventType: type, event, ts: Date.now() });
     broadcast({ type: 'last-event-preview', eventType: type, event });
 
+    if (manual) return;
     tamagotchi.handleTwitchEvent(kind);
 
     if (kind === 'raid' && login) {

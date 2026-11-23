@@ -5,7 +5,7 @@ const PEOPLE_KINDS = ['followers', 'subs', 'cheers', 'raids'];
 
 // Reconstitue la liste followers/subs à partir de l'API Twitch (elle ne se remplit sinon
 // qu'au fil des nouveaux follows/subs à venir, en partant d'une liste vide).
-function createFollowListSyncRouter({ store, requireAdmin, broadcast, follower, getRecentActivity, logError, CLIENT_ID, CLIENT_SECRET }) {
+function createFollowListSyncRouter({ store, requireAdmin, broadcast, follower, getRecentActivity, recordActivity, logError, CLIENT_ID, CLIENT_SECRET }) {
   const router = express.Router();
 
   router.get('/api/admin/people', requireAdmin, (req, res) => {
@@ -29,15 +29,21 @@ function createFollowListSyncRouter({ store, requireAdmin, broadcast, follower, 
     if (!cleanLogin) return res.status(400).json({ error: 'pseudo manquant' });
     const cleanExtra = Number.isFinite(Number(extra)) && extra !== '' ? Number(extra) : undefined;
 
-    const name = typeof displayName === 'string' ? displayName.trim() : cleanLogin;
-    if (kind === 'subs' && cleanExtra) {
-      // Re-sub manqué : même rendu qu'un re-sub reçu de Twitch (en tête de liste, "N mois").
-      store.addPerson('subs', cleanLogin, name, undefined, `${cleanExtra} mois`, { bump: true });
-    } else {
-      store.addPerson(kind, cleanLogin, name, undefined, kind === 'subs' ? undefined : cleanExtra);
-    }
+    const name = (typeof displayName === 'string' && displayName.trim()) || cleanLogin;
+    // Passe par le même chemin qu'un vrai event Twitch : liste followers/subs, fil d'activité et
+    // "dernier follow/sub/bits/raid" des overlays sont mis à jour (sans alerte ni réaction).
+    const events = {
+      followers: ['channel.follow', { user_login: cleanLogin, user_name: name }],
+      subs: ['channel.subscribe', cleanExtra
+        // Re-sub manqué : même rendu qu'un re-sub reçu de Twitch (en tête de liste, "N mois").
+        ? { user_login: cleanLogin, user_name: name, is_gift: false, is_resub: true, cumulative_months: cleanExtra, message_text: '' }
+        : { user_login: cleanLogin, user_name: name, is_gift: false }],
+      cheers: ['channel.cheer', { user_login: cleanLogin, user_name: name, bits: cleanExtra }],
+      raids: ['channel.raid', { from_broadcaster_user_login: cleanLogin, from_broadcaster_user_name: name, viewers: cleanExtra }],
+    };
+    const [type, event] = events[kind];
+    recordActivity(type, event, { manual: true });
     const people = store.getPeople();
-    broadcast({ type: 'activity', recent: getRecentActivity(), people });
     res.json({ ok: true, people });
   });
 

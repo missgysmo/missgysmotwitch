@@ -964,3 +964,7 @@ button:hover { background: #7d2ff0; }
   font-weight: 400;
   opacity: 0.75;
 }
+
+/* Liste followers/subs : subs à part, groupés par nombre de mois */
+.people-group-title { margin: 18px 0 6px; font-size: 0.95rem; }
+.people-subgroup-title { margin: 10px 0 4px; font-size: 0.78rem; font-weight: 600; color: #ffd633; text-transform: uppercase; letter-spacing: 0.04em; }

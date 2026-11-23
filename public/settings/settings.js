@@ -491,35 +491,60 @@ document.getElementById('donationtotal-reset-btn')?.addEventListener('click', as
 
 const PEOPLE_KIND_LABELS = { followers: '💜 Follower', subs: '⭐ Sub', cheers: '💎 Bits', raids: '🚀 Raid' };
 
-function renderPeopleManualList(people) {
-  const el = document.getElementById('people-manual-list');
-  if (!el) return;
-  const rows = [];
-  for (const kind of Object.keys(PEOPLE_KIND_LABELS)) {
-    for (const p of people[kind] || []) {
-      rows.push({ kind, ...p });
-    }
-  }
-  rows.sort((a, b) => (b.since || 0) - (a.since || 0));
-  const countsHtml = `
-    <p class="hint">💜 <strong>${(people.followers || []).length}</strong> followers · ⭐ <strong>${(people.subs || []).length}</strong> subs</p>
-  `;
-  if (!rows.length) {
-    el.innerHTML = `${countsHtml}<p class="hint">Aucune entrée.</p>`;
-    return;
-  }
-  el.innerHTML = countsHtml + rows.map((p) => `
+// Les subs sont affichés à part, regroupés par ancienneté ("7 mois", "2 mois"…, du plus fidèle au
+// plus récent) ; les autres entrées (follows, bits, raids) suivent, de la plus récente à la plus ancienne.
+const subMonths = (p) => parseInt(p.extra, 10) || 0;
+
+function peopleCard(p) {
+  return `
     <div class="cc-card" data-kind="${p.kind}" data-login="${escapeHtmlPanel(p.login)}">
       <div class="cc-card-head">
         <span class="cc-card-title">${PEOPLE_KIND_LABELS[p.kind]}</span>
-        <span class="cc-card-command">${escapeHtmlPanel(p.displayName)}${p.extra ? ` (${p.extra})` : ''}</span>
+        <span class="cc-card-command">${escapeHtmlPanel(p.displayName)}${p.extra ? ` (${escapeHtmlPanel(String(p.extra))})` : ''}</span>
         <span class="hint">${p.since ? new Date(p.since).toLocaleDateString('fr-FR') : ''}</span>
         <div class="cc-card-actions">
           <button type="button" class="people-manual-remove-btn">Supprimer</button>
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+}
+
+function renderPeopleManualList(people) {
+  const el = document.getElementById('people-manual-list');
+  if (!el) return;
+  const countsHtml = `
+    <p class="hint">💜 <strong>${(people.followers || []).length}</strong> followers · ⭐ <strong>${(people.subs || []).length}</strong> subs</p>
+  `;
+
+  const subs = (people.subs || []).map((p) => ({ kind: 'subs', ...p }))
+    .sort((a, b) => subMonths(b) - subMonths(a) || (b.since || 0) - (a.since || 0));
+  const groups = new Map(); // nombre de mois -> subs
+  for (const p of subs) {
+    const m = subMonths(p);
+    if (!groups.has(m)) groups.set(m, []);
+    groups.get(m).push(p);
+  }
+  const subsHtml = subs.length
+    ? `<h4 class="people-group-title">⭐ Subs (${subs.length})</h4>` + [...groups].map(([m, list]) => `
+        <div class="people-subgroup-title">${m ? `${m} mois` : 'Durée inconnue (nouveaux subs ou synchro Twitch)'} · ${list.length}</div>
+        ${list.map(peopleCard).join('')}`).join('')
+    : '';
+
+  const others = [];
+  for (const kind of Object.keys(PEOPLE_KIND_LABELS)) {
+    if (kind === 'subs') continue;
+    for (const p of people[kind] || []) others.push({ kind, ...p });
+  }
+  others.sort((a, b) => (b.since || 0) - (a.since || 0));
+  const othersHtml = others.length
+    ? `<h4 class="people-group-title">Followers, bits et raids (${others.length})</h4>${others.map(peopleCard).join('')}`
+    : '';
+
+  if (!subs.length && !others.length) {
+    el.innerHTML = `${countsHtml}<p class="hint">Aucune entrée.</p>`;
+    return;
+  }
+  el.innerHTML = countsHtml + subsHtml + othersHtml;
 }
 
 async function loadPeopleManualList() {
