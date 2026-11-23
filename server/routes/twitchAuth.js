@@ -48,7 +48,13 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
       kind = 'subscribe';
       displayName = event.user_name;
       login = event.user_login;
-      store.addPerson('subs', login, displayName);
+      if (event.is_resub) {
+        // Re-sub : remonte en tête de la liste des subs du dashboard, avec son ancienneté.
+        extra = event.cumulative_months ? `${event.cumulative_months} mois` : 're-sub';
+        store.addPerson('subs', login, displayName, undefined, extra, { bump: true });
+      } else {
+        store.addPerson('subs', login, displayName);
+      }
     } else if (type === 'channel.cheer') {
       kind = 'cheer';
       displayName = event.user_name;
@@ -182,8 +188,15 @@ function createTwitchAuthRouter({ store, broadcast, follower, tamagotchi, botHea
         clientId: CLIENT_ID,
         clientSecret: CLIENT_SECRET,
         broadcasterId,
-        onEvent: (type, event) => {
-          console.log(`[twitchEvents] event reçu: ${type}`);
+        onEvent: (rawType, rawEvent) => {
+          console.log(`[twitchEvents] event reçu: ${rawType}`);
+          // Un re-sub est traité exactement comme un sub (même alerte, "dernier sub", fil d'activité,
+          // liste des subs) : on le convertit en channel.subscribe, en gardant ses infos de re-sub.
+          const isResub = rawType === 'channel.subscription.message';
+          const type = isResub ? 'channel.subscribe' : rawType;
+          const event = isResub
+            ? { ...rawEvent, is_gift: false, is_resub: true, message_text: rawEvent.message?.text || '' }
+            : rawEvent;
           if (type === 'channel.channel_points_custom_reward_redemption.add') {
             handleRewardRedemption(event).catch((err) => logError('avatar-reward', err));
             return;

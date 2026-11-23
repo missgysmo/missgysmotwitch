@@ -323,6 +323,9 @@ async function connectEventSub({ clientId, clientSecret, broadcasterId, onEvent,
 
           await subscribe({ clientId, clientSecret, type: 'channel.follow', version: '2', condition: moderatorCondition, sessionId });
           await subscribe({ clientId, clientSecret, type: 'channel.subscribe', version: '1', condition, sessionId });
+          // Re-subs : Twitch ne les envoie pas dans channel.subscribe (nouveaux subs et subs offerts
+          // seulement), mais dans channel.subscription.message quand le viewer partage son re-sub dans le tchat.
+          await subscribe({ clientId, clientSecret, type: 'channel.subscription.message', version: '1', condition, sessionId });
           await subscribe({ clientId, clientSecret, type: 'channel.cheer', version: '1', condition, sessionId });
           await subscribe({ clientId, clientSecret, type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: broadcasterId }, sessionId });
           await subscribe({ clientId, clientSecret, type: 'channel.channel_points_custom_reward_redemption.add', version: '1', condition, sessionId });

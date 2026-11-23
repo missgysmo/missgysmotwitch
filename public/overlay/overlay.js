@@ -578,7 +578,7 @@ function applyFollowListLayout() {
 
 const ACTIVITY_LABELS = {
   follow: (a) => `💜 ${a.displayName} vient de follow !`,
-  subscribe: (a) => `⭐ ${a.displayName} vient de s'abonner !`,
+  subscribe: (a) => (a.extra ? `⭐ ${a.displayName} se réabonne (${a.extra}) !` : `⭐ ${a.displayName} vient de s'abonner !`),
   cheer: (a) => `💎 ${a.displayName} a cheer ${a.extra} bits !`,
   raid: (a) => `🚀 Raid de ${a.displayName} (${a.extra} viewers) !`,
   donation: (a) => `🎁 ${a.displayName} a fait un don de ${a.extra} !`,

@@ -301,12 +301,17 @@ function getPeople() {
 }
 
 // extra : bits cumulés (cheers) ou viewers du dernier raid (raids) — ignoré pour followers/subs.
-function addPerson(kind, login, displayName, since, extra) {
+// bump: true = remet la personne en tête de liste avec la date du jour (ex : re-sub), au lieu de
+// seulement mettre à jour sa ligne existante là où elle est.
+function addPerson(kind, login, displayName, since, extra, { bump = false } = {}) {
   const people = getPeople();
   const list = people[kind] || (people[kind] = []);
   const lower = (login || '').toLowerCase();
   const existing = list.find((p) => p.login === lower);
-  if (existing) {
+  if (existing && bump) {
+    list.splice(list.indexOf(existing), 1);
+    list.unshift({ ...existing, displayName: displayName || existing.displayName, since: since || Date.now(), extra });
+  } else if (existing) {
     existing.displayName = displayName || existing.displayName;
     if (extra !== undefined) existing.extra = kind === 'cheers' ? (existing.extra || 0) + extra : extra;
   } else {
