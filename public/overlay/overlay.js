@@ -110,13 +110,41 @@ const SPECIES_FILES = {
 };
 
 // Avatars personnalisés ajoutés par l'admin (en plus de SPECIES_FILES ci-dessus, codé en dur) :
-// chargés une fois au démarrage, et utilisés comme repli par spriteSrcFor() ci-dessous.
+// chargés au démarrage, puis rechargés dès qu'un avatar inconnu apparaît (avatar ajouté après
+// l'ouverture de l'overlay dans OBS) ; les avatars déjà affichés sont alors redessinés.
 const CUSTOM_SPECIES_SRC = {};
-fetch('/api/species/sprites').then((r) => r.json()).then((list) => {
-  for (const s of list) {
-    if (s.src && !SPECIES_FILES[s.id]) CUSTOM_SPECIES_SRC[s.id] = s.src;
+let speciesLoading = null;
+let lastSpeciesLoad = 0;
+function loadCustomSpecies() {
+  if (speciesLoading) return speciesLoading;
+  lastSpeciesLoad = Date.now();
+  speciesLoading = fetch('/api/species/sprites').then((r) => r.json()).then((list) => {
+    for (const s of list) {
+      if (s.src && !SPECIES_FILES[s.id]) CUSTOM_SPECIES_SRC[s.id] = s.src;
+    }
+    refreshSpriteUsers();
+  }).catch(() => {}).finally(() => { speciesLoading = null; });
+  return speciesLoading;
+}
+loadCustomSpecies();
+
+// Avatar inconnu : on recharge la liste (au plus toutes les 10 s, pour ne pas spammer le serveur).
+function requestSpeciesReload() {
+  if (!speciesLoading && Date.now() - lastSpeciesLoad > 10000) loadCustomSpecies();
+}
+
+// Redessine tout ce qui affiche un sprite, maintenant que la liste est à jour.
+function refreshSpriteUsers() {
+  for (const entry of avatars.values()) {
+    if (entry.el && entry.el._skin) applySkin(entry.el, entry.el._skin);
   }
-}).catch(() => {});
+  for (const species of Object.keys(stickerImages)) {
+    if (CUSTOM_SPECIES_SRC[species] && stickerImages[species].dataset.fallback) delete stickerImages[species];
+  }
+  if (typeof redrawGraffitiCanvas === 'function') redrawGraffitiCanvas();
+  const t = settings.tamagotchi;
+  if (t && CUSTOM_SPECIES_SRC[t.species]) tamagotchiImgEl.src = CUSTOM_SPECIES_SRC[t.species];
+}
 
 // Version du sprite sans le vide transparent qui l'entoure : sans ça, un personnage avec beaucoup
 // de marge dans son image paraît plus petit que les autres à taille égale. Calculée une fois par
@@ -172,6 +200,7 @@ function trimmedSpriteSrc(src, onReady) {
 function spriteSrcFor(species) {
   if (SPECIES_FILES[species]) return `/overlay/sprites/${SPECIES_FILES[species]}`;
   if (CUSTOM_SPECIES_SRC[species]) return CUSTOM_SPECIES_SRC[species];
+  if (species && species !== 'mascot') requestSpeciesReload();
   return `/overlay/sprites/${SPECIES_FILES.cat}`;
 }
 
@@ -427,6 +456,7 @@ function removeAvatarEl(entry) {
 function applySkin(el, skin) {
   const img = el.querySelector('.avatar');
   const name = el.querySelector('.avatar-name');
+  el._skin = skin; // gardé pour le redessiner quand la liste des avatars perso est rechargée
   const src = spriteSrcFor(skin.species);
   if (img.dataset.rawSrc !== src) {
     img.dataset.rawSrc = src;
@@ -486,6 +516,7 @@ function getStickerImage(species) {
   if (!stickerImages[species]) {
     const img = new Image();
     img.src = spriteSrcFor(species);
+    if (!SPECIES_FILES[species] && !CUSTOM_SPECIES_SRC[species]) img.dataset.fallback = '1';
     stickerImages[species] = img;
   }
   return stickerImages[species];
