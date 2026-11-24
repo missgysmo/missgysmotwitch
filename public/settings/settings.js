@@ -1013,8 +1013,8 @@ for (const type of EVENT_TYPES) {
     durationOut: document.getElementById(`evt-${type}-duration-out`),
     showBg: document.getElementById(`evt-${type}-showbg`),
     soundFile: document.getElementById(`evt-${type}-sound-file`),
-    soundStatus: document.getElementById(`evt-${type}-sound-status`),
-    soundRemove: document.getElementById(`evt-${type}-sound-remove`),
+    soundsList: document.getElementById(`evt-${type}-sounds-list`),
+    soundsStatus: document.getElementById(`evt-${type}-sounds-status`),
   };
 }
 
@@ -1278,7 +1278,7 @@ async function loadSettings() {
     eventFields[type].imageSize.value = s.events[type].imageSize ?? 180;
     eventFields[type].duration.value = s.events[type].duration ?? 3.6;
     eventFields[type].showBg.checked = s.events[type].showBackground ?? true;
-    updateSoundStatus(type, s.events[type].sound);
+    renderEventSounds(type, [...(s.events[type].sounds || []), ...(s.events[type].sound ? [s.events[type].sound] : [])]);
     if (EVENT_IMAGE_TYPES.includes(type)) renderEventImages(type, s.events[type].images || []);
     lastEventFields[type].enabled.checked = s.lastEvents[type].enabled;
     lastEventFields[type].text.value = s.lastEvents[type].text;
@@ -2735,9 +2735,25 @@ document.getElementById('graffiti-templates-list')?.addEventListener('click', as
   }
 });
 
-function updateSoundStatus(type, sound) {
-  eventFields[type].soundStatus.textContent = sound ? `Son actuel : ${sound.replace(/^[a-zA-Z]+-\d+/, 'fichier')}` : 'Aucun son';
-  eventFields[type].soundRemove.hidden = !sound;
+// Sons des alertes : un est tiré au hasard à chaque alerte (voir pickAlertSound() côté overlay).
+let eventSoundPreview = null;
+function renderEventSounds(type, sounds) {
+  const listEl = eventFields[type].soundsList;
+  if (!sounds.length) {
+    listEl.innerHTML = '<p class="hint">Aucun son pour le moment.</p>';
+    return;
+  }
+  listEl.innerHTML = sounds.map((filename, i) => `
+    <div class="cc-card" data-filename="${escapeHtmlPanel(filename)}">
+      <div class="cc-card-head">
+        <span class="cc-card-title">🔊 Son ${i + 1}</span>
+        <div class="cc-card-actions">
+          <button type="button" class="event-sound-play-btn">▶ Écouter</button>
+          <button type="button" class="event-sound-remove-btn">Retirer</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
 // Galerie d'images des alertes (follow/sub/cheer/raid/don) : une image est tirée au hasard dans la
@@ -2802,27 +2818,42 @@ for (const type of EVENT_IMAGE_TYPES) {
 
 for (const type of EVENT_TYPES) {
   eventFields[type].soundFile.addEventListener('change', async () => {
-    const file = eventFields[type].soundFile.files[0];
-    if (!file) return;
-    eventFields[type].soundStatus.textContent = 'Envoi...';
-    const formData = new FormData();
-    formData.append('sound', file);
-    try {
-      const res = await fetch(`/api/admin/sound/${type}`, { method: 'POST', body: formData });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'échec');
-      updateSoundStatus(type, body.sound);
-    } catch (err) {
-      eventFields[type].soundStatus.textContent = `Échec de l'envoi : ${err.message}`;
-      console.error(err);
-    } finally {
-      eventFields[type].soundFile.value = '';
+    const files = [...eventFields[type].soundFile.files];
+    if (!files.length) return;
+    const statusEl = eventFields[type].soundsStatus;
+    statusEl.hidden = false;
+    const failures = [];
+    for (const [i, file] of files.entries()) {
+      statusEl.textContent = `Envoi ${i + 1}/${files.length}...`;
+      const formData = new FormData();
+      formData.append('sound', file);
+      try {
+        const res = await fetch(`/api/admin/event-sounds/${type}`, { method: 'POST', body: formData });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || 'échec');
+        renderEventSounds(type, body.sounds);
+      } catch (err) {
+        failures.push(`${file.name} : ${err.message}`);
+      }
     }
+    statusEl.textContent = failures.length
+      ? `Échec pour ${failures.join(' ; ')}`
+      : (files.length > 1 ? `${files.length} sons ajoutés.` : 'Son ajouté.');
+    eventFields[type].soundFile.value = '';
   });
 
-  eventFields[type].soundRemove.addEventListener('click', async () => {
-    await fetch(`/api/admin/sound/${type}`, { method: 'DELETE' });
-    updateSoundStatus(type, null);
+  eventFields[type].soundsList.addEventListener('click', async (e) => {
+    const card = e.target.closest('.cc-card');
+    if (!card) return;
+    const filename = card.dataset.filename;
+    if (e.target.classList.contains('event-sound-play-btn')) {
+      if (eventSoundPreview) eventSoundPreview.pause();
+      eventSoundPreview = new Audio(`/sounds/${filename}`);
+      eventSoundPreview.play().catch(() => {});
+    } else if (e.target.classList.contains('event-sound-remove-btn')) {
+      const res = await fetch(`/api/admin/event-sounds/${type}/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      if (res.ok) renderEventSounds(type, (await res.json()).sounds);
+    }
   });
 }
 

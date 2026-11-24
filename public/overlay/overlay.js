@@ -1460,6 +1460,17 @@ function showClipToast() {
   setTimeout(() => toast.remove(), 3000);
 }
 
+// Un son au hasard parmi ceux de l'alerte, en évitant de rejouer le même deux fois d'affilée.
+const lastAlertSound = {};
+function pickAlertSound(key, cfg) {
+  const pool = [...(cfg.sounds || []), ...(cfg.sound ? [cfg.sound] : [])];
+  if (!pool.length) return null;
+  const choices = pool.length > 1 ? pool.filter((f) => f !== lastAlertSound[key]) : pool;
+  const chosen = choices[Math.floor(Math.random() * choices.length)];
+  lastAlertSound[key] = chosen;
+  return chosen;
+}
+
 function showEvent(eventType, event, cast) {
   // L'alerte de don a sa propre source OBS indépendante ("donation"), séparée du module
   // "alerts" qui couvre follow/sub/cheer/raid — pour pouvoir l'afficher seule, ailleurs.
@@ -1469,8 +1480,9 @@ function showEvent(eventType, event, cast) {
   const cfg = settings.events?.[key];
   if (!cfg || !cfg.enabled) return;
 
-  if (cfg.sound) {
-    const audio = new Audio(`/sounds/${cfg.sound}`);
+  const chosenSound = pickAlertSound(key, cfg);
+  if (chosenSound) {
+    const audio = new Audio(`/sounds/${chosenSound}`);
     audio.play().catch((err) => console.error('[son] lecture impossible:', err.message));
   }
 

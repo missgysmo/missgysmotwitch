@@ -49,6 +49,8 @@ function sanitizeEventConfig(input, fallback) {
     // pas envoyé non plus par le formulaire classique — géré par ses propres routes d'upload/retrait
     // (une image à la fois ajoutée/retirée du tableau, jamais tout le tableau remplacé d'un coup).
     images: Array.isArray(input?.images) ? input.images.filter((v) => typeof v === 'string') : fallback.images,
+    // Liste de sons (un tiré au hasard à chaque alerte) : mêmes règles que les images ci-dessus.
+    sounds: Array.isArray(input?.sounds) ? input.sounds.filter((v) => typeof v === 'string') : (fallback.sounds || []),
   };
 }
 

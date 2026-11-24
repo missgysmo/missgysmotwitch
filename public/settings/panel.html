@@ -693,11 +693,10 @@
           <label>Taille de l'image <input type="range" id="evt-follow-imagesize" min="40" max="800" step="10" /><output id="evt-follow-imagesize-out"></output></label>
           <label>Durée d'affichage <input type="range" id="evt-follow-duration" min="2" max="15" step="0.5" /><output id="evt-follow-duration-out"></output></label>
           <label><input type="checkbox" id="evt-follow-showbg" /> Fond noir derrière l'alerte</label>
-          <div class="sound-row" data-sound-row="follow">
-            <span class="sound-status" id="evt-follow-sound-status">Aucun son</span>
-            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-follow-sound-file" hidden /></label>
-            <button type="button" class="sound-remove-btn" data-type="follow" id="evt-follow-sound-remove" hidden>Retirer</button>
-          </div>
+          <p class="hint">Sons : un son est tiré au hasard à chaque alerte (jamais le même deux fois d'affilée). Tu peux en choisir plusieurs d'un coup.</p>
+          <div id="evt-follow-sounds-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter des sons<input type="file" accept="audio/*" multiple id="evt-follow-sound-file" hidden /></label>
+          <p id="evt-follow-sounds-status" class="hint" hidden></p>
           <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
           <div id="evt-follow-images-list" class="cc-list"></div>
           <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-follow-images-file" hidden /></label>
@@ -775,11 +774,10 @@
           <label>Taille de l'image <input type="range" id="evt-subscribe-imagesize" min="40" max="800" step="10" /><output id="evt-subscribe-imagesize-out"></output></label>
           <label>Durée d'affichage <input type="range" id="evt-subscribe-duration" min="2" max="15" step="0.5" /><output id="evt-subscribe-duration-out"></output></label>
           <label><input type="checkbox" id="evt-subscribe-showbg" /> Fond noir derrière l'alerte</label>
-          <div class="sound-row" data-sound-row="subscribe">
-            <span class="sound-status" id="evt-subscribe-sound-status">Aucun son</span>
-            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-subscribe-sound-file" hidden /></label>
-            <button type="button" class="sound-remove-btn" data-type="subscribe" id="evt-subscribe-sound-remove" hidden>Retirer</button>
-          </div>
+          <p class="hint">Sons : un son est tiré au hasard à chaque alerte (jamais le même deux fois d'affilée). Tu peux en choisir plusieurs d'un coup.</p>
+          <div id="evt-subscribe-sounds-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter des sons<input type="file" accept="audio/*" multiple id="evt-subscribe-sound-file" hidden /></label>
+          <p id="evt-subscribe-sounds-status" class="hint" hidden></p>
           <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
           <div id="evt-subscribe-images-list" class="cc-list"></div>
           <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-subscribe-images-file" hidden /></label>
@@ -857,11 +855,10 @@
           <label>Taille de l'image <input type="range" id="evt-cheer-imagesize" min="40" max="800" step="10" /><output id="evt-cheer-imagesize-out"></output></label>
           <label>Durée d'affichage <input type="range" id="evt-cheer-duration" min="2" max="15" step="0.5" /><output id="evt-cheer-duration-out"></output></label>
           <label><input type="checkbox" id="evt-cheer-showbg" /> Fond noir derrière l'alerte</label>
-          <div class="sound-row" data-sound-row="cheer">
-            <span class="sound-status" id="evt-cheer-sound-status">Aucun son</span>
-            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-cheer-sound-file" hidden /></label>
-            <button type="button" class="sound-remove-btn" data-type="cheer" id="evt-cheer-sound-remove" hidden>Retirer</button>
-          </div>
+          <p class="hint">Sons : un son est tiré au hasard à chaque alerte (jamais le même deux fois d'affilée). Tu peux en choisir plusieurs d'un coup.</p>
+          <div id="evt-cheer-sounds-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter des sons<input type="file" accept="audio/*" multiple id="evt-cheer-sound-file" hidden /></label>
+          <p id="evt-cheer-sounds-status" class="hint" hidden></p>
           <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
           <div id="evt-cheer-images-list" class="cc-list"></div>
           <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-cheer-images-file" hidden /></label>
@@ -939,11 +936,10 @@
           <label>Taille de l'image <input type="range" id="evt-raid-imagesize" min="40" max="800" step="10" /><output id="evt-raid-imagesize-out"></output></label>
           <label>Durée d'affichage <input type="range" id="evt-raid-duration" min="2" max="15" step="0.5" /><output id="evt-raid-duration-out"></output></label>
           <label><input type="checkbox" id="evt-raid-showbg" /> Fond noir derrière l'alerte</label>
-          <div class="sound-row" data-sound-row="raid">
-            <span class="sound-status" id="evt-raid-sound-status">Aucun son</span>
-            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-raid-sound-file" hidden /></label>
-            <button type="button" class="sound-remove-btn" data-type="raid" id="evt-raid-sound-remove" hidden>Retirer</button>
-          </div>
+          <p class="hint">Sons : un son est tiré au hasard à chaque alerte (jamais le même deux fois d'affilée). Tu peux en choisir plusieurs d'un coup.</p>
+          <div id="evt-raid-sounds-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter des sons<input type="file" accept="audio/*" multiple id="evt-raid-sound-file" hidden /></label>
+          <p id="evt-raid-sounds-status" class="hint" hidden></p>
           <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque alerte (laisse vide pour aucune image).</p>
           <div id="evt-raid-images-list" class="cc-list"></div>
           <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-raid-images-file" hidden /></label>
@@ -1035,11 +1031,10 @@
           <label>Taille de l'image <input type="range" id="evt-donation-imagesize" min="40" max="800" step="10" /><output id="evt-donation-imagesize-out"></output></label>
           <label>Durée d'affichage <input type="range" id="evt-donation-duration" min="2" max="15" step="0.5" /><output id="evt-donation-duration-out"></output></label>
           <label><input type="checkbox" id="evt-donation-showbg" /> Fond noir derrière l'alerte</label>
-          <div class="sound-row" data-sound-row="donation">
-            <span class="sound-status" id="evt-donation-sound-status">Aucun son</span>
-            <label class="sound-upload-btn">Choisir un son<input type="file" accept="audio/*" id="evt-donation-sound-file" hidden /></label>
-            <button type="button" class="sound-remove-btn" data-type="donation" id="evt-donation-sound-remove" hidden>Retirer</button>
-          </div>
+          <p class="hint">Sons : un son est tiré au hasard à chaque alerte (jamais le même deux fois d'affilée). Tu peux en choisir plusieurs d'un coup.</p>
+          <div id="evt-donation-sounds-list" class="cc-list"></div>
+          <label class="sound-upload-btn">➕ Ajouter des sons<input type="file" accept="audio/*" multiple id="evt-donation-sound-file" hidden /></label>
+          <p id="evt-donation-sounds-status" class="hint" hidden></p>
           <p class="hint">Images affichées dans le popup : une au hasard est tirée à chaque don (laisse vide pour aucune image).</p>
           <div id="evt-donation-images-list" class="cc-list"></div>
           <label class="sound-upload-btn">➕ Ajouter une image<input type="file" accept="image/*" id="evt-donation-images-file" hidden /></label>

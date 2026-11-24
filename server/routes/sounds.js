@@ -177,6 +177,60 @@ function createSoundsRouter({ store, requireAdmin, broadcast, soundsDir, eventIm
     res.json({ ok: true, images: slot.images });
   });
 
+  // Plusieurs sons par alerte (follow/sub/cheer/raid/don) : l'overlay en tire un au hasard à chaque
+  // alerte. L'ancien son unique (slot.sound) est versé dans la liste au premier ajout, pour ne pas le perdre.
+  const MAX_SOUNDS = 20;
+  const allSounds = (slot) => [...(slot.sounds || []), ...(slot.sound ? [slot.sound] : [])];
+
+  router.post('/api/admin/event-sounds/:type', requireAdmin, (req, res) => {
+    soundUpload.single('sound')(req, res, (err) => {
+      if (err) {
+        const message = err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (8 Mo max)' : err.message;
+        return res.status(400).json({ error: message });
+      }
+      const type = req.params.type;
+      const settings = store.getSettings();
+      const slot = settings.events[type];
+      if (!slot) return res.status(400).json({ error: 'type invalide' });
+      if (!req.file) return res.status(400).json({ error: 'fichier audio manquant ou format invalide' });
+      slot.sounds = slot.sounds || [];
+      if (slot.sound) {
+        slot.sounds.push(slot.sound);
+        slot.sound = null;
+      }
+      if (slot.sounds.length >= MAX_SOUNDS) return res.status(400).json({ error: `Maximum ${MAX_SOUNDS} sons.` });
+
+      const SAFE_SOUND_EXT = new Set(['.mp3', '.wav', '.ogg', '.m4a', '.webm', '.aac', '.flac']);
+      const rawExt = path.extname(req.file.originalname).toLowerCase();
+      const ext = SAFE_SOUND_EXT.has(rawExt) ? rawExt : '.mp3';
+      const filename = `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+      fs.writeFileSync(path.join(soundsDir, filename), req.file.buffer);
+
+      slot.sounds.push(filename);
+      store.setSettings(settings);
+      broadcast({ type: 'settings', settings });
+      res.json({ ok: true, sounds: allSounds(slot) });
+    });
+  });
+
+  router.delete('/api/admin/event-sounds/:type/:filename', requireAdmin, (req, res) => {
+    const { type, filename } = req.params;
+    // Nom exactement tel que généré à l'upload (pas de séparateur de chemin).
+    if (!/^[a-zA-Z0-9._-]+$/.test(filename)) return res.status(400).json({ error: 'nom de fichier invalide' });
+    const settings = store.getSettings();
+    const slot = settings.events[type];
+    if (!slot) return res.status(400).json({ error: 'type invalide' });
+    if (!allSounds(slot).includes(filename)) return res.status(404).json({ error: 'son introuvable' });
+
+    if (slot.sound === filename) slot.sound = null;
+    slot.sounds = (slot.sounds || []).filter((f) => f !== filename);
+    store.setSettings(settings);
+    fs.rm(path.join(soundsDir, filename), { force: true }, () => {});
+
+    broadcast({ type: 'settings', settings });
+    res.json({ ok: true, sounds: allSounds(slot) });
+  });
+
   return router;
 }
 
