@@ -190,7 +190,7 @@ let settings = {
   nameTag: { show: true, fontSize: 13, color: '#ffffff' },
   ownerNameColor: '#ffd633',
   ownerSize: 64,
-  graffiti: { enabled: true, cols: 60, rows: 34, cooldownSeconds: 8, position: { x: 2, y: 58, width: 32, height: 38 } },
+  graffiti: { enabled: true, cols: 128, rows: 72, cooldownSeconds: 8, position: { x: 0, y: 0, width: 100, height: 100 } },
   chatOverlay: {
     enabled: false, maxMessages: 8, fontSize: 14, textColor: '#ffffff', colorMode: 'twitch', style: 'list', rotation: 0,
     bgColor: '#000000', bgOpacity: 55, fadeSeconds: 12, position: { x: 78, y: 55, width: 20, height: 40 },

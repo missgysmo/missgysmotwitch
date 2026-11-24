@@ -18,7 +18,11 @@ const templateInput = document.getElementById('template-input');
 const templateImg = document.getElementById('template-img');
 const templateOpacityWrap = document.getElementById('template-opacity-wrap');
 const templateOpacity = document.getElementById('template-opacity');
-const templateClearBtn = document.getElementById('template-clear');
+const templateSelect = document.getElementById('template-select');
+const templateFileWrap = document.getElementById('template-file-wrap');
+const templateSizeWrap = document.getElementById('template-size-wrap');
+const templateSize = document.getElementById('template-size');
+const templateMoveBtn = document.getElementById('template-move');
 const eraseBtn = document.getElementById('erase-btn');
 const cellInfoEl = document.getElementById('cell-info');
 
@@ -32,7 +36,7 @@ let login = null;
 let brush = { type: 'pixel', color: COLORS[0][0] };
 let cooldownUntil = 0;
 let cooldownTimer = null;
-const state = { cols: 60, rows: 34, cells: {}, activeTemplate: null };
+const state = { cols: 60, rows: 34, cells: {}, templates: [] };
 
 function buildPalette() {
   paletteEl.innerHTML = '';
@@ -124,56 +128,240 @@ zoomOutBtn.addEventListener('click', () => {
   applyZoom();
 });
 
-// Le modèle peut venir de deux endroits : celui que la streameuse a choisi pour tout le monde
-// (chargé automatiquement depuis le serveur), ou un fichier perso chargé en local par le viewer
-// (qui prend le dessus tant qu'il est actif, mais ne touche à rien côté serveur ni pour les autres).
-function showTemplate(src) {
-  templateImg.src = src;
-  templateImg.hidden = false;
-  templateOpacityWrap.hidden = false;
-  templateClearBtn.hidden = false;
-  templateImg.style.opacity = templateOpacity.value / 100;
+// Modèle optionnel, choisi par chaque viewer pour lui seul : aucun, un des modèles de la
+// streameuse, ou sa propre image. Il le place et le redimensionne où il veut sur le graffiti,
+// dans la limite de 25 % de la surface pour laisser de la place aux autres. Tout reste dans son
+// navigateur : le modèle n'est jamais envoyé au serveur, ni montré aux autres ou sur le stream.
+// Seuls les pixels posés sont partagés (en direct, avec tout le monde).
+const TEMPLATE_CHOICE_KEY = 'graffiti-template-choice';
+const TEMPLATE_LOCAL_KEY = 'graffiti-template-local';
+const TEMPLATE_OPACITY_KEY = 'graffiti-template-opacity';
+const TEMPLATE_PLACE_KEY = 'graffiti-template-place';
+const TEMPLATE_MAX_AREA = 0.25; // part maximale de la surface du graffiti
+const TEMPLATE_MIN_SIZE = 10; // % de la taille maximale
+
+function readPref(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function writePref(key, value) {
+  try {
+    if (value == null) localStorage.removeItem(key); else localStorage.setItem(key, value);
+  } catch { /* stockage indisponible ou plein : le choix ne sera juste pas retenu */ }
 }
 
-function applySharedTemplate(template) {
-  // N'écrase pas un modèle perso que le viewer a déjà chargé localement.
-  if (localTemplateActive) return;
-  if (template) showTemplate(`/graffiti-templates/${template.image}`);
-  else {
-    templateImg.hidden = true;
-    templateImg.src = '';
-    templateOpacityWrap.hidden = true;
-    templateClearBtn.hidden = true;
+let localTemplateSrc = readPref(TEMPLATE_LOCAL_KEY);
+let templateChoice = readPref(TEMPLATE_CHOICE_KEY) || 'none';
+const savedOpacity = readPref(TEMPLATE_OPACITY_KEY);
+if (savedOpacity !== null) templateOpacity.value = savedOpacity;
+
+// Placement en fractions du graffiti : x, y = coin haut gauche ; size = % de la taille maximale.
+let templatePlace = (() => {
+  try {
+    const p = JSON.parse(readPref(TEMPLATE_PLACE_KEY));
+    if (p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.size)) return p;
+  } catch { /* placement absent ou illisible */ }
+  return null;
+})();
+let templateMoving = false;
+
+// Largeur/hauteur du modèle en fractions du graffiti, selon sa taille choisie.
+function templateBox() {
+  const ratio = templateImg.naturalHeight / templateImg.naturalWidth || 1; // h/w de l'image
+  const aspect = state.rows / state.cols; // h/w du graffiti
+  // aire = w × h = w² × ratio / aspect ≤ TEMPLATE_MAX_AREA, et l'image doit tenir dans le graffiti
+  const maxW = Math.min(1, aspect / ratio, Math.sqrt((TEMPLATE_MAX_AREA * aspect) / ratio));
+  const w = (maxW * templatePlace.size) / 100;
+  return { w, h: (w * ratio) / aspect };
+}
+
+function layoutTemplate() {
+  if (templateImg.hidden || !templateImg.naturalWidth) return;
+  if (!templatePlace) templatePlace = { x: 0, y: 0, size: 100, centered: false };
+  const { w, h } = templateBox();
+  if (templatePlace.centered === false) {
+    templatePlace = { x: (1 - w) / 2, y: (1 - h) / 2, size: templatePlace.size };
   }
+  templatePlace.x = Math.min(Math.max(0, templatePlace.x), 1 - w);
+  templatePlace.y = Math.min(Math.max(0, templatePlace.y), 1 - h);
+  templateImg.style.left = `${templatePlace.x * 100}%`;
+  templateImg.style.top = `${templatePlace.y * 100}%`;
+  templateImg.style.width = `${w * 100}%`;
+  templateImg.style.height = `${h * 100}%`;
+  templateSize.value = templatePlace.size;
 }
 
-let localTemplateActive = false;
+function saveTemplatePlace() {
+  writePref(TEMPLATE_PLACE_KEY, JSON.stringify(templatePlace));
+}
 
-templateInput.addEventListener('change', () => {
+function showTemplate(src) {
+  const visible = !!src;
+  templateOpacityWrap.hidden = !visible;
+  templateSizeWrap.hidden = !visible;
+  templateMoveBtn.hidden = !visible;
+  if (!visible) {
+    templateImg.hidden = true;
+    templateImg.removeAttribute('src');
+    setTemplateMoving(false);
+    return;
+  }
+  templateImg.hidden = false;
+  templateImg.style.opacity = templateOpacity.value / 100;
+  if (templateImg.getAttribute('src') !== src) templateImg.src = src;
+  else layoutTemplate();
+}
+templateImg.addEventListener('load', layoutTemplate);
+
+function renderTemplateSelect() {
+  const options = [['none', 'Aucun modèle']]
+    .concat(state.templates.map((t) => [t.id, t.label]))
+    .concat([['local', '📁 Mon image perso…']]);
+  templateSelect.innerHTML = '';
+  for (const [value, label] of options) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    templateSelect.appendChild(opt);
+  }
+  // Modèle supprimé par la streameuse entre-temps : retour à "aucun".
+  if (!options.some(([value]) => value === templateChoice)) templateChoice = 'none';
+  templateSelect.value = templateChoice;
+  applyTemplateChoice();
+}
+
+function applyTemplateChoice() {
+  templateFileWrap.hidden = templateChoice !== 'local';
+  if (templateChoice === 'local') return showTemplate(localTemplateSrc);
+  const tpl = state.templates.find((t) => t.id === templateChoice);
+  showTemplate(tpl ? `/graffiti-templates/${tpl.image}` : null);
+}
+
+// Nouveau modèle : on repart au centre, en taille maximale.
+function resetTemplatePlace() {
+  templatePlace = { x: 0, y: 0, size: 100, centered: false };
+  saveTemplatePlace();
+}
+
+templateSelect.addEventListener('change', () => {
+  templateChoice = templateSelect.value;
+  writePref(TEMPLATE_CHOICE_KEY, templateChoice);
+  resetTemplatePlace();
+  applyTemplateChoice();
+  if (templateChoice === 'local' && !localTemplateSrc) templateInput.click();
+});
+
+// Réduit l'image si elle dépasse 1920x1080 (sans la déformer), en WebP pour rester légère
+// (PNG si le navigateur ne sait pas encoder le WebP).
+function shrinkImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 1920 / img.naturalWidth, 1080 / img.naturalHeight);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob((blob) => {
+        if (blob) return resolve(blob);
+        c.toBlob((png) => (png ? resolve(png) : reject(new Error('conversion impossible'))), 'image/png');
+      }, 'image/webp', 0.9);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image illisible')); };
+    img.src = url;
+  });
+}
+
+templateInput.addEventListener('change', async () => {
   const file = templateInput.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    localTemplateActive = true;
-    showTemplate(reader.result);
-  };
-  reader.readAsDataURL(file);
+  try {
+    const blob = await shrinkImage(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      localTemplateSrc = reader.result;
+      writePref(TEMPLATE_LOCAL_KEY, localTemplateSrc);
+      resetTemplatePlace();
+      applyTemplateChoice();
+    };
+    reader.readAsDataURL(blob);
+  } catch (err) {
+    alert(`Impossible de charger cette image : ${err.message}`);
+  }
 });
 
 templateOpacity.addEventListener('input', () => {
   templateImg.style.opacity = templateOpacity.value / 100;
+  writePref(TEMPLATE_OPACITY_KEY, templateOpacity.value);
 });
 
-templateClearBtn.addEventListener('click', () => {
-  localTemplateActive = false;
-  templateInput.value = '';
-  applySharedTemplate(state.activeTemplate);
+templateSize.addEventListener('input', () => {
+  if (!templatePlace) return;
+  // Redimensionne autour du centre du modèle
+  const before = templateBox();
+  const cx = templatePlace.x + before.w / 2;
+  const cy = templatePlace.y + before.h / 2;
+  templatePlace.size = Math.max(TEMPLATE_MIN_SIZE, Number(templateSize.value));
+  const after = templateBox();
+  templatePlace.x = cx - after.w / 2;
+  templatePlace.y = cy - after.h / 2;
+  layoutTemplate();
+  saveTemplatePlace();
 });
+
+// Mode "placer" : le modèle se déplace à la souris/au doigt ; les clics ne posent plus de pixels.
+function setTemplateMoving(on) {
+  templateMoving = on;
+  templateImg.classList.toggle('moving', on);
+  canvasStage.classList.toggle('template-moving', on);
+  templateMoveBtn.textContent = on ? '✅ Terminer le placement' : '✋ Déplacer mon modèle';
+}
+templateMoveBtn.addEventListener('click', () => setTemplateMoving(!templateMoving));
+
+templateImg.addEventListener('pointerdown', (e) => {
+  if (!templateMoving) return;
+  e.preventDefault();
+  templateImg.setPointerCapture(e.pointerId);
+  const rect = canvasStage.getBoundingClientRect();
+  const start = { px: e.clientX, py: e.clientY, x: templatePlace.x, y: templatePlace.y };
+  const move = (ev) => {
+    templatePlace.x = start.x + (ev.clientX - start.px) / rect.width;
+    templatePlace.y = start.y + (ev.clientY - start.py) / rect.height;
+    layoutTemplate();
+  };
+  const up = () => {
+    templateImg.removeEventListener('pointermove', move);
+    templateImg.removeEventListener('pointerup', up);
+    templateImg.removeEventListener('pointercancel', up);
+    saveTemplatePlace();
+  };
+  templateImg.addEventListener('pointermove', move);
+  templateImg.addEventListener('pointerup', up);
+  templateImg.addEventListener('pointercancel', up);
+});
+
+let zoomFitted = false;
 
 function resizeCanvas() {
   canvasEl.width = state.cols * CELL_PX;
   canvasEl.height = state.rows * CELL_PX;
+  fitZoomOnce();
   applyZoom();
+  layoutTemplate();
+}
+
+// Au premier affichage de la zone de dessin, zoom ajusté pour voir tout le graffiti
+// (format 1920x1080) en largeur. Rien à faire tant qu'elle est cachée (avant la connexion).
+function fitZoomOnce() {
+  if (zoomFitted) return;
+  const available = canvasStage.parentElement.clientWidth - 16;
+  if (available <= 0) return;
+  zoomFitted = true;
+  const fit = available / (state.cols * CELL_PX);
+  if (fit < 1) zoomLevel = Math.max(0.25, Math.floor(fit * 20) / 20);
 }
 
 function redraw() {
@@ -190,13 +378,13 @@ async function loadCanvas() {
   state.cols = data.cols;
   state.rows = data.rows;
   state.cells = data.cells || {};
-  state.activeTemplate = data.activeTemplate || null;
+  state.templates = data.templates || [];
   cooldownInfoEl.textContent = data.enabled
     ? `Cooldown : ${data.cooldownSeconds}s entre deux placements.`
     : 'Le graffiti est désactivé pour le moment.';
   resizeCanvas();
   redraw();
-  applySharedTemplate(state.activeTemplate);
+  renderTemplateSelect();
 }
 loadCanvas();
 
@@ -216,9 +404,9 @@ function connectWs() {
       state.cells[`${data.x},${data.y}`] = data.cell;
       drawCell(data.x, data.y, data.cell);
     }
-    if (data.type === 'graffiti-template') {
-      state.activeTemplate = data.template;
-      applySharedTemplate(data.template);
+    if (data.type === 'graffiti-templates') {
+      state.templates = data.templates || [];
+      renderTemplateSelect();
     }
   };
   ws.onclose = () => setTimeout(connectWs, 3000);
@@ -243,6 +431,7 @@ function startCooldownDisplay(ms) {
 }
 
 canvasEl.addEventListener('click', async (e) => {
+  if (templateMoving) return;
   if (!login) return;
   if (Date.now() < cooldownUntil) return;
 
@@ -302,6 +491,9 @@ loginForm.addEventListener('submit', async (e) => {
       login = value;
       statusEl.textContent = `Connecté en tant que ${value}. Clique sur le canvas pour peindre !`;
       paintArea.hidden = false;
+      fitZoomOnce();
+      applyZoom();
+      layoutTemplate();
     } else {
       login = null;
       paintArea.hidden = true;

@@ -79,18 +79,25 @@ function sanitizeTimerConfig(input, fallback) {
   };
 }
 
+// Grilles possibles, toutes en 16:9 comme le stream (1920x1080) : colonnes → lignes = colonnes × 9/16.
+const GRAFFITI_COLS = [64, 96, 128, 160, 192];
+
 function sanitizeGraffitiConfig(input, fallback) {
+  const cols = GRAFFITI_COLS.includes(input?.cols) ? input.cols : fallback.cols;
+  // Même pourcentage en largeur et en hauteur : garde le format 16:9 de l'écran.
+  const size = clamp(input?.position?.width, 5, 100, fallback.position.width);
   return {
     enabled: typeof input?.enabled === 'boolean' ? input.enabled : fallback.enabled,
-    cols: clamp(input?.cols, 10, 150, fallback.cols),
-    rows: clamp(input?.rows, 10, 150, fallback.rows),
+    cols,
+    rows: (cols * 9) / 16,
     cooldownSeconds: clamp(input?.cooldownSeconds, 1, 120, fallback.cooldownSeconds),
     position: {
-      x: clamp(input?.position?.x, 0, 100, fallback.position.x),
-      y: clamp(input?.position?.y, 0, 100, fallback.position.y),
-      width: clamp(input?.position?.width, 5, 100, fallback.position.width),
-      height: clamp(input?.position?.height, 5, 100, fallback.position.height),
+      x: clamp(input?.position?.x, 0, 100 - size, Math.min(fallback.position.x, 100 - size)),
+      y: clamp(input?.position?.y, 0, 100 - size, Math.min(fallback.position.y, 100 - size)),
+      width: size,
+      height: size,
     },
+    format: '16:9',
   };
 }
 

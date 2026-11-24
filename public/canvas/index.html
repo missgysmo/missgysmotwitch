@@ -34,14 +34,22 @@
           <button type="button" id="zoom-in">+</button>
         </div>
         <label class="template-picker">
-          Mon modèle perso (optionnel)
+          Modèle à reproduire (rien que pour toi)
+          <select id="template-select"></select>
+        </label>
+        <label class="template-picker" id="template-file-wrap" hidden>
+          Ton image
           <input type="file" id="template-input" accept="image/*" />
         </label>
         <label class="template-opacity" id="template-opacity-wrap" hidden>
           Opacité
           <input type="range" id="template-opacity" min="0" max="100" value="40" />
         </label>
-        <button type="button" id="template-clear" hidden>Retirer le modèle</button>
+        <label class="template-opacity" id="template-size-wrap" hidden title="25 % de la surface du graffiti au maximum, pour laisser de la place à tout le monde">
+          Taille
+          <input type="range" id="template-size" min="10" max="100" value="100" />
+        </label>
+        <button type="button" id="template-move" hidden>✋ Déplacer mon modèle</button>
       </div>
 
       <div class="canvas-wrap">

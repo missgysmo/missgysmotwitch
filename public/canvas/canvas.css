@@ -1,3 +1,6 @@
+/* L'attribut hidden doit toujours gagner (les labels sont en display:flex plus bas) */
+[hidden] { display: none !important; }
+
 * { box-sizing: border-box; }
 body {
   font-family: system-ui, sans-serif;
@@ -127,14 +130,15 @@ button:hover { background: #7d2ff0; }
 }
 #template-opacity { width: 100px; }
 
-#template-clear {
-  padding: 0.4rem 0.8rem;
+#template-select {
+  margin-left: 0.3rem;
+  padding: 0.3rem 0.5rem;
   font-size: 0.8rem;
-  background: transparent;
+  background: #14141a;
   border: 1px solid #3a3a45;
-  color: #a9a9b8;
+  border-radius: 6px;
+  color: #f1f1f5;
 }
-#template-clear:hover { background: rgba(255,255,255,0.05); color: #f1f1f5; }
 
 .canvas-wrap {
   background: #0c0c11;
@@ -151,14 +155,31 @@ button:hover { background: #7d2ff0; }
   background: #0c0c11;
 }
 
+/* Modèle perso du viewer : placé/redimensionné par lui (positions en % posées par canvas.js) */
 #template-img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  object-fit: fill;
   pointer-events: none;
 }
+/* En placement : passe au-dessus des pixels pour pouvoir l'attraper */
+#template-img.moving {
+  z-index: 5;
+  pointer-events: auto;
+  cursor: move;
+  outline: 2px dashed #ffd633;
+  outline-offset: 1px;
+  touch-action: none;
+}
+.canvas-stage.template-moving #canvas { cursor: default; }
+#template-size { width: 100px; }
+#template-move {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px solid #3a3a45;
+  color: #a9a9b8;
+}
+#template-move:hover { background: rgba(255,255,255,0.05); color: #f1f1f5; }
 
 #canvas {
   position: relative;

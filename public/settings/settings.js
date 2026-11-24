@@ -27,7 +27,6 @@ const coHostsListEl = document.getElementById('cohosts-list');
 const graffitiFields = {
   enabled: document.getElementById('graffiti-enabled'),
   cols: document.getElementById('graffiti-cols'),
-  rows: document.getElementById('graffiti-rows'),
   cooldown: document.getElementById('graffiti-cooldown'),
   posX: document.getElementById('graffiti-posx'),
   posXOut: document.getElementById('graffiti-posx-out'),
@@ -1186,7 +1185,11 @@ for (const type of TIMER_TYPES) {
 }
 graffitiFields.posX.addEventListener('input', updateOutputs);
 graffitiFields.posY.addEventListener('input', updateOutputs);
-graffitiFields.width.addEventListener('input', updateOutputs);
+graffitiFields.width.addEventListener('input', () => {
+  // Le graffiti garde le format 16:9 de l'écran : même pourcentage en hauteur qu'en largeur.
+  graffitiFields.height.value = graffitiFields.width.value;
+  updateOutputs();
+});
 graffitiFields.height.addEventListener('input', updateOutputs);
 chatOverlayFields.fontSize.addEventListener('input', updateOutputs);
 chatOverlayFields.bgOpacity.addEventListener('input', updateOutputs);
@@ -1301,7 +1304,6 @@ async function loadSettings() {
   }
   graffitiFields.enabled.checked = s.graffiti.enabled;
   graffitiFields.cols.value = s.graffiti.cols;
-  graffitiFields.rows.value = s.graffiti.rows;
   graffitiFields.cooldown.value = s.graffiti.cooldownSeconds;
   graffitiFields.posX.value = s.graffiti.position.x;
   graffitiFields.posY.value = s.graffiti.position.y;
@@ -1506,7 +1508,7 @@ async function saveSettings() {
     graffiti: {
       enabled: graffitiFields.enabled.checked,
       cols: Number(graffitiFields.cols.value),
-      rows: Number(graffitiFields.rows.value),
+      rows: (Number(graffitiFields.cols.value) * 9) / 16,
       cooldownSeconds: Number(graffitiFields.cooldown.value),
       position: {
         x: Number(graffitiFields.posX.value),
@@ -2643,7 +2645,32 @@ document.getElementById('graffiti-reset-btn').addEventListener('click', () => {
   fetch('/api/admin/canvas/reset', { method: 'POST' });
 });
 
-function renderGraffitiTemplates(templates, activeId) {
+// Réduit l'image si elle dépasse 1920x1080 (sans la déformer), en WebP pour rester légère
+// (PNG si le navigateur ne sait pas encoder le WebP).
+function toStreamFormat(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 1920 / img.naturalWidth, 1080 / img.naturalHeight);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob((blob) => {
+        if (blob) return resolve(blob);
+        c.toBlob((png) => (png ? resolve(png) : reject(new Error('conversion impossible'))), 'image/png');
+      }, 'image/webp', 0.9);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image illisible')); };
+    img.src = url;
+  });
+}
+
+function renderGraffitiTemplates(templates) {
   const listEl = document.getElementById('graffiti-templates-list');
   if (!listEl) return;
   if (!templates.length) {
@@ -2655,9 +2682,7 @@ function renderGraffitiTemplates(templates, activeId) {
       <div class="cc-card-head">
         <img src="/graffiti-templates/${escapeHtmlPanel(t.image)}" alt="" style="height:40px;border-radius:4px" />
         <span class="cc-card-title">${escapeHtmlPanel(t.label)}</span>
-        <span class="cc-badge ${t.id === activeId ? '' : 'cc-badge-owner'}">${t.id === activeId ? '✅ Actif' : ''}</span>
         <div class="cc-card-actions">
-          <button type="button" class="graffiti-template-activate-btn" ${t.id === activeId ? 'disabled' : ''}>Activer</button>
           <button type="button" class="graffiti-template-remove-btn">Supprimer</button>
         </div>
       </div>
@@ -2669,7 +2694,7 @@ async function loadGraffitiTemplates() {
   const res = await fetch('/api/admin/graffiti-templates');
   if (!res.ok) return;
   const data = await res.json();
-  renderGraffitiTemplates(data.templates, data.activeId);
+  renderGraffitiTemplates(data.templates);
 }
 loadGraffitiTemplates();
 
@@ -2681,9 +2706,10 @@ document.getElementById('graffiti-template-file')?.addEventListener('change', as
   statusEl.hidden = false;
   statusEl.textContent = 'Envoi...';
   const formData = new FormData();
-  formData.append('image', file);
   formData.append('label', document.getElementById('graffiti-template-label').value);
   try {
+    const blob = await toStreamFormat(file);
+    formData.append('image', blob, blob.type === 'image/webp' ? 'modele.webp' : 'modele.png');
     const res = await fetch('/api/admin/graffiti-templates', { method: 'POST', body: formData });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || 'échec');
@@ -2702,10 +2728,7 @@ document.getElementById('graffiti-templates-list')?.addEventListener('click', as
   if (!card) return;
   const id = card.dataset.id;
 
-  if (e.target.classList.contains('graffiti-template-activate-btn')) {
-    await fetch(`/api/admin/graffiti-templates/${id}/activate`, { method: 'POST' });
-    loadGraffitiTemplates();
-  } else if (e.target.classList.contains('graffiti-template-remove-btn')) {
+  if (e.target.classList.contains('graffiti-template-remove-btn')) {
     if (!confirm('Supprimer ce modèle ?')) return;
     await fetch(`/api/admin/graffiti-templates/${id}`, { method: 'DELETE' });
     loadGraffitiTemplates();

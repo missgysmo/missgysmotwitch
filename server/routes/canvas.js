@@ -58,23 +58,20 @@ function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast
   router.get('/api/canvas', (req, res) => {
     const settings = store.getSettings();
     const canvas = store.getCanvas();
-    const activeTemplate = settings.activeGraffitiTemplateId
-      ? findTemplate(settings, settings.activeGraffitiTemplateId) || null
-      : null;
     res.json({
       ...canvas,
       cooldownSeconds: settings.graffiti.cooldownSeconds,
       enabled: settings.graffiti.enabled,
-      activeTemplate,
+      templates: settings.graffitiTemplates,
     });
   });
 
-  // Modèles de dessin (images de référence que les viewers peuvent reproduire sur le graffiti) :
-  // gérés par la streameuse, partagés par tout le monde sur /canvas (contrairement au "modèle perso"
-  // que chaque viewer peut aussi charger localement, qui lui reste propre et n'est jamais envoyé ici).
+  // Modèles de dessin (images de référence à reproduire sur le graffiti) : la streameuse gère la
+  // bibliothèque, et chaque viewer choisit sur /canvas le modèle qu'il veut voir en transparence
+  // (ou aucun, ou sa propre image). Ce choix reste dans son navigateur et ne change rien pour les autres.
   router.get('/api/admin/graffiti-templates', requireAdmin, (req, res) => {
     const settings = store.getSettings();
-    res.json({ templates: settings.graffitiTemplates, activeId: settings.activeGraffitiTemplateId });
+    res.json({ templates: settings.graffitiTemplates });
   });
 
   router.post('/api/admin/graffiti-templates', requireAdmin, (req, res) => {
@@ -97,6 +94,7 @@ function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast
       settings.graffitiTemplates.push({ id, label, image: filename });
       store.setSettings(settings);
       broadcast({ type: 'settings', settings });
+      broadcast({ type: 'graffiti-templates', templates: settings.graffitiTemplates });
       res.json({ ok: true, templates: settings.graffitiTemplates });
     });
   });
@@ -108,34 +106,10 @@ function createCanvasRouter({ store, requireAdmin, publicApiRateLimit, broadcast
 
     fs.rm(path.join(templatesDir, tpl.image), { force: true }, () => {});
     settings.graffitiTemplates = settings.graffitiTemplates.filter((t) => t.id !== tpl.id);
-    if (settings.activeGraffitiTemplateId === tpl.id) {
-      settings.activeGraffitiTemplateId = null;
-      broadcast({ type: 'graffiti-template', template: null });
-    }
     store.setSettings(settings);
     broadcast({ type: 'settings', settings });
+    broadcast({ type: 'graffiti-templates', templates: settings.graffitiTemplates });
     res.json({ ok: true, templates: settings.graffitiTemplates });
-  });
-
-  router.post('/api/admin/graffiti-templates/:id/activate', requireAdmin, (req, res) => {
-    const settings = store.getSettings();
-    const tpl = findTemplate(settings, req.params.id);
-    if (!tpl) return res.status(404).json({ error: 'modèle introuvable' });
-
-    settings.activeGraffitiTemplateId = tpl.id;
-    store.setSettings(settings);
-    broadcast({ type: 'settings', settings });
-    broadcast({ type: 'graffiti-template', template: tpl });
-    res.json({ ok: true });
-  });
-
-  router.post('/api/admin/graffiti-templates/active/clear', requireAdmin, (req, res) => {
-    const settings = store.getSettings();
-    settings.activeGraffitiTemplateId = null;
-    store.setSettings(settings);
-    broadcast({ type: 'settings', settings });
-    broadcast({ type: 'graffiti-template', template: null });
-    res.json({ ok: true });
   });
 
   router.get('/api/follow-status/:login', publicApiRateLimit, async (req, res) => {

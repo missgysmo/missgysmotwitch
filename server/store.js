@@ -65,12 +65,14 @@ const DEFAULT_SETTINGS = {
     intro: { label: 'Le stream démarre dans...', durationSeconds: 300, color: '#ffffff', fontSize: 32, position: { x: 50, y: 50 } },
     pause: { label: 'De retour dans...', durationSeconds: 300, color: '#ffffff', fontSize: 32, position: { x: 50, y: 50 } },
   },
+  // Format du stream (1920x1080) : grille en 16:9, plein écran par défaut.
   graffiti: {
     enabled: true,
-    cols: 60,
-    rows: 34,
+    cols: 128,
+    rows: 72,
     cooldownSeconds: 8,
-    position: { x: 2, y: 58, width: 32, height: 38 },
+    position: { x: 0, y: 0, width: 100, height: 100 },
+    format: '16:9',
   },
   chatOverlay: {
     enabled: false,
@@ -670,7 +672,20 @@ function getSettings() {
       donation: mergeEventConfig(DEFAULT_SETTINGS.lastEvents.donation, saved.lastEvents?.donation),
     },
   };
+  migrateGraffitiTo169(saved);
   return settingsCache;
+}
+
+// Ancien graffiti (petite zone, grille 60x34) → format du stream 1920x1080 en plein écran.
+// Fait une seule fois ; le dessin existant est gardé (ses cases restent dans la nouvelle grille).
+function migrateGraffitiTo169(saved) {
+  if (!saved.graffiti || saved.graffiti.format === '16:9') return;
+  const { cols, rows, position, format } = DEFAULT_SETTINGS.graffiti;
+  settingsCache.graffiti = { ...settingsCache.graffiti, cols, rows, position: { ...position }, format };
+  writeJson(SETTINGS_PATH, { ...saved, graffiti: settingsCache.graffiti });
+  const canvas = getCanvas();
+  writeJson(CANVAS_PATH, { ...canvas, cols, rows });
+  console.log('[graffiti] passage au format 1920x1080 (grille 128x72, plein écran)');
 }
 
 function setSettings(settings) {
