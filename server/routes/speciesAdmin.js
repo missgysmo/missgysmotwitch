@@ -7,7 +7,6 @@ const twitchEvents = require('../twitchEvents');
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const SAFE_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
-const MAX_CUSTOM_SPECIES = 60;
 
 // Gestion du catalogue d'avatars depuis le panneau : ajout d'avatars personnalisés (upload d'un
 // sprite + un nom) et activer/désactiver n'importe quel avatar (natif ou personnalisé). Les avatars
@@ -38,10 +37,6 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
 
       const label = typeof req.body?.label === 'string' ? req.body.label.trim().slice(0, 40) : '';
       if (!label) return res.status(400).json({ error: 'nom manquant' });
-
-      if (store.getCustomSpecies().length >= MAX_CUSTOM_SPECIES) {
-        return res.status(400).json({ error: `Maximum ${MAX_CUSTOM_SPECIES} avatars personnalisés.` });
-      }
 
       const slugBase = label.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'avatar';
