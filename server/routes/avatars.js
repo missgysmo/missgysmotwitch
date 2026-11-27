@@ -34,7 +34,7 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, s
     const login = req.params.login;
     const skin = follower.getSkin(login);
     const follows = follower.isChannelOwner(login) ? true : await follower.checkAndCacheFollower(login);
-    res.json({ ...skin, follows });
+    res.json({ ...skin, src: speciesCatalog.getById(skin.species)?.src || null, follows });
   });
 
   router.post('/api/avatar/:login', publicApiRateLimit, async (req, res) => {

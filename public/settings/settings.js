@@ -1711,9 +1711,77 @@ let catalogTab = CATALOG_TAB_ALL;
 async function loadSpeciesCatalog() {
   const res = await fetch('/api/admin/species');
   const list = await res.json();
-  catalogSpecies = list.filter((s) => !s.reserved);
+  // Les avatars de la streameuse sont gérés dans l'onglet "Mon avatar", pas dans le catalogue.
+  catalogSpecies = list.filter((s) => !s.reserved && !s.ownerOnly);
   renderSpeciesCatalog();
 }
+
+// --- Mes avatars à moi (onglet "Mon avatar") ---
+async function loadOwnerAvatars() {
+  const listEl = document.getElementById('owner-avatars-list');
+  if (!listEl) return;
+  const res = await fetch('/api/admin/owner-avatars');
+  if (!res.ok) return;
+  const { list } = await res.json();
+  listEl.innerHTML = list.map((s) => `
+    <div class="cc-card" data-id="${escapeHtmlPanel(s.id)}">
+      <div class="cc-card-head">
+        <img src="${s.src}" alt="" style="width:40px;height:40px;object-fit:contain;" />
+        <span class="cc-card-title">${escapeHtmlPanel(s.label)}</span>
+        ${s.worn ? '<span class="cc-badge cc-badge-owner">✔ Porté</span>' : ''}
+        <div class="cc-card-actions">
+          ${s.worn ? '' : '<button type="button" class="owner-avatar-wear">Porter</button>'}
+          ${s.custom ? '<button type="button" class="owner-avatar-delete">Supprimer</button>' : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('owner-avatars-list')?.addEventListener('click', async (e) => {
+  const card = e.target.closest('.cc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+  if (e.target.classList.contains('owner-avatar-wear')) {
+    await fetch('/api/admin/owner-avatars/wear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speciesId: id }),
+    });
+    loadOwnerAvatars();
+  } else if (e.target.classList.contains('owner-avatar-delete')) {
+    if (!confirm('Supprimer cet avatar ?')) return;
+    await fetch(`/api/admin/species/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    loadOwnerAvatars();
+  }
+});
+
+document.getElementById('owner-avatar-add')?.addEventListener('click', async () => {
+  const statusEl = document.getElementById('owner-avatar-status');
+  const labelEl = document.getElementById('owner-avatar-label');
+  const fileEl = document.getElementById('owner-avatar-file');
+  const label = labelEl.value.trim();
+  const file = fileEl.files[0];
+  if (!label || !file) { statusEl.textContent = 'Nom et image requis.'; return; }
+  statusEl.textContent = 'Envoi...';
+  try {
+    const formData = new FormData();
+    formData.append('label', label);
+    formData.append('forOwner', '1');
+    formData.append('sprite', file);
+    const res = await fetch('/api/admin/species', { method: 'POST', body: formData });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'échec');
+    statusEl.textContent = `"${body.label}" ajouté ! Clique sur "Porter" pour l'utiliser.`;
+    labelEl.value = '';
+    fileEl.value = '';
+    loadOwnerAvatars();
+  } catch (err) {
+    statusEl.textContent = `Échec : ${err.message}`;
+  }
+});
+
+loadOwnerAvatars();
 
 function catalogCollections() {
   return [...new Set(catalogSpecies.map((s) => s.collection).filter(Boolean))]

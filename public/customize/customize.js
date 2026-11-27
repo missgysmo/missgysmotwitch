@@ -136,13 +136,13 @@ async function checkReserved() {
   try {
     const res = await fetch(`/api/avatar/${encodeURIComponent(login)}`);
     const skin = await res.json();
-    isReserved = skin.species === 'mon-avatar';
+    isReserved = !!skin.owner || skin.species === 'mon-avatar';
     isNotFollower = !isReserved && !skin.follows;
     reservedNotice.hidden = !isReserved;
     notFollowerNotice.hidden = !isNotFollower;
     pickerBlock.hidden = isReserved || isNotFollower;
     if (isReserved) {
-      previewImg.src = '/overlay/sprites/mon-avatar.png';
+      previewImg.src = skin.src || '/overlay/sprites/mon-avatar.png';
       previewImg.style.filter = 'none';
     } else if (!isNotFollower) {
       await loadSpeciesFor(login);

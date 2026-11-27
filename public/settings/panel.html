@@ -185,6 +185,16 @@
           Inverser l'orientation
         </label>
 
+        <h3>👑 Mes avatars à moi</h3>
+        <p class="hint">Ajoute des avatars rien que pour toi (personne d'autre ne peut les voir ni les choisir) et choisis celui que tu portes sur l'overlay.</p>
+        <div id="owner-avatars-list" class="cc-list"></div>
+        <div class="cc-card" style="margin-top: 12px;">
+          <label>Nom <input type="text" id="owner-avatar-label" maxlength="40" placeholder="Ex: Moi en sorcière" /></label>
+          <label>Image <input type="file" id="owner-avatar-file" accept="image/*" /></label>
+          <button type="button" id="owner-avatar-add">Ajouter</button>
+          <p id="owner-avatar-status" class="hint"></p>
+        </div>
+
         <h3>Collaborateur(s) / co-stream</h3>
         <p class="hint">
           Pseudos Twitch des personnes avec qui tu fais un stream ensemble — leur avatar reste affiché en

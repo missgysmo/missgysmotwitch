@@ -11,8 +11,11 @@ const SAFE_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 // Gestion du catalogue d'avatars depuis le panneau : ajout d'avatars personnalisés (upload d'un
 // sprite + un nom) et activer/désactiver n'importe quel avatar (natif ou personnalisé). Les avatars
 // natifs (species.js) ne peuvent pas être supprimés, seulement désactivés.
-function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesDir, follower, broadcast, CLIENT_ID, CLIENT_SECRET }) {
+function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesDir, follower, broadcast, CHANNEL, CLIENT_ID, CLIENT_SECRET }) {
   const router = express.Router();
+  const ownerLogin = (CHANNEL || '').toLowerCase();
+  // Avatar perso de la streameuse : réservé à elle seule (géré dans l'onglet "Mon avatar").
+  const isOwnerOnly = (s) => s.owners.length === 1 && s.owners[0] === ownerLogin;
 
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -24,7 +27,27 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
   });
 
   router.get('/api/admin/species', requireAdmin, (req, res) => {
-    res.json(speciesCatalog.getAll());
+    res.json(speciesCatalog.getAll().map((s) => ({ ...s, ownerOnly: isOwnerOnly(s) })));
+  });
+
+  // --- Avatars de la streameuse (onglet "Mon avatar") : "mon-avatar" + ceux qu'elle ajoute pour elle ---
+  router.get('/api/admin/owner-avatars', requireAdmin, (req, res) => {
+    const current = follower.getSkin(ownerLogin).species;
+    const list = speciesCatalog.getAll().filter((s) => s.id === 'mon-avatar' || (s.custom && isOwnerOnly(s)))
+      .map((s) => ({ id: s.id, label: s.label, src: s.src, custom: !!s.custom, worn: s.id === current }));
+    res.json({ list });
+  });
+
+  router.post('/api/admin/owner-avatars/wear', requireAdmin, (req, res) => {
+    const id = req.body?.speciesId;
+    const match = speciesCatalog.getById(id);
+    if (id !== 'mon-avatar' && !(match && match.custom && isOwnerOnly(match))) {
+      return res.status(400).json({ error: 'avatar introuvable' });
+    }
+    if (id === 'mon-avatar') store.removeAvatar(ownerLogin);
+    else store.setAvatar(ownerLogin, { species: id, hue: 0 });
+    broadcast(follower.buildState());
+    res.json({ ok: true });
   });
 
   router.post('/api/admin/species', requireAdmin, (req, res) => {
@@ -50,7 +73,9 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
       fs.writeFileSync(path.join(spritesDir, filename), req.file.buffer);
 
       store.addCustomSpecies({ id, label, file: filename });
-      const owners = typeof req.body?.owners === 'string' ? req.body.owners : '';
+      // forOwner : ajouté depuis l'onglet "Mon avatar", réservé à la streameuse seule.
+      const owners = req.body?.forOwner === '1' ? ownerLogin
+        : (typeof req.body?.owners === 'string' ? req.body.owners : '');
       if (owners.trim()) setOwners(speciesCatalog.getById(id), owners);
       res.json(speciesCatalog.getById(id));
     });
@@ -106,6 +131,10 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
     store.removeCustomSpecies(match.id);
     store.setSpeciesCollection(match.id, '');
     store.setSpeciesOwners(match.id, []);
+    if (store.getAvatar(ownerLogin)?.species === match.id) {
+      store.removeAvatar(ownerLogin); // elle portait cet avatar : retour à "mon-avatar"
+      broadcast(follower.buildState());
+    }
     fs.rm(path.join(spritesDir, match.file), { force: true }, () => {});
     res.json({ ok: true });
   });

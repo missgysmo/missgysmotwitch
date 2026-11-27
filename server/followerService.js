@@ -90,7 +90,14 @@ function createFollowerService({ store, species, twitchEvents, CHANNEL, CLIENT_I
   }
 
   function getSkin(login) {
-    if (isChannelOwner(login)) return { species: 'mon-avatar', hue: 0 };
+    // Streameuse : "mon-avatar" par défaut, ou un de ses avatars perso (réservés à elle seule)
+    // choisi dans le dashboard. owner: true = rendu "streameuse" sur l'overlay (taille, pseudo).
+    if (isChannelOwner(login)) {
+      const saved = store.getAvatar(login);
+      const match = saved && species.getById(saved.species);
+      const owned = match && match.enabled && match.owners?.includes(login.toLowerCase());
+      return { species: owned ? match.id : 'mon-avatar', hue: 0, owner: true };
+    }
     return store.getAvatar(login) || defaultSkin(login);
   }
 

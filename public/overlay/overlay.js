@@ -319,7 +319,7 @@ function applySettings(newSettings) {
   root.setProperty('--name-font-size', `${settings.nameTag.fontSize}px`);
   root.setProperty('--name-color', settings.nameTag.color);
   document.body.classList.toggle('hide-names', !settings.nameTag.show);
-  const ownerEntry = [...avatars.values()].find((e) => e.el.dataset.species === 'mon-avatar');
+  const ownerEntry = [...avatars.values()].find((e) => e.el.dataset.owner === '1');
   if (ownerEntry) {
     const size = scaledOwnerSize();
     const ownerImg = ownerEntry.el.querySelector('.avatar');
@@ -463,8 +463,10 @@ function applySkin(el, skin) {
     img.src = trimmedSpriteSrc(src, (url) => { if (img.dataset.rawSrc === src) img.src = url; });
   }
   el.dataset.species = skin.species;
+  const isOwner = !!skin.owner || skin.species === 'mon-avatar';
+  el.dataset.owner = isOwner ? '1' : '';
 
-  if (skin.species === 'mon-avatar') {
+  if (isOwner) {
     const size = scaledOwnerSize();
     img.style.maxWidth = `${size * 2}px`;
     img.style.maxHeight = '';
