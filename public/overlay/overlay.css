@@ -523,7 +523,9 @@ body.module-messages-off .messages-panel { display: none !important; }
   width: auto;
   max-width: calc(var(--avatar-size, 64px) * 2);
   object-fit: contain;
-  image-rendering: pixelated;
+  /* Rendu lissé : les sprites sont des illustrations HD fortement réduites ; en "pixelated"
+     (plus proche voisin) elles deviennent crénelées et illisibles. */
+  image-rendering: auto;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
 }
 
