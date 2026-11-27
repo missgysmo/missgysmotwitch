@@ -19,6 +19,7 @@ const SPECIES_ENABLED_PATH = path.join(DATA_DIR, 'speciesEnabled.json');
 const SPECIES_REWARDS_PATH = path.join(DATA_DIR, 'speciesRewards.json');
 const UNLOCKED_AVATARS_PATH = path.join(DATA_DIR, 'unlockedAvatars.json');
 const SPECIES_COLLECTIONS_PATH = path.join(DATA_DIR, 'speciesCollections.json');
+const SPECIES_OWNERS_PATH = path.join(DATA_DIR, 'speciesOwners.json');
 const UNFOLLOWS_PATH = path.join(DATA_DIR, 'unfollows.json');
 const ATTENDANCE_PATH = path.join(DATA_DIR, 'attendance.json');
 const MAX_UNFOLLOWS_KEPT = 100;
@@ -457,6 +458,20 @@ function setSpeciesCollection(id, name) {
   return map;
 }
 
+// Avatars exclusifs : id -> [logins] des seuls viewers qui peuvent le porter (comme "mon-avatar"
+// pour la streameuse). Absent de la map = avatar ouvert à tous (selon les autres règles).
+function getSpeciesOwners() {
+  return readJson(SPECIES_OWNERS_PATH, {});
+}
+
+function setSpeciesOwners(id, logins) {
+  const map = getSpeciesOwners();
+  if (logins.length) map[id] = logins;
+  else delete map[id];
+  writeJson(SPECIES_OWNERS_PATH, map);
+  return map;
+}
+
 // Avatars débloqués par viewer (définitif, une fois échangé contre des points) : login -> [speciesId, ...]
 function getUnlockedAvatars(login) {
   const map = readJson(UNLOCKED_AVATARS_PATH, {});
@@ -511,6 +526,13 @@ function setAvatar(login, skin) {
   avatars[login.toLowerCase()] = skin;
   writeJson(AVATARS_PATH, avatars);
   return avatars[login.toLowerCase()];
+}
+
+// Oublie l'avatar choisi : le viewer retombe sur son avatar par défaut.
+function removeAvatar(login) {
+  const avatars = getAllAvatars();
+  delete avatars[login.toLowerCase()];
+  writeJson(AVATARS_PATH, avatars);
 }
 
 function getTokens() {
@@ -733,6 +755,9 @@ module.exports = {
   removeSpeciesReward,
   getSpeciesCollections,
   setSpeciesCollection,
+  getSpeciesOwners,
+  setSpeciesOwners,
+  removeAvatar,
   getUnlockedAvatars,
   unlockAvatarForUser,
   getTamagotchiState,

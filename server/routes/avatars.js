@@ -12,11 +12,14 @@ function createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, s
     }
     const unlocked = new Set(store.getUnlockedAvatars(login));
     const list = speciesCatalog.getAll()
-      .filter((s) => !s.reserved && s.enabled)
-      .map((s) => ({
-        id: s.id, label: s.label, src: s.src, collection: s.collection,
-        locked: !!s.reward, cost: s.reward?.cost || null, unlocked: !s.reward || unlocked.has(s.id),
-      }));
+      // Un avatar exclusif n'apparaît que pour ses propriétaires (invisible pour les autres).
+      .filter((s) => !s.reserved && s.enabled && (!s.owners.length || speciesCatalog.isOwner(s, login)))
+      .map((s) => (s.owners.length
+        ? { id: s.id, label: s.label, src: s.src, collection: s.collection, exclusive: true, locked: false, cost: null, unlocked: true }
+        : {
+          id: s.id, label: s.label, src: s.src, collection: s.collection,
+          locked: !!s.reward, cost: s.reward?.cost || null, unlocked: !s.reward || unlocked.has(s.id),
+        }));
     res.json(list);
   });
 

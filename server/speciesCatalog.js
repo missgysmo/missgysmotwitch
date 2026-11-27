@@ -9,6 +9,7 @@ function createSpeciesCatalog({ store }) {
     const enabledMap = store.getSpeciesEnabled();
     const rewards = store.getSpeciesRewards();
     const collections = store.getSpeciesCollections();
+    const owners = store.getSpeciesOwners();
     const custom = store.getCustomSpecies().map((s) => ({ ...s, custom: true }));
     return [...baseSpecies.SPECIES, ...custom].map((s) => ({
       ...s,
@@ -16,20 +17,25 @@ function createSpeciesCatalog({ store }) {
       src: s.custom ? `/avatar-sprites/${s.file}` : `/overlay/sprites/${s.file}`,
       reward: rewards[s.id] || null,
       collection: collections[s.id] || null,
+      owners: owners[s.id] || [], // non vide = avatar exclusif, réservé à ces viewers
     }));
   }
 
   // Sélectionnables gratuitement (sans tenir compte d'un viewer précis) : exclut les avatars
   // verrouillés contre des points. Utilisé pour l'attribution aléatoire par défaut (defaultSkin) —
   // on ne veut jamais qu'un avatar payant tombe au hasard sur quelqu'un qui ne l'a pas débloqué.
+  // Les avatars exclusifs en sont exclus aussi : personne d'autre ne doit pouvoir les avoir.
   function getSelectable() {
-    return getAll().filter((s) => !s.reserved && s.enabled && !s.reward);
+    return getAll().filter((s) => !s.reserved && s.enabled && !s.reward && !s.owners.length);
   }
+
+  const isOwner = (s, login) => s.owners.includes((login || '').toLowerCase());
 
   // Sélectionnables pour CE viewer précis : les gratuits + ceux qu'il a débloqués avec des points.
   function getSelectableFor(login) {
     const unlocked = new Set(store.getUnlockedAvatars(login));
-    return getAll().filter((s) => !s.reserved && s.enabled && (!s.reward || unlocked.has(s.id)));
+    return getAll().filter((s) => !s.reserved && s.enabled
+      && (s.owners.length ? isOwner(s, login) : (!s.reward || unlocked.has(s.id))));
   }
 
   function getById(id) {
@@ -39,11 +45,12 @@ function createSpeciesCatalog({ store }) {
   function isAvailableFor(login, id) {
     const match = getById(id);
     if (!match || match.reserved || !match.enabled) return false;
+    if (match.owners.length) return isOwner(match, login);
     if (!match.reward) return true;
     return store.getUnlockedAvatars(login).includes(id);
   }
 
-  return { getAll, getSelectable, getSelectableFor, getById, isAvailableFor };
+  return { getAll, getSelectable, getSelectableFor, getById, isAvailableFor, isOwner };
 }
 
 module.exports = { createSpeciesCatalog };

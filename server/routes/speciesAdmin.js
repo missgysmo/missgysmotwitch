@@ -11,7 +11,7 @@ const SAFE_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 // Gestion du catalogue d'avatars depuis le panneau : ajout d'avatars personnalisés (upload d'un
 // sprite + un nom) et activer/désactiver n'importe quel avatar (natif ou personnalisé). Les avatars
 // natifs (species.js) ne peuvent pas être supprimés, seulement désactivés.
-function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesDir, follower, CLIENT_ID, CLIENT_SECRET }) {
+function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesDir, follower, broadcast, CLIENT_ID, CLIENT_SECRET }) {
   const router = express.Router();
 
   const upload = multer({
@@ -50,6 +50,8 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
       fs.writeFileSync(path.join(spritesDir, filename), req.file.buffer);
 
       store.addCustomSpecies({ id, label, file: filename });
+      const owners = typeof req.body?.owners === 'string' ? req.body.owners : '';
+      if (owners.trim()) setOwners(speciesCatalog.getById(id), owners);
       res.json(speciesCatalog.getById(id));
     });
   });
@@ -58,15 +60,34 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
     const match = speciesCatalog.getById(req.params.id);
     if (!match) return res.status(404).json({ error: 'avatar introuvable' });
     if (match.reserved) return res.status(400).json({ error: "cet avatar ne peut pas être désactivé" });
-    const { enabled, collection } = req.body || {};
-    if (typeof enabled !== 'boolean' && typeof collection !== 'string') {
-      return res.status(400).json({ error: 'enabled ou collection manquant' });
+    const { enabled, collection, owners } = req.body || {};
+    if (typeof enabled !== 'boolean' && typeof collection !== 'string' && typeof owners !== 'string') {
+      return res.status(400).json({ error: 'enabled, collection ou owners manquant' });
     }
 
     if (typeof enabled === 'boolean') store.setSpeciesEnabled(match.id, enabled);
     if (typeof collection === 'string') store.setSpeciesCollection(match.id, collection.trim().slice(0, 30));
+    if (typeof owners === 'string') setOwners(match, owners);
     res.json(speciesCatalog.getById(match.id));
   });
+
+  // Avatar exclusif : réservé aux pseudos donnés (séparés par des virgules ou des espaces, "@" accepté).
+  // Ces viewers le voient dans leur page /customize/ et le choisissent s'ils le veulent (rien n'est
+  // imposé). Ceux qui le portaient sans y avoir droit (avatar ouvert à tous jusque-là, ou
+  // propriétaire retiré) retombent sur leur avatar par défaut.
+  function setOwners(match, raw) {
+    const logins = [...new Set(raw.split(/[\s,;]+/)
+      .map((l) => l.replace(/^@/, '').trim().toLowerCase())
+      .filter((l) => /^[a-z0-9_]{1,25}$/.test(l)))];
+    store.setSpeciesOwners(match.id, logins);
+    if (logins.length) {
+      const allowed = new Set(logins);
+      for (const [login, skin] of Object.entries(store.getAllAvatars())) {
+        if (skin?.species === match.id && !allowed.has(login)) store.removeAvatar(login);
+      }
+    }
+    broadcast(follower.buildState());
+  }
 
   router.delete('/api/admin/species/:id', requireAdmin, async (req, res) => {
     const match = speciesCatalog.getById(req.params.id);
@@ -84,6 +105,7 @@ function createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, sprites
     }
     store.removeCustomSpecies(match.id);
     store.setSpeciesCollection(match.id, '');
+    store.setSpeciesOwners(match.id, []);
     fs.rm(path.join(spritesDir, match.file), { force: true }, () => {});
     res.json({ ok: true });
   });

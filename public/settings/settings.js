@@ -1771,6 +1771,7 @@ function renderSpeciesCatalog() {
         <span class="cc-card-title">${escapeHtmlPanel(s.label)}</span>
         <span class="cc-badge ${s.custom ? '' : 'cc-badge-owner'}">${s.custom ? '🆕 Personnalisé' : '📦 Natif'}</span>
         ${s.reward ? `<span class="cc-badge cc-badge-video">🔒 ${s.reward.cost} points</span>` : ''}
+        ${s.owners?.length ? `<span class="cc-badge cc-badge-owner">⭐ Exclusif</span>` : ''}
         <div class="cc-card-actions">
           ${s.custom ? '<button type="button" class="species-delete-btn">Supprimer</button>' : ''}
         </div>
@@ -1782,6 +1783,12 @@ function renderSpeciesCatalog() {
                  placeholder="Aucune" value="${escapeHtmlPanel(s.collection || '')}" style="width:160px" />
         </label>
       </div>
+      ${s.reserved ? '' : `<div class="cc-card-body">
+        <label title="Pseudos séparés par des virgules. Personne d'autre ne pourra choisir ni recevoir cet avatar ; ces viewers le trouvent dans leur page d'avatars et restent libres de choisir celui qu'ils veulent.">⭐ Réservé à
+          <input type="text" class="species-owners" placeholder="Tout le monde (pseudos séparés par des virgules)"
+                 value="${escapeHtmlPanel((s.owners || []).join(', '))}" style="width:280px" />
+        </label>
+      </div>`}
       <div class="cc-card-body">
         ${s.reward
           ? `<span class="cc-status-text">Verrouillé contre ${s.reward.cost} points de chaîne ("${escapeHtmlPanel(s.reward.title)}")</span>
@@ -1806,6 +1813,7 @@ document.getElementById('species-create-btn')?.addEventListener('click', async (
   try {
     const formData = new FormData();
     formData.append('label', label);
+    formData.append('owners', document.getElementById('species-new-owners').value);
     formData.append('sprite', file);
     const res = await fetch('/api/admin/species', { method: 'POST', body: formData });
     const body = await res.json();
@@ -1813,6 +1821,7 @@ document.getElementById('species-create-btn')?.addEventListener('click', async (
     statusEl.textContent = `"${body.label}" ajouté !`;
     labelEl.value = '';
     fileEl.value = '';
+    document.getElementById('species-new-owners').value = '';
     await Promise.all([loadSpeciesCatalog(), loadTestAvatars()]);
   } catch (err) {
     statusEl.textContent = `Échec : ${err.message}`;
@@ -1905,6 +1914,18 @@ document.getElementById('species-catalog-list')?.addEventListener('change', asyn
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: e.target.checked }),
     });
+  } else if (e.target.classList.contains('species-owners')) {
+    const res = await fetch(`/api/admin/species/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ owners: e.target.value }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      const entry = catalogSpecies.find((s) => s.id === id);
+      if (entry) entry.owners = updated.owners;
+      renderSpeciesCatalog();
+    }
   } else if (e.target.classList.contains('species-collection')) {
     const res = await fetch(`/api/admin/species/${id}`, {
       method: 'PATCH',

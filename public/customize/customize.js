@@ -60,7 +60,8 @@ function renderSpeciesGrid() {
     opt.dataset.id = s.id;
     const badge = locked
       ? `<span class="locked-badge">🔒 ${s.cost} points</span>`
-      : (s.locked ? '<span class="owned-badge">✔ Débloqué</span>' : '');
+      : (s.exclusive ? '<span class="owned-badge">⭐ Rien que pour toi</span>'
+        : (s.locked ? '<span class="owned-badge">✔ Débloqué</span>' : ''));
     opt.innerHTML = `<img src="${s.src}" alt="${escapeHtml(s.label)}"><span>${escapeHtml(s.label)}</span>${badge}`;
     if (!locked) opt.addEventListener('click', () => selectSpecies(s.id));
     speciesGrid.appendChild(opt);

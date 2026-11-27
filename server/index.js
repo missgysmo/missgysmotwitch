@@ -192,7 +192,7 @@ app.use(createMessagesRouter({ store, requireAdmin, broadcast, mediaDir: MESSAGE
 const AVATAR_SPRITES_DIR = path.join(store.DATA_DIR, 'avatar-sprites');
 fs.mkdirSync(AVATAR_SPRITES_DIR, { recursive: true });
 app.use('/avatar-sprites', express.static(AVATAR_SPRITES_DIR, { maxAge: '1y' }));
-app.use(createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesDir: AVATAR_SPRITES_DIR, follower, CLIENT_ID, CLIENT_SECRET }));
+app.use(createSpeciesAdminRouter({ store, requireAdmin, speciesCatalog, spritesDir: AVATAR_SPRITES_DIR, follower, broadcast, CLIENT_ID, CLIENT_SECRET }));
 
 app.use(createSettingsRouter({ store, requireAdmin, broadcast }));
 app.use(createAvatarsRouter({ store, publicApiRateLimit, broadcast, follower, speciesCatalog }));
